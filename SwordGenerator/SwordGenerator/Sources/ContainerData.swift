@@ -12,6 +12,8 @@ struct ContainerData {
     
     var name: String
     
+    var parent: Container? = nil
+    
     var properties: [Property] = []
     
     var initializer: Initializer
@@ -22,6 +24,36 @@ struct ContainerData {
         self.name = name
         self.initializer = initializer
     }
+    
+    enum AccessLevel {
+        case `private`
+        case `fileprivate`
+        case `open`
+        case `internal`
+        
+        var source: String {
+            switch self {
+            case .private: return "private"
+            case .fileprivate: return "fileprivate"
+            case .open: return "open"
+            case .internal: return "internal"
+            }
+        }
+    }
+    
+    enum ReferenceType {
+        case `strong`
+        case `weak`
+        case `unowned`
+        
+        var source: String {
+            switch self {
+            case .strong: return "strong"
+            case .weak: return "weak"
+            case .unowned: return "unowned"
+            }
+        }
+    }
 }
 
 extension ContainerData {
@@ -30,10 +62,20 @@ extension ContainerData {
         
         var name: String
         var typeName: String
+        var accessLevel: AccessLevel = .open
+        var referenceType: ReferenceType? = nil
         
         init(name: String, typeName: String) {
             self.name = name
             self.typeName = typeName
+        }
+        
+        var declaration: String {
+            return [
+                accessLevel.source,
+                referenceType?.source,
+                "let \(name): \(typeName)"
+            ].compactMap { $0 }.joined(separator: " ")
         }
     }
     
@@ -64,8 +106,36 @@ extension ContainerData {
 
 extension ContainerData {
     
-    static func make(from container: Container) -> ContainerData {
+    static func make(from container: Container, parent: Container? = nil) -> ContainerData {
         var data = ContainerData(name: "\(container.name)Container", initializer: Initializer())
+        data.parent = parent
+        if let parent = parent {
+            let parentName = "parentContainer"
+            let parentTypeName = "\(parent.name)Container"
+            data.properties.append(
+                {
+                    var property = Property(name: parentName, typeName: parentTypeName)
+                    property.referenceType = .unowned
+                    return property
+                }()
+            )
+            data.initializer.storedProperties.append("self.\(parentName) = \(parentName)")
+            data.initializer.args.append((name: parentName, typeName: parentTypeName))
+            parent.dependencies.forEach { (dep) in
+                var getter: Getter
+                switch dep.typeResolver {
+                case .explicit(let type):
+                    getter = Getter(name: dep.name, typeName: type.fullName)
+                case .provided(var type, let providerType):
+                    if providerType.isOptional {
+                        type.isOptional = true
+                    }
+                    getter = Getter(name: dep.name, typeName: type.fullName)
+                }
+                getter.body = ["return self.\(parentName).\(dep.name)"]
+                data.getters.append(getter)
+            }
+        }
         container.args.forEach {
             if $0.isStoredProperty {
                 data.properties.append(Property(name: $0.name, typeName: $0.typeName))

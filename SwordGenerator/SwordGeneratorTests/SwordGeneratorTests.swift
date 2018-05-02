@@ -11,6 +11,70 @@ import XCTest
 
 class SwordGeneratorTests: XCTestCase {
     
+    func testParentContainer() {
+        var parentContainer = Container(name: "Parent")
+        parentContainer.dependencies.append(
+            {
+                let type = Type(name: "Foo")
+                return Dependency(name: "foo1", typeResolver: .explicit(type), storage: .singleton)
+            }()
+        )
+        parentContainer.dependencies.append(
+            {
+                var type = Type(name: "Foo")
+                type.isOptional = true
+                return Dependency(name: "foo2", typeResolver: .explicit(type), storage: .singleton)
+            }()
+        )
+        parentContainer.dependencies.append(
+            {
+                let type = Type(name: "Bar")
+                let providerType = Type(name: "BarProvider")
+                return Dependency(name: "bar", typeResolver: .provided(type, by: providerType), storage: .singleton)
+            }()
+        )
+        parentContainer.dependencies.append(
+            {
+                let type = Type(name: "Baz")
+                var providerType = Type(name: "BazProvider")
+                providerType.isOptional = true
+                return Dependency(name: "baz", typeResolver: .provided(type, by: providerType), storage: .singleton)
+            }()
+        )
+        parentContainer.dependencies.append(
+            {
+                var type = Type(name: "Quux")
+                type.isOptional = true
+                let providerType = Type(name: "QuuxProvider")
+                return Dependency(name: "quux", typeResolver: .provided(type, by: providerType), storage: .singleton)
+            }()
+        )
+        let container = Container(name: "Test")
+        let data = ContainerData.make(from: container, parent: parentContainer)
+        XCTAssertEqual(
+            data.initializer.args.map { "\($0.name): \($0.typeName)" },
+            ["parentContainer: ParentContainer"]
+        )
+        XCTAssertEqual(
+            data.properties.map { $0.declaration },
+            ["open unowned let parentContainer: ParentContainer"]
+        )
+        XCTAssertEqual(
+            data.initializer.storedProperties,
+            ["self.parentContainer = parentContainer"]
+        )
+        XCTAssertEqual(
+            data.getters.map { "var \($0.name): \($0.typeName) { \($0.body.joined()) }" },
+            [
+                "var foo1: Foo { return self.parentContainer.foo1 }",
+                "var foo2: Foo? { return self.parentContainer.foo2 }",
+                "var bar: Bar { return self.parentContainer.bar }",
+                "var baz: Baz? { return self.parentContainer.baz }",
+                "var quux: Quux? { return self.parentContainer.quux }"
+            ]
+        )
+    }
+    
     func testPrototypeProviderReferenceWithPropertyAndConstructorInjections() {
         var container = Container(name: "Test")
         container.dependencies.append(
@@ -82,8 +146,8 @@ class SwordGeneratorTests: XCTestCase {
         )
         let data = ContainerData.make(from: container)
         XCTAssertEqual(
-            data.properties.map { "let \($0.name): \($0.typeName)" },
-            ["let fooProvider: FooProvider?"]
+            data.properties.map { $0.declaration },
+            ["open let fooProvider: FooProvider?"]
         )
         XCTAssertEqual(
             data.initializer.creations,
@@ -119,8 +183,8 @@ class SwordGeneratorTests: XCTestCase {
         )
         let data = ContainerData.make(from: container)
         XCTAssertEqual(
-            data.properties.map { "let \($0.name): \($0.typeName)" },
-            ["let fooProvider: FooProvider?"]
+            data.properties.map { $0.declaration },
+            ["open let fooProvider: FooProvider?"]
         )
         XCTAssertEqual(
             data.initializer.creations,
@@ -159,8 +223,8 @@ class SwordGeneratorTests: XCTestCase {
         )
         let data = ContainerData.make(from: container)
         XCTAssertEqual(
-            data.properties.map { "let \($0.name): \($0.typeName)" },
-            ["let fooProvider: FooProvider"]
+            data.properties.map { $0.declaration },
+            ["open let fooProvider: FooProvider"]
         )
         XCTAssertEqual(
             data.initializer.creations,
@@ -195,8 +259,8 @@ class SwordGeneratorTests: XCTestCase {
         )
         let data = ContainerData.make(from: container)
         XCTAssertEqual(
-            data.properties.map { "let \($0.name): \($0.typeName)" },
-            ["let fooProvider: FooProvider"]
+            data.properties.map { $0.declaration },
+            ["open let fooProvider: FooProvider"]
         )
         XCTAssertEqual(
             data.initializer.creations,
@@ -386,8 +450,8 @@ class SwordGeneratorTests: XCTestCase {
         )
         let data = ContainerData.make(from: container)
         XCTAssertEqual(
-            data.properties.map { "let \($0.name): \($0.typeName)" },
-            ["let foo: Foo?"]
+            data.properties.map { $0.declaration },
+            ["open let foo: Foo?"]
         )
         XCTAssertEqual(
             data.initializer.creations,
@@ -415,8 +479,8 @@ class SwordGeneratorTests: XCTestCase {
         )
         let data = ContainerData.make(from: container)
         XCTAssertEqual(
-            data.properties.map { "let \($0.name): \($0.typeName)" },
-            ["let foo: Foo?"]
+            data.properties.map { $0.declaration },
+            ["open let foo: Foo?"]
         )
         XCTAssertEqual(
             data.initializer.creations,
@@ -442,8 +506,8 @@ class SwordGeneratorTests: XCTestCase {
         )
         let data = ContainerData.make(from: container)
         XCTAssertEqual(
-            data.properties.map { "let \($0.name): \($0.typeName)" },
-            ["let foo: Foo?"]
+            data.properties.map { $0.declaration },
+            ["open let foo: Foo?"]
         )
     }
     
@@ -457,8 +521,8 @@ class SwordGeneratorTests: XCTestCase {
         )
         let data = ContainerData.make(from: container)
         XCTAssertEqual(
-            data.properties.map { "let \($0.name): \($0.typeName)" },
-            ["let foo: Foo"]
+            data.properties.map { $0.declaration },
+            ["open let foo: Foo"]
         )
         XCTAssertEqual(
             data.initializer.creations,
@@ -483,8 +547,8 @@ class SwordGeneratorTests: XCTestCase {
         )
         let data = ContainerData.make(from: container)
         XCTAssertEqual(
-            data.properties.map { "let \($0.name): \($0.typeName)" },
-            ["let foo: Foo"]
+            data.properties.map { $0.declaration },
+            ["open let foo: Foo"]
         )
         XCTAssertEqual(
             data.initializer.creations,
@@ -506,8 +570,8 @@ class SwordGeneratorTests: XCTestCase {
             ["foo: String", "bar: Int?"]
         )
         XCTAssertEqual(
-            data.properties.map { "let \($0.name): \($0.typeName)" },
-            ["let bar: Int?"]
+            data.properties.map { $0.declaration },
+            ["open let bar: Int?"]
         )
         XCTAssertEqual(data.initializer.storedProperties, ["self.bar = bar"])
     }

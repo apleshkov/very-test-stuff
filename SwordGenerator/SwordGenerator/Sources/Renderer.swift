@@ -17,7 +17,7 @@ class Renderer {
         
         print()
         data.properties.forEach {
-            print("\(indent)let \($0.name): \($0.typeName)")
+            print("\(indent)\($0.declaration)")
         }
         
         print()
