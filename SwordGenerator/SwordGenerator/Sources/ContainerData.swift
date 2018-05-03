@@ -12,8 +12,6 @@ struct ContainerData {
     
     var name: String
     
-    var parent: Container? = nil
-    
     var properties: [Property] = []
     
     var initializer: Initializer
@@ -106,10 +104,9 @@ extension ContainerData {
 
 extension ContainerData {
     
-    static func make(from container: Container, parent: Container? = nil) -> ContainerData {
+    static func make(from container: Container) -> ContainerData {
         var data = ContainerData(name: "\(container.name)Container", initializer: Initializer())
-        data.parent = parent
-        if let parent = parent {
+        if let parent = container.parent {
             let parentName = "parentContainer"
             let parentTypeName = "\(parent.name)Container"
             data.properties.append(
@@ -121,7 +118,7 @@ extension ContainerData {
             )
             data.initializer.storedProperties.append("self.\(parentName) = \(parentName)")
             data.initializer.args.append((name: parentName, typeName: parentTypeName))
-            parent.dependencies.forEach { (dep) in
+            parentDependenciesOf(container).forEach { (dep) in
                 var getter: Getter
                 switch dep.typeResolver {
                 case .explicit(let type):
@@ -195,6 +192,16 @@ extension ContainerData {
             }
         }
         return data
+    }
+    
+    private static func parentDependenciesOf(_ container: Container) -> [Dependency] {
+        guard let parent = container.parent as? Container else {
+            return []
+        }
+        let names = Set(container.dependencies.map { $0.name })
+        let parentDependencies = parent.dependencies + parentDependenciesOf(parent)
+        let filtered = parentDependencies.filter { names.contains($0.name) == false }
+        return filtered
     }
     
     private static func constructing(_ type: Type) -> String {

@@ -49,8 +49,8 @@ class SwordGeneratorTests: XCTestCase {
                 return Dependency(name: "quux", typeResolver: .provided(type, by: providerType), storage: .singleton)
             }()
         )
-        let container = Container(name: "Test")
-        let data = ContainerData.make(from: container, parent: parentContainer)
+        let container = Container(name: "Test", parent: parentContainer)
+        let data = ContainerData.make(from: container)
         XCTAssertEqual(
             data.initializer.args.map { "\($0.name): \($0.typeName)" },
             ["parentContainer: ParentContainer"]
@@ -71,6 +71,155 @@ class SwordGeneratorTests: XCTestCase {
                 "var bar: Bar { return self.parentContainer.bar }",
                 "var baz: Baz? { return self.parentContainer.baz }",
                 "var quux: Quux? { return self.parentContainer.quux }"
+            ]
+        )
+    }
+    
+    func testParentContainerCollisions() {
+        var parentContainer = Container(name: "Parent")
+        parentContainer.dependencies.append(
+            {
+                let type = Type(name: "Foo")
+                return Dependency(name: "foo", typeResolver: .explicit(type), storage: .singleton)
+            }()
+        )
+        parentContainer.dependencies.append(
+            {
+                let type = Type(name: "Bar")
+                return Dependency(name: "bar", typeResolver: .explicit(type), storage: .singleton)
+            }()
+        )
+        var container = Container(name: "Test", parent: parentContainer)
+        container.dependencies.append(
+            {
+                let type = Type(name: "ReplacedFoo")
+                return Dependency(name: "foo", typeResolver: .explicit(type), storage: .singleton)
+            }()
+        )
+        let data = ContainerData.make(from: container)
+        XCTAssertEqual(
+            data.properties.map { $0.declaration },
+            [
+                "open unowned let parentContainer: ParentContainer",
+                "open let foo: ReplacedFoo"
+            ]
+        )
+        XCTAssertEqual(
+            data.initializer.creations,
+            ["let foo = ReplacedFoo()"]
+        )
+        XCTAssertEqual(
+            data.initializer.storedProperties,
+            [
+                "self.parentContainer = parentContainer",
+                "self.foo = foo"
+            ]
+        )
+        XCTAssertEqual(
+            data.getters.map { "var \($0.name): \($0.typeName) { \($0.body.joined()) }" },
+            [
+                "var bar: Bar { return self.parentContainer.bar }"
+            ]
+        )
+    }
+    
+    func testMultipleChildContainers() {
+        let containerA: Container = {
+            var container = Container(name: "A")
+            container.dependencies.append(
+                {
+                    let type = Type(name: "AFoo")
+                    return Dependency(name: "foo", typeResolver: .explicit(type), storage: .singleton)
+                }()
+            )
+            container.dependencies.append(
+                {
+                    let type = Type(name: "ABar")
+                    return Dependency(name: "bar", typeResolver: .explicit(type), storage: .singleton)
+                }()
+            )
+            return container
+        }()
+        let containerB: Container = {
+            var container = Container(name: "B", parent: containerA)
+            container.dependencies.append(
+                {
+                    let type = Type(name: "BReplacedBar")
+                    return Dependency(name: "bar", typeResolver: .explicit(type), storage: .singleton)
+                }()
+            )
+            container.dependencies.append(
+                {
+                    let type = Type(name: "BBaz")
+                    return Dependency(name: "baz", typeResolver: .explicit(type), storage: .singleton)
+                }()
+            )
+            return container
+        }()
+        let containerC: Container = {
+            var container = Container(name: "C", parent: containerB)
+            container.dependencies.append(
+                {
+                    let type = Type(name: "CReplacedBaz")
+                    return Dependency(name: "baz", typeResolver: .explicit(type), storage: .singleton)
+                }()
+            )
+            return container
+        }()
+        let dataB = ContainerData.make(from: containerB)
+        XCTAssertEqual(
+            dataB.properties.map { $0.declaration },
+            [
+                "open unowned let parentContainer: AContainer",
+                "open let bar: BReplacedBar",
+                "open let baz: BBaz"
+            ]
+        )
+        XCTAssertEqual(
+            dataB.initializer.creations,
+            [
+                "let bar = BReplacedBar()",
+                "let baz = BBaz()"
+            ]
+        )
+        XCTAssertEqual(
+            dataB.initializer.storedProperties,
+            [
+                "self.parentContainer = parentContainer",
+                "self.bar = bar",
+                "self.baz = baz"
+            ]
+        )
+        XCTAssertEqual(
+            dataB.getters.map { "var \($0.name): \($0.typeName) { \($0.body.joined()) }" },
+            [
+                "var foo: AFoo { return self.parentContainer.foo }"
+            ]
+        )
+        let dataC = ContainerData.make(from: containerC)
+        XCTAssertEqual(
+            dataC.properties.map { $0.declaration },
+            [
+                "open unowned let parentContainer: BContainer",
+                "open let baz: CReplacedBaz"
+            ]
+        )
+        XCTAssertEqual(
+            dataC.initializer.creations,
+            ["let baz = CReplacedBaz()"]
+        )
+        XCTAssertEqual(
+            dataC.initializer.storedProperties,
+            [
+                "self.parentContainer = parentContainer",
+                "self.baz = baz"
+            ]
+        )
+        XCTAssertEqual(
+            dataC.getters.map { "var \($0.name): \($0.typeName) { \($0.body.joined()) }" },
+            [
+                "var bar: BReplacedBar { return self.parentContainer.bar }",
+                "var foo: AFoo { return self.parentContainer.foo }"
             ]
         )
     }
@@ -562,8 +711,8 @@ class SwordGeneratorTests: XCTestCase {
     
     func testInitArguments() {
         var container = Container(name: "Test")
-        container.args.append((name: "foo", typeName: "String", isStoredProperty: false))
-        container.args.append((name: "bar", typeName: "Int?", isStoredProperty: true))
+        container.args.append(ContainerArgument(name: "foo", typeName: "String", isStoredProperty: false))
+        container.args.append(ContainerArgument(name: "bar", typeName: "Int?", isStoredProperty: true))
         let data = ContainerData.make(from: container)
         XCTAssertEqual(
             data.initializer.args.map { "\($0.name): \($0.typeName)" },

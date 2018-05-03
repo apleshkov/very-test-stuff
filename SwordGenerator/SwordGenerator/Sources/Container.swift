@@ -7,16 +7,43 @@
 
 import Foundation
 
-struct Container {
+struct ContainerArgument {
+    
+    var name: String
+    
+    var typeName: String
+    
+    var isStoredProperty: Bool
+    
+    init(name: String, typeName: String, isStoredProperty: Bool) {
+        self.name = name
+        self.typeName = typeName
+        self.isStoredProperty = isStoredProperty
+    }
+}
+
+protocol Containing {
+    
+    var name: String { get }
+    
+    var args: [ContainerArgument] { get }
+    
+    var dependencies: [Dependency] { get }
+}
+
+struct Container: Containing {
 
     var name: String
 
-    var args: [(name: String, typeName: String, isStoredProperty: Bool)] = []
+    var parent: Containing? = nil
+    
+    var args: [ContainerArgument] = []
     
     var dependencies: [Dependency] = []
 
-    init(name: String) {
+    init(name: String, parent: Containing? = nil) {
         self.name = name
+        self.parent = parent
     }
 }
 
@@ -92,8 +119,8 @@ enum TypeResolver {
 
 func makeTestContainer() -> Container {
     var container = Container(name: "Country")
-    container.args.append((name: "code", typeName: "String", isStoredProperty: false))
-    container.args.append((name: "omg", typeName: "Int?", isStoredProperty: true))
+    container.args.append(ContainerArgument(name: "code", typeName: "String", isStoredProperty: false))
+    container.args.append(ContainerArgument(name: "omg", typeName: "Int?", isStoredProperty: true))
     
     let foo: Dependency = {
         var type = Type(name: "Foo")
