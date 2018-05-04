@@ -12,11 +12,11 @@ struct ContainerData {
     
     var name: String
     
-    var properties: [Property] = []
+    var storedProperties: [StoredProperty] = []
     
     var initializer: Initializer
     
-    var getters: [Getter] = []
+    var readOnlyProperties: [ReadOnlyProperty] = []
     
     init(name: String, initializer: Initializer) {
         self.name = name
@@ -52,7 +52,7 @@ struct ContainerData {
 
 extension ContainerData {
     
-    struct Property {
+    struct StoredProperty {
         
         var name: String
         var typeName: String
@@ -62,14 +62,6 @@ extension ContainerData {
         init(name: String, typeName: String) {
             self.name = name
             self.typeName = typeName
-        }
-        
-        var declaration: String {
-            return [
-                accessLevel.source,
-                referenceType?.source,
-                "let \(name): \(typeName)"
-            ].compactMap { $0 }.joined(separator: " ")
         }
     }
     
@@ -84,9 +76,9 @@ extension ContainerData {
         init() {}
     }
     
-    struct Getter {
+    struct ReadOnlyProperty {
         
-        private var name: String
+        var name: String
         var typeName: String
         var accessLevel: AccessLevel = .open
         var body: [String]
@@ -95,10 +87,6 @@ extension ContainerData {
             self.name = name
             self.typeName = typeName
             self.body = body
-        }
-        
-        var declaration: String {
-            return "\(accessLevel.source) var \(name): \(typeName)"
         }
     }
 }
@@ -110,9 +98,9 @@ extension ContainerData {
         if let parent = container.parent {
             let parentName = "parentContainer"
             let parentTypeName = "\(parent.name)Container"
-            data.properties.append(
+            data.storedProperties.append(
                 {
-                    var property = Property(name: parentName, typeName: parentTypeName)
+                    var property = StoredProperty(name: parentName, typeName: parentTypeName)
                     property.referenceType = .unowned
                     return property
                 }()
@@ -120,23 +108,23 @@ extension ContainerData {
             data.initializer.storedProperties.append("self.\(parentName) = \(parentName)")
             data.initializer.args.append((name: parentName, typeName: parentTypeName))
             parentDependenciesOf(container).forEach { (dep) in
-                var getter: Getter
+                var getter: ReadOnlyProperty
                 switch dep.typeResolver {
                 case .explicit(let type):
-                    getter = Getter(name: dep.name, typeName: type.fullName)
+                    getter = ReadOnlyProperty(name: dep.name, typeName: type.fullName)
                 case .provided(var type, let providerType):
                     if providerType.isOptional {
                         type.isOptional = true
                     }
-                    getter = Getter(name: dep.name, typeName: type.fullName)
+                    getter = ReadOnlyProperty(name: dep.name, typeName: type.fullName)
                 }
                 getter.body = ["return self.\(parentName).\(dep.name)"]
-                data.getters.append(getter)
+                data.readOnlyProperties.append(getter)
             }
         }
         container.args.forEach {
             if $0.isStoredProperty {
-                data.properties.append(Property(name: $0.name, typeName: $0.typeName))
+                data.storedProperties.append(StoredProperty(name: $0.name, typeName: $0.typeName))
                 data.initializer.storedProperties.append("self.\($0.name) = \($0.name)")
             }
             data.initializer.args.append((name: $0.name, typeName: $0.typeName))
@@ -147,27 +135,27 @@ extension ContainerData {
                 switch dep.typeResolver {
                 case .explicit(let type):
                     let created = create(type: type, named: dep.name)
-                    var getter = Getter(name: dep.name, typeName: type.fullName)
+                    var getter = ReadOnlyProperty(name: dep.name, typeName: type.fullName)
                     getter.body.append(created.creation)
                     getter.body.append(contentsOf: created.injections)
                     getter.body.append("return \(dep.name)")
-                    data.getters.append(getter)
+                    data.readOnlyProperties.append(getter)
                 case .provided(var type, let providerType):
                     if providerType.isOptional {
                         type.isOptional = true
                     }
                     let providerName = "\(dep.name)Provider"
                     let created = create(type: providerType, named: providerName)
-                    var getter = Getter(name: dep.name, typeName: type.fullName)
+                    var getter = ReadOnlyProperty(name: dep.name, typeName: type.fullName)
                     getter.body.append(created.creation)
                     getter.body.append(contentsOf: created.injections)
                     getter.body.append("return \(invoked(providerName, of: providerType, with: "get()"))")
-                    data.getters.append(getter)
+                    data.readOnlyProperties.append(getter)
                 }
             case .singleton:
                 switch dep.typeResolver {
                 case .explicit(let type):
-                    data.properties.append(Property(name: dep.name, typeName: type.fullName))
+                    data.storedProperties.append(StoredProperty(name: dep.name, typeName: type.fullName))
                     let created = create(type: type, named: dep.name)
                     data.initializer.creations.append(created.creation)
                     data.initializer.propertyInjections.append(contentsOf: created.injections)
@@ -177,14 +165,14 @@ extension ContainerData {
                         type.isOptional = true
                     }
                     let providerName = "\(dep.name)Provider"
-                    data.properties.append(Property(name: providerName, typeName: providerType.fullName))
+                    data.storedProperties.append(StoredProperty(name: providerName, typeName: providerType.fullName))
                     let created = create(type: providerType, named: providerName)
                     data.initializer.creations.append(created.creation)
                     data.initializer.propertyInjections.append(contentsOf: created.injections)
                     data.initializer.storedProperties.append("self.\(providerName) = \(providerName)")
-                    data.getters.append(
+                    data.readOnlyProperties.append(
                         {
-                            var getter = Getter(name: dep.name, typeName: type.fullName)
+                            var getter = ReadOnlyProperty(name: dep.name, typeName: type.fullName)
                             getter.body = ["return \(invoked(providerName, of: providerType, with: "get()"))"]
                             return getter
                         }()
