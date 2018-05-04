@@ -43,7 +43,7 @@ class Renderer {
         print("extension \(data.name) {")
         data.getters.forEach {
             print()
-            print("\(indent)var \($0.name): \($0.typeName) {")
+            print("\(indent)\($0.declaration) {")
             $0.body.forEach {
                 print("\(indent)\(indent)\($0)")
             }

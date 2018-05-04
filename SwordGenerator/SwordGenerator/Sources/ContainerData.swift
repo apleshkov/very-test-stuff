@@ -24,15 +24,11 @@ struct ContainerData {
     }
     
     enum AccessLevel {
-        case `private`
-        case `fileprivate`
         case `open`
         case `internal`
         
         var source: String {
             switch self {
-            case .private: return "private"
-            case .fileprivate: return "fileprivate"
             case .open: return "open"
             case .internal: return "internal"
             }
@@ -90,14 +86,19 @@ extension ContainerData {
     
     struct Getter {
         
-        var name: String
+        private var name: String
         var typeName: String
+        var accessLevel: AccessLevel = .open
         var body: [String]
         
         init(name: String, typeName: String, body: [String] = []) {
             self.name = name
             self.typeName = typeName
             self.body = body
+        }
+        
+        var declaration: String {
+            return "\(accessLevel.source) var \(name): \(typeName)"
         }
     }
 }

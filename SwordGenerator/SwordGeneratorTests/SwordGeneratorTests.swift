@@ -64,13 +64,13 @@ class SwordGeneratorTests: XCTestCase {
             ["self.parentContainer = parentContainer"]
         )
         XCTAssertEqual(
-            data.getters.map { "var \($0.name): \($0.typeName) { \($0.body.joined()) }" },
+            data.getters.map { "\($0.declaration) { \($0.body.joined()) }" },
             [
-                "var foo1: Foo { return self.parentContainer.foo1 }",
-                "var foo2: Foo? { return self.parentContainer.foo2 }",
-                "var bar: Bar { return self.parentContainer.bar }",
-                "var baz: Baz? { return self.parentContainer.baz }",
-                "var quux: Quux? { return self.parentContainer.quux }"
+                "open var foo1: Foo { return self.parentContainer.foo1 }",
+                "open var foo2: Foo? { return self.parentContainer.foo2 }",
+                "open var bar: Bar { return self.parentContainer.bar }",
+                "open var baz: Baz? { return self.parentContainer.baz }",
+                "open var quux: Quux? { return self.parentContainer.quux }"
             ]
         )
     }
@@ -116,9 +116,9 @@ class SwordGeneratorTests: XCTestCase {
             ]
         )
         XCTAssertEqual(
-            data.getters.map { "var \($0.name): \($0.typeName) { \($0.body.joined()) }" },
+            data.getters.map { "\($0.declaration) { \($0.body.joined()) }" },
             [
-                "var bar: Bar { return self.parentContainer.bar }"
+                "open var bar: Bar { return self.parentContainer.bar }"
             ]
         )
     }
@@ -191,9 +191,9 @@ class SwordGeneratorTests: XCTestCase {
             ]
         )
         XCTAssertEqual(
-            dataB.getters.map { "var \($0.name): \($0.typeName) { \($0.body.joined()) }" },
+            dataB.getters.map { "\($0.declaration) { \($0.body.joined()) }" },
             [
-                "var foo: AFoo { return self.parentContainer.foo }"
+                "open var foo: AFoo { return self.parentContainer.foo }"
             ]
         )
         let dataC = ContainerData.make(from: containerC)
@@ -216,10 +216,10 @@ class SwordGeneratorTests: XCTestCase {
             ]
         )
         XCTAssertEqual(
-            dataC.getters.map { "var \($0.name): \($0.typeName) { \($0.body.joined()) }" },
+            dataC.getters.map { "\($0.declaration) { \($0.body.joined()) }" },
             [
-                "var bar: BReplacedBar { return self.parentContainer.bar }",
-                "var foo: AFoo { return self.parentContainer.foo }"
+                "open var bar: BReplacedBar { return self.parentContainer.bar }",
+                "open var foo: AFoo { return self.parentContainer.foo }"
             ]
         )
     }
@@ -241,10 +241,10 @@ class SwordGeneratorTests: XCTestCase {
         )
         let data = ContainerData.make(from: container)
         XCTAssertEqual(
-            data.getters.map { return ["var \($0.name): \($0.typeName) {}"] + $0.body },
+            data.getters.map { return ["\($0.declaration) { ... }"] + $0.body },
             [
                 [
-                    "var foo: Foo? {}",
+                    "open var foo: Foo? { ... }",
                     "let fooProvider = FooProvider(unnamed, named: named)",
                     "fooProvider.x = x",
                     "return fooProvider.get()"
@@ -269,10 +269,10 @@ class SwordGeneratorTests: XCTestCase {
         )
         let data = ContainerData.make(from: container)
         XCTAssertEqual(
-            data.getters.map { return ["var \($0.name): \($0.typeName) {}"] + $0.body },
+            data.getters.map { return ["\($0.declaration) { ... }"] + $0.body },
             [
                 [
-                    "var foo: Foo? {}",
+                    "open var foo: Foo? { ... }",
                     "var fooProvider = FooProvider(unnamed, named: named)",
                     "fooProvider?.x = x",
                     "return fooProvider?.get()"
@@ -309,10 +309,10 @@ class SwordGeneratorTests: XCTestCase {
             ]
         )
         XCTAssertEqual(
-            data.getters.map { return ["var \($0.name): \($0.typeName) {}"] + $0.body },
+            data.getters.map { return ["\($0.declaration) { ... }"] + $0.body },
             [
                 [
-                    "var foo: Foo? {}",
+                    "open var foo: Foo? { ... }",
                     "return fooProvider?.get()"
                 ]
             ]
@@ -346,10 +346,10 @@ class SwordGeneratorTests: XCTestCase {
             ]
         )
         XCTAssertEqual(
-            data.getters.map { return ["var \($0.name): \($0.typeName) {}"] + $0.body },
+            data.getters.map { return ["\($0.declaration) { ... }"] + $0.body },
             [
                 [
-                    "var foo: Foo? {}",
+                    "open var foo: Foo? { ... }",
                     "return fooProvider?.get()"
                 ]
             ]
@@ -387,10 +387,10 @@ class SwordGeneratorTests: XCTestCase {
             ]
         )
         XCTAssertEqual(
-            data.getters.map { return ["var \($0.name): \($0.typeName) {}"] + $0.body },
+            data.getters.map { return ["\($0.declaration) { ... }"] + $0.body },
             [
                 [
-                    "var foo: Foo {}",
+                    "open var foo: Foo { ... }",
                     "return fooProvider.get()"
                 ]
             ]
@@ -420,10 +420,10 @@ class SwordGeneratorTests: XCTestCase {
             ["self.fooProvider = fooProvider"]
         )
         XCTAssertEqual(
-            data.getters.map { return ["var \($0.name): \($0.typeName) {}"] + $0.body },
+            data.getters.map { return ["\($0.declaration) { ... }"] + $0.body },
             [
                 [
-                    "var foo: Foo {}",
+                    "open var foo: Foo { ... }",
                     "return fooProvider.get()"
                 ]
             ]
@@ -571,10 +571,10 @@ class SwordGeneratorTests: XCTestCase {
         )
         let data = ContainerData.make(from: container)
         XCTAssertEqual(
-            data.getters.map { ["var \($0.name): \($0.typeName) {}"] + $0.body },
+            data.getters.map { ["\($0.declaration) { ... }"] + $0.body },
             [
                 [
-                    "var foo: Foo {}",
+                    "open var foo: Foo { ... }",
                     "let foo = Foo()",
                     "return foo"
                 ]
