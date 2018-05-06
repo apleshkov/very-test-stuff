@@ -29,28 +29,28 @@ class SwordGeneratorTests: XCTestCase {
         parentContainer.dependencies.append(
             {
                 let type = Type(name: "Bar")
-                let providerType = Type(name: "BarProvider")
-                return Dependency(name: "bar", typeResolver: .provided(type, by: providerType), storage: .singleton)
+                let provider = TypedProvider(Type(name: "BarProvider"))
+                return Dependency(name: "bar", typeResolver: .provided(type, by: provider), storage: .singleton)
             }()
         )
         parentContainer.dependencies.append(
             {
                 let type = Type(name: "Baz")
-                var providerType = Type(name: "BazProvider")
-                providerType.isOptional = true
-                return Dependency(name: "baz", typeResolver: .provided(type, by: providerType), storage: .singleton)
+                var provider = TypedProvider(Type(name: "BazProvider"))
+                provider.type.isOptional = true
+                return Dependency(name: "baz", typeResolver: .provided(type, by: provider), storage: .singleton)
             }()
         )
         parentContainer.dependencies.append(
             {
                 var type = Type(name: "Quux")
                 type.isOptional = true
-                let providerType = Type(name: "QuuxProvider")
-                return Dependency(name: "quux", typeResolver: .provided(type, by: providerType), storage: .singleton)
+                let provider = TypedProvider(Type(name: "QuuxProvider"))
+                return Dependency(name: "quux", typeResolver: .provided(type, by: provider), storage: .singleton)
             }()
         )
         let container = Container(name: "Test", parent: parentContainer)
-        let data = ContainerData.make(from: container)
+        let data = ContainerDataFactory().make(from: container)
         XCTAssertEqual(
             data.initializer.args.map { "\($0.name): \($0.typeName)" },
             ["parentContainer: ParentContainer"]
@@ -96,7 +96,7 @@ class SwordGeneratorTests: XCTestCase {
                 return Dependency(name: "foo", typeResolver: .explicit(type), storage: .singleton)
             }()
         )
-        let data = ContainerData.make(from: container)
+        let data = ContainerDataFactory().make(from: container)
         XCTAssertEqual(
             data.storedProperties.map { $0.declaration },
             [
@@ -166,7 +166,7 @@ class SwordGeneratorTests: XCTestCase {
             )
             return container
         }()
-        let dataB = ContainerData.make(from: containerB)
+        let dataB = ContainerDataFactory().make(from: containerB)
         XCTAssertEqual(
             dataB.storedProperties.map { $0.declaration },
             [
@@ -196,7 +196,7 @@ class SwordGeneratorTests: XCTestCase {
                 "open var foo: AFoo { return self.parentContainer.foo }"
             ]
         )
-        let dataC = ContainerData.make(from: containerC)
+        let dataC = ContainerDataFactory().make(from: containerC)
         XCTAssertEqual(
             dataC.storedProperties.map { $0.declaration },
             [
@@ -224,22 +224,119 @@ class SwordGeneratorTests: XCTestCase {
         )
     }
     
-    func testPrototypeProviderReferenceWithPropertyAndConstructorInjections() {
+    func testPrototypeStaticMethodProvider() {
+        var container = Container(name: "Test")
+        container.dependencies.append(
+            {
+                let type = Type(name: "Foo")
+                let provider = StaticMethodProvider(recieverName: "Foo", methodName: "makeFoo", args: [])
+                return Dependency(name: "foo", typeResolver: .provided(type, by: provider), storage: .prototype)
+            }()
+        )
+        container.dependencies.append(
+            {
+                var type = Type(name: "Bar")
+                type.isOptional = true
+                let provider = StaticMethodProvider(recieverName: "Bar", methodName: "makeBar", args: [
+                    FunctionInvocationArgument(name: "foo", valueName: "foo")
+                    ])
+                return Dependency(name: "bar", typeResolver: .provided(type, by: provider), storage: .prototype)
+            }()
+        )
+        let data = ContainerDataFactory().make(from: container)
+        XCTAssertEqual(
+            data.storedProperties.map { $0.declaration },
+            []
+        )
+        XCTAssertEqual(
+            data.initializer.creations,
+            []
+        )
+        XCTAssertEqual(
+            data.initializer.propertyInjections,
+            []
+        )
+        XCTAssertEqual(
+            data.initializer.storedProperties,
+            []
+        )
+        XCTAssertEqual(
+            data.readOnlyProperties.map { return "\($0.declaration) { \($0.body.joined()) }" },
+            [
+                "open var foo: Foo { return Foo.makeFoo() }",
+                "open var bar: Bar? { return Bar.makeBar(foo: foo) }"
+            ]
+        )
+    }
+    
+    func testSingletonStaticMethodProvider() {
+        var container = Container(name: "Test")
+        container.dependencies.append(
+            {
+                let type = Type(name: "Foo")
+                let provider = StaticMethodProvider(recieverName: "Foo", methodName: "makeFoo", args: [])
+                return Dependency(name: "foo", typeResolver: .provided(type, by: provider), storage: .singleton)
+            }()
+        )
+        container.dependencies.append(
+            {
+                var type = Type(name: "Bar")
+                type.isOptional = true
+                let provider = StaticMethodProvider(recieverName: "Bar", methodName: "makeBar", args: [
+                    FunctionInvocationArgument(name: "foo", valueName: "foo")
+                    ])
+                return Dependency(name: "bar", typeResolver: .provided(type, by: provider), storage: .singleton)
+            }()
+        )
+        let data = ContainerDataFactory().make(from: container)
+        XCTAssertEqual(
+            data.storedProperties.map { $0.declaration },
+            [
+                "open let foo: Foo",
+                "open let bar: Bar?"
+            ]
+        )
+        XCTAssertEqual(
+            data.initializer.creations,
+            [
+                "let foo = Foo.makeFoo()",
+                "let bar = Bar.makeBar(foo: foo)"
+            ]
+        )
+        XCTAssertEqual(
+            data.initializer.propertyInjections,
+            []
+        )
+        XCTAssertEqual(
+            data.initializer.storedProperties,
+            [
+                "self.foo = foo",
+                "self.bar = bar"
+            ]
+        )
+        XCTAssertEqual(
+            data.readOnlyProperties.map { return ["\($0.declaration) { ... }"] + $0.body },
+            []
+        )
+    }
+    
+    func testPrototypeTypedProviderReferenceWithPropertyAndConstructorInjections() {
         var container = Container(name: "Test")
         container.dependencies.append(
             {
                 var type = Type(name: "Foo")
                 type.isOptional = true
-                var providerType = Type(name: "FooProvider")
-                providerType.isReference = true
-                providerType.injectionSuite.constructor = ConstructorInjection(args: [])
-                providerType.injectionSuite.constructor?.args.append((name: nil, dependencyName: "unnamed"))
-                providerType.injectionSuite.constructor?.args.append((name: "named", dependencyName: "named"))
-                providerType.injectionSuite.properties.append(PropertyInjection(name: "x", dependencyName: "x"))
-                return Dependency(name: "foo", typeResolver: .provided(type, by: providerType), storage: .prototype)
+                var provider = TypedProvider(Type(name: "FooProvider"))
+                provider.type.isReference = true
+                provider.type.injectionSuite.constructor = ConstructorInjection(args: [
+                    FunctionInvocationArgument(name: nil, valueName: "unnamed"),
+                    FunctionInvocationArgument(name: "named", valueName: "named")
+                    ])
+                provider.type.injectionSuite.properties.append(PropertyInjection(name: "x", dependencyName: "x"))
+                return Dependency(name: "foo", typeResolver: .provided(type, by: provider), storage: .prototype)
             }()
         )
-        let data = ContainerData.make(from: container)
+        let data = ContainerDataFactory().make(from: container)
         XCTAssertEqual(
             data.readOnlyProperties.map { return ["\($0.declaration) { ... }"] + $0.body },
             [
@@ -247,27 +344,28 @@ class SwordGeneratorTests: XCTestCase {
                     "open var foo: Foo? { ... }",
                     "let fooProvider = FooProvider(unnamed, named: named)",
                     "fooProvider.x = x",
-                    "return fooProvider.get()"
+                    "return fooProvider.provide()"
                 ]
             ]
         )
     }
     
-    func testOptionalPrototypeProviderValueWithPropertyAndConstructorInjections() {
+    func testOptionalPrototypeTypedProviderValueWithPropertyAndConstructorInjections() {
         var container = Container(name: "Test")
         container.dependencies.append(
             {
                 let type = Type(name: "Foo")
-                var providerType = Type(name: "FooProvider")
-                providerType.isOptional = true
-                providerType.injectionSuite.constructor = ConstructorInjection(args: [])
-                providerType.injectionSuite.constructor?.args.append((name: nil, dependencyName: "unnamed"))
-                providerType.injectionSuite.constructor?.args.append((name: "named", dependencyName: "named"))
-                providerType.injectionSuite.properties.append(PropertyInjection(name: "x", dependencyName: "x"))
-                return Dependency(name: "foo", typeResolver: .provided(type, by: providerType), storage: .prototype)
+                var provider = TypedProvider(Type(name: "FooProvider"))
+                provider.type.isOptional = true
+                provider.type.injectionSuite.constructor = ConstructorInjection(args: [
+                    FunctionInvocationArgument(name: nil, valueName: "unnamed"),
+                    FunctionInvocationArgument(name: "named", valueName: "named")
+                    ])
+                provider.type.injectionSuite.properties.append(PropertyInjection(name: "x", dependencyName: "x"))
+                return Dependency(name: "foo", typeResolver: .provided(type, by: provider), storage: .prototype)
             }()
         )
-        let data = ContainerData.make(from: container)
+        let data = ContainerDataFactory().make(from: container)
         XCTAssertEqual(
             data.readOnlyProperties.map { return ["\($0.declaration) { ... }"] + $0.body },
             [
@@ -275,25 +373,25 @@ class SwordGeneratorTests: XCTestCase {
                     "open var foo: Foo? { ... }",
                     "var fooProvider = FooProvider(unnamed, named: named)",
                     "fooProvider?.x = x",
-                    "return fooProvider?.get()"
+                    "return fooProvider?.provide()"
                 ]
             ]
         )
     }
     
-    func testOptionalSingletonProviderReferenceWithPropertyInjections() {
+    func testOptionalSingletonTypedProviderReferenceWithPropertyInjections() {
         var container = Container(name: "Test")
         container.dependencies.append(
             {
                 let type = Type(name: "Foo")
-                var providerType = Type(name: "FooProvider")
-                providerType.isReference = true
-                providerType.isOptional = true
-                providerType.injectionSuite.properties.append(PropertyInjection(name: "x", dependencyName: "x"))
-                return Dependency(name: "foo", typeResolver: .provided(type, by: providerType), storage: .singleton)
+                var provider = TypedProvider(Type(name: "FooProvider"))
+                provider.type.isReference = true
+                provider.type.isOptional = true
+                provider.type.injectionSuite.properties.append(PropertyInjection(name: "x", dependencyName: "x"))
+                return Dependency(name: "foo", typeResolver: .provided(type, by: provider), storage: .singleton)
             }()
         )
-        let data = ContainerData.make(from: container)
+        let data = ContainerDataFactory().make(from: container)
         XCTAssertEqual(
             data.storedProperties.map { $0.declaration },
             ["open let fooProvider: FooProvider?"]
@@ -313,24 +411,24 @@ class SwordGeneratorTests: XCTestCase {
             [
                 [
                     "open var foo: Foo? { ... }",
-                    "return fooProvider?.get()"
+                    "return fooProvider?.provide()"
                 ]
             ]
         )
     }
     
-    func testOptionalSingletonProviderValueWithPropertyInjections() {
+    func testOptionalSingletonTypedProviderValueWithPropertyInjections() {
         var container = Container(name: "Test")
         container.dependencies.append(
             {
                 let type = Type(name: "Foo")
-                var providerType = Type(name: "FooProvider")
-                providerType.isOptional = true
-                providerType.injectionSuite.properties.append(PropertyInjection(name: "x", dependencyName: "x"))
-                return Dependency(name: "foo", typeResolver: .provided(type, by: providerType), storage: .singleton)
+                var provider = TypedProvider(Type(name: "FooProvider"))
+                provider.type.isOptional = true
+                provider.type.injectionSuite.properties.append(PropertyInjection(name: "x", dependencyName: "x"))
+                return Dependency(name: "foo", typeResolver: .provided(type, by: provider), storage: .singleton)
             }()
         )
-        let data = ContainerData.make(from: container)
+        let data = ContainerDataFactory().make(from: container)
         XCTAssertEqual(
             data.storedProperties.map { $0.declaration },
             ["open let fooProvider: FooProvider?"]
@@ -350,27 +448,28 @@ class SwordGeneratorTests: XCTestCase {
             [
                 [
                     "open var foo: Foo? { ... }",
-                    "return fooProvider?.get()"
+                    "return fooProvider?.provide()"
                 ]
             ]
         )
     }
     
-    func testSingletonProviderValueWithPropertyAndConstructorInjections() {
+    func testSingletonTypedProviderValueWithPropertyAndConstructorInjections() {
         var container = Container(name: "Test")
         container.dependencies.append(
             {
                 let type = Type(name: "Foo")
-                var providerType = Type(name: "FooProvider")
-                providerType.injectionSuite.constructor = ConstructorInjection(args: [])
-                providerType.injectionSuite.constructor?.args.append((name: nil, dependencyName: "unnamed"))
-                providerType.injectionSuite.constructor?.args.append((name: "named", dependencyName: "named"))
-                providerType.injectionSuite.properties.append(PropertyInjection(name: "x", dependencyName: "x"))
-                providerType.injectionSuite.properties.append(PropertyInjection(name: "y", dependencyName: "y"))
-                return Dependency(name: "foo", typeResolver: .provided(type, by: providerType), storage: .singleton)
+                var provider = TypedProvider(Type(name: "FooProvider"))
+                provider.type.injectionSuite.constructor = ConstructorInjection(args: [
+                    FunctionInvocationArgument(name: nil, valueName: "unnamed"),
+                    FunctionInvocationArgument(name: "named", valueName: "named")
+                    ])
+                provider.type.injectionSuite.properties.append(PropertyInjection(name: "x", dependencyName: "x"))
+                provider.type.injectionSuite.properties.append(PropertyInjection(name: "y", dependencyName: "y"))
+                return Dependency(name: "foo", typeResolver: .provided(type, by: provider), storage: .singleton)
             }()
         )
-        let data = ContainerData.make(from: container)
+        let data = ContainerDataFactory().make(from: container)
         XCTAssertEqual(
             data.storedProperties.map { $0.declaration },
             ["open let fooProvider: FooProvider"]
@@ -391,7 +490,7 @@ class SwordGeneratorTests: XCTestCase {
             [
                 [
                     "open var foo: Foo { ... }",
-                    "return fooProvider.get()"
+                    "return fooProvider.provide()"
                 ]
             ]
         )
@@ -402,11 +501,11 @@ class SwordGeneratorTests: XCTestCase {
         container.dependencies.append(
             {
                 let type = Type(name: "Foo")
-                let providerType = Type(name: "FooProvider")
-                return Dependency(name: "foo", typeResolver: .provided(type, by: providerType), storage: .singleton)
+                let provider = TypedProvider(Type(name: "FooProvider"))
+                return Dependency(name: "foo", typeResolver: .provided(type, by: provider), storage: .singleton)
             }()
         )
-        let data = ContainerData.make(from: container)
+        let data = ContainerDataFactory().make(from: container)
         XCTAssertEqual(
             data.storedProperties.map { $0.declaration },
             ["open let fooProvider: FooProvider"]
@@ -424,7 +523,7 @@ class SwordGeneratorTests: XCTestCase {
             [
                 [
                     "open var foo: Foo { ... }",
-                    "return fooProvider.get()"
+                    "return fooProvider.provide()"
                 ]
             ]
         )
@@ -443,7 +542,7 @@ class SwordGeneratorTests: XCTestCase {
                 return Dependency(name: "foo", typeResolver: .explicit(type), storage: .prototype)
             }()
         )
-        let data = ContainerData.make(from: container)
+        let data = ContainerDataFactory().make(from: container)
         XCTAssertEqual(
             data.readOnlyProperties.map { $0.body },
             [
@@ -463,15 +562,16 @@ class SwordGeneratorTests: XCTestCase {
             {
                 var type = Type(name: "Foo")
                 type.isReference = true
-                type.injectionSuite.constructor = ConstructorInjection(args: [])
-                type.injectionSuite.constructor?.args.append((name: nil, dependencyName: "unnamed"))
-                type.injectionSuite.constructor?.args.append((name: "named", dependencyName: "named"))
+                type.injectionSuite.constructor = ConstructorInjection(args: [
+                    FunctionInvocationArgument(name: nil, valueName: "unnamed"),
+                    FunctionInvocationArgument(name: "named", valueName: "named")
+                    ])
                 type.injectionSuite.properties.append(PropertyInjection(name: "x", dependencyName: "x"))
                 type.injectionSuite.properties.append(PropertyInjection(name: "y", dependencyName: "y"))
                 return Dependency(name: "foo", typeResolver: .explicit(type), storage: .prototype)
             }()
         )
-        let data = ContainerData.make(from: container)
+        let data = ContainerDataFactory().make(from: container)
         XCTAssertEqual(
             data.readOnlyProperties.map { $0.body },
             [
@@ -497,7 +597,7 @@ class SwordGeneratorTests: XCTestCase {
                 return Dependency(name: "foo", typeResolver: .explicit(type), storage: .prototype)
             }()
         )
-        let data = ContainerData.make(from: container)
+        let data = ContainerDataFactory().make(from: container)
         XCTAssertEqual(
             data.readOnlyProperties.map { $0.body },
             [
@@ -516,15 +616,16 @@ class SwordGeneratorTests: XCTestCase {
         container.dependencies.append(
             {
                 var type = Type(name: "Foo")
-                type.injectionSuite.constructor = ConstructorInjection(args: [])
-                type.injectionSuite.constructor?.args.append((name: nil, dependencyName: "unnamed"))
-                type.injectionSuite.constructor?.args.append((name: "named", dependencyName: "named"))
+                type.injectionSuite.constructor = ConstructorInjection(args: [
+                    FunctionInvocationArgument(name: nil, valueName: "unnamed"),
+                    FunctionInvocationArgument(name: "named", valueName: "named")
+                    ])
                 type.injectionSuite.properties.append(PropertyInjection(name: "x", dependencyName: "x"))
                 type.injectionSuite.properties.append(PropertyInjection(name: "y", dependencyName: "y"))
                 return Dependency(name: "foo", typeResolver: .explicit(type), storage: .prototype)
             }()
         )
-        let data = ContainerData.make(from: container)
+        let data = ContainerDataFactory().make(from: container)
         XCTAssertEqual(
             data.readOnlyProperties.map { $0.body },
             [
@@ -543,13 +644,14 @@ class SwordGeneratorTests: XCTestCase {
         container.dependencies.append(
             {
                 var type = Type(name: "Foo")
-                type.injectionSuite.constructor = ConstructorInjection(args: [])
-                type.injectionSuite.constructor?.args.append((name: nil, dependencyName: "unnamed"))
-                type.injectionSuite.constructor?.args.append((name: "named", dependencyName: "named"))
+                type.injectionSuite.constructor = ConstructorInjection(args: [
+                    FunctionInvocationArgument(name: nil, valueName: "unnamed"),
+                    FunctionInvocationArgument(name: "named", valueName: "named")
+                    ])
                 return Dependency(name: "foo", typeResolver: .explicit(type), storage: .prototype)
             }()
         )
-        let data = ContainerData.make(from: container)
+        let data = ContainerDataFactory().make(from: container)
         XCTAssertEqual(
             data.readOnlyProperties.map { $0.body },
             [
@@ -569,7 +671,7 @@ class SwordGeneratorTests: XCTestCase {
                 return Dependency(name: "foo", typeResolver: .explicit(type), storage: .prototype)
             }()
         )
-        let data = ContainerData.make(from: container)
+        let data = ContainerDataFactory().make(from: container)
         XCTAssertEqual(
             data.readOnlyProperties.map { ["\($0.declaration) { ... }"] + $0.body },
             [
@@ -589,15 +691,16 @@ class SwordGeneratorTests: XCTestCase {
                 var type = Type(name: "Foo")
                 type.isReference = true
                 type.isOptional = true
-                type.injectionSuite.constructor = ConstructorInjection(args: [])
-                type.injectionSuite.constructor?.args.append((name: nil, dependencyName: "unnamed"))
-                type.injectionSuite.constructor?.args.append((name: "named", dependencyName: "named"))
+                type.injectionSuite.constructor = ConstructorInjection(args: [
+                    FunctionInvocationArgument(name: nil, valueName: "unnamed"),
+                    FunctionInvocationArgument(name: "named", valueName: "named")
+                    ])
                 type.injectionSuite.properties.append(PropertyInjection(name: "x", dependencyName: "x"))
                 type.injectionSuite.properties.append(PropertyInjection(name: "y", dependencyName: "y"))
                 return Dependency(name: "foo", typeResolver: .explicit(type), storage: .singleton)
             }()
         )
-        let data = ContainerData.make(from: container)
+        let data = ContainerDataFactory().make(from: container)
         XCTAssertEqual(
             data.storedProperties.map { $0.declaration },
             ["open let foo: Foo?"]
@@ -626,7 +729,7 @@ class SwordGeneratorTests: XCTestCase {
                 return Dependency(name: "foo", typeResolver: .explicit(type), storage: .singleton)
             }()
         )
-        let data = ContainerData.make(from: container)
+        let data = ContainerDataFactory().make(from: container)
         XCTAssertEqual(
             data.storedProperties.map { $0.declaration },
             ["open let foo: Foo?"]
@@ -653,7 +756,7 @@ class SwordGeneratorTests: XCTestCase {
                 return Dependency(name: "foo", typeResolver: .explicit(type), storage: .singleton)
             }()
         )
-        let data = ContainerData.make(from: container)
+        let data = ContainerDataFactory().make(from: container)
         XCTAssertEqual(
             data.storedProperties.map { $0.declaration },
             ["open let foo: Foo?"]
@@ -668,7 +771,7 @@ class SwordGeneratorTests: XCTestCase {
                 return Dependency(name: "foo", typeResolver: .explicit(type), storage: .singleton)
             }()
         )
-        let data = ContainerData.make(from: container)
+        let data = ContainerDataFactory().make(from: container)
         XCTAssertEqual(
             data.storedProperties.map { $0.declaration },
             ["open let foo: Foo"]
@@ -688,13 +791,14 @@ class SwordGeneratorTests: XCTestCase {
         container.dependencies.append(
             {
                 var type = Type(name: "Foo")
-                type.injectionSuite.constructor = ConstructorInjection(args: [])
-                type.injectionSuite.constructor?.args.append((name: nil, dependencyName: "unnamed"))
-                type.injectionSuite.constructor?.args.append((name: "named", dependencyName: "named"))
+                type.injectionSuite.constructor = ConstructorInjection(args: [
+                    FunctionInvocationArgument(name: nil, valueName: "unnamed"),
+                    FunctionInvocationArgument(name: "named", valueName: "named")
+                    ])
                 return Dependency(name: "foo", typeResolver: .explicit(type), storage: .singleton)
             }()
         )
-        let data = ContainerData.make(from: container)
+        let data = ContainerDataFactory().make(from: container)
         XCTAssertEqual(
             data.storedProperties.map { $0.declaration },
             ["open let foo: Foo"]
@@ -713,7 +817,7 @@ class SwordGeneratorTests: XCTestCase {
         var container = Container(name: "Test")
         container.args.append(ContainerArgument(name: "foo", typeName: "String", isStoredProperty: false))
         container.args.append(ContainerArgument(name: "bar", typeName: "Int?", isStoredProperty: true))
-        let data = ContainerData.make(from: container)
+        let data = ContainerDataFactory().make(from: container)
         XCTAssertEqual(
             data.initializer.args.map { "\($0.name): \($0.typeName)" },
             ["foo: String", "bar: Int?"]
@@ -727,7 +831,7 @@ class SwordGeneratorTests: XCTestCase {
     
     func testName() {
         let container = Container(name: "Test")
-        let data = ContainerData.make(from: container)
+        let data = ContainerDataFactory().make(from: container)
         XCTAssertEqual(data.name, "TestContainer")
     }
 }

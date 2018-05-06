@@ -18,6 +18,7 @@
 		07788A852097BD0C0039A68C /* ContainerData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07788A842097BD0C0039A68C /* ContainerData.swift */; };
 		07788A872097CDBC0039A68C /* Renderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07788A862097CDBC0039A68C /* Renderer.swift */; };
 		07862976209CE2FD00567B86 /* ContainerData+Test.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07862975209CE2FD00567B86 /* ContainerData+Test.swift */; };
+		07862978209F688900567B86 /* ContainerDataFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07862977209F688900567B86 /* ContainerDataFactory.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -46,6 +47,7 @@
 		07788A842097BD0C0039A68C /* ContainerData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContainerData.swift; sourceTree = "<group>"; };
 		07788A862097CDBC0039A68C /* Renderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Renderer.swift; sourceTree = "<group>"; };
 		07862975209CE2FD00567B86 /* ContainerData+Test.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ContainerData+Test.swift"; sourceTree = "<group>"; };
+		07862977209F688900567B86 /* ContainerDataFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContainerDataFactory.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -115,6 +117,7 @@
 				07788A7F209784110039A68C /* Container.swift */,
 				07788A842097BD0C0039A68C /* ContainerData.swift */,
 				07788A862097CDBC0039A68C /* Renderer.swift */,
+				07862977209F688900567B86 /* ContainerDataFactory.swift */,
 			);
 			path = Sources;
 			sourceTree = "<group>";
@@ -220,6 +223,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				07862978209F688900567B86 /* ContainerDataFactory.swift in Sources */,
 				07788A60209783500039A68C /* ViewController.swift in Sources */,
 				07788A81209784110039A68C /* Container.swift in Sources */,
 				07788A5E209783500039A68C /* AppDelegate.swift in Sources */,

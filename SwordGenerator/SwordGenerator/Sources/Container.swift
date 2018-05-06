@@ -47,9 +47,16 @@ struct Container: Containing {
     }
 }
 
+struct FunctionInvocationArgument {
+    
+    var name: String?
+    
+    var valueName: String
+}
+
 struct ConstructorInjection {
 
-    var args: [(name: String?, dependencyName: String)]
+    var args: [FunctionInvocationArgument]
 }
 
 struct PropertyInjection {
@@ -112,5 +119,27 @@ extension Type: Hashable {
 
 enum TypeResolver {
     case explicit(Type)
-    case provided(Type, by: Type)
+    case provided(Type, by: TypeProviding)
+}
+
+// MARK: Providers
+
+protocol TypeProviding {}
+
+struct TypedProvider: TypeProviding {
+    
+    var type: Type
+    
+    init(_ type: Type) {
+        self.type = type
+    }
+}
+
+struct StaticMethodProvider: TypeProviding {
+    
+    var recieverName: String
+    
+    var methodName: String
+    
+    var args: [FunctionInvocationArgument]
 }
