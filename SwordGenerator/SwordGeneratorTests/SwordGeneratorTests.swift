@@ -10,7 +10,68 @@ import XCTest
 @testable import SwordGenerator
 
 class SwordGeneratorTests: XCTestCase {
-    
+
+    func testParentContainerDependencies() {
+        var parentContainer = Container(name: "Parent")
+        parentContainer.dependencies.append(
+            {
+                let type = Type(name: "Foo")
+                return Dependency(name: "foo", typeResolver: .explicit(type), storage: .singleton)
+            }()
+        )
+        var container = Container(name: "Test", parent: parentContainer)
+        container.dependencies.append(
+            {
+                var type = Type(name: "Bar")
+                type.injectionSuite.constructor = ConstructorInjection(args: [
+                    FunctionInvocationArgument(name: "foo", valueName: "parentContainer.foo")
+                    ])
+                return Dependency(name: "bar", typeResolver: .explicit(type), storage: .singleton)
+            }()
+        )
+        container.dependencies.append(
+            {
+                var type = Type(name: "Baz")
+                type.injectionSuite.constructor = ConstructorInjection(args: [
+                    FunctionInvocationArgument(name: "foo", valueName: "parentContainer.foo")
+                    ])
+                return Dependency(name: "baz", typeResolver: .explicit(type), storage: .prototype)
+            }()
+        )
+        let data = ContainerDataFactory().make(from: container)
+        XCTAssertEqual(
+            data.initializer.args.map { "\($0.name): \($0.typeName)" },
+            ["parentContainer: ParentContainer"]
+        )
+        XCTAssertEqual(
+            data.storedProperties.map { $0.declaration },
+            [
+                "open unowned let parentContainer: ParentContainer",
+                "open let bar: Bar"
+            ]
+        )
+        XCTAssertEqual(
+            data.initializer.creations,
+            [
+                "let bar = Bar(foo: parentContainer.foo)"
+            ]
+        )
+        XCTAssertEqual(
+            data.initializer.storedProperties,
+            [
+                "self.parentContainer = parentContainer",
+                "self.bar = bar"
+            ]
+        )
+        XCTAssertEqual(
+            data.readOnlyProperties.map { "\($0.declaration) { \($0.body.joined(separator: "; ")) }" },
+            [
+                "open var foo: Foo { return self.parentContainer.foo }",
+                "open var baz: Baz { let baz = Baz(foo: parentContainer.foo); return baz }"
+            ]
+        )
+    }
+
     func testParentContainer() {
         var parentContainer = Container(name: "Parent")
         parentContainer.dependencies.append(
