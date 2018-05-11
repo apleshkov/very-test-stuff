@@ -27,7 +27,8 @@ class ContainerDataFactory {
             parentDependenciesOf(container).forEach { (dep) in
                 var getter: ContainerData.ReadOnlyProperty
                 switch dep.typeResolver {
-                case .explicit(let type):
+                case .explicit(let type),
+                     .bound(let type, _):
                     getter = ContainerData.ReadOnlyProperty(name: dep.name, typeName: type.fullName)
                 case .provided(var type, let provider):
                     if (provider as? TypedProvider)?.type.isOptional == true {
@@ -77,8 +78,15 @@ class ContainerDataFactory {
                     } else {
                         assertionFailure("Unknown provider: \(provider)")
                     }
+                case .bound(let mimicType, let type):
+                    let created = create(type: type, named: dep.name)
+                    var getter = ContainerData.ReadOnlyProperty(name: dep.name, typeName: mimicType.fullName)
+                    getter.body.append(created.creation)
+                    getter.body.append(contentsOf: created.injections)
+                    getter.body.append("return \(dep.name)")
+                    data.readOnlyProperties.append(getter)
                 }
-            case .singleton:
+            case .cached:
                 switch dep.typeResolver {
                 case .explicit(let type):
                     data.storedProperties.append(ContainerData.StoredProperty(name: dep.name, typeName: type.fullName))
@@ -93,18 +101,11 @@ class ContainerDataFactory {
                             type.isOptional = true
                         }
                         let providerName = "\(dep.name)Provider"
-                        data.storedProperties.append(ContainerData.StoredProperty(name: providerName, typeName: providerType.fullName))
+                        data.storedProperties.append(ContainerData.StoredProperty(name: dep.name, typeName: type.fullName))
                         let created = create(type: providerType, named: providerName)
                         data.initializer.creations.append(created.creation)
                         data.initializer.propertyInjections.append(contentsOf: created.injections)
-                        data.initializer.storedProperties.append("self.\(providerName) = \(providerName)")
-                        data.readOnlyProperties.append(
-                            {
-                                var getter = ContainerData.ReadOnlyProperty(name: dep.name, typeName: type.fullName)
-                                getter.body = ["return \(invoked(providerName, isOptional: providerType.isOptional, with: provideMethodName, args: []))"]
-                                return getter
-                            }()
-                        )
+                        data.initializer.storedProperties.append("self.\(dep.name) = \(invoked(providerName, isOptional: providerType.isOptional, with: provideMethodName, args: []))")
                     } else if let provider = provider as? StaticMethodProvider {
                         data.storedProperties.append(ContainerData.StoredProperty(name: dep.name, typeName: type.fullName))
                         let creation = invoked(provider.recieverName, isOptional: false, with: provider.methodName, args: provider.args)
@@ -113,6 +114,12 @@ class ContainerDataFactory {
                     } else {
                         assertionFailure("Unknown provider: \(provider)")
                     }
+                case .bound(let mimicType, let type):
+                    data.storedProperties.append(ContainerData.StoredProperty(name: dep.name, typeName: mimicType.fullName))
+                    let created = create(type: type, named: dep.name)
+                    data.initializer.creations.append(created.creation)
+                    data.initializer.propertyInjections.append(contentsOf: created.injections)
+                    data.initializer.storedProperties.append("self.\(dep.name) = \(dep.name)")
                 }
             }
         }
