@@ -229,7 +229,7 @@ class SwordGeneratorTests: XCTestCase {
         container.dependencies.append(
             {
                 let type = Type(name: "Foo")
-                let provider = StaticMethodProvider(recieverName: "Foo", methodName: "makeFoo", args: [])
+                let provider = StaticMethodProvider(receiverName: "Foo", methodName: "makeFoo", args: [])
                 return Dependency(name: "foo", typeResolver: .provided(type, by: provider), storage: .prototype)
             }()
         )
@@ -237,7 +237,7 @@ class SwordGeneratorTests: XCTestCase {
             {
                 var type = Type(name: "Bar")
                 type.isOptional = true
-                let provider = StaticMethodProvider(recieverName: "Bar", methodName: "makeBar", args: [
+                let provider = StaticMethodProvider(receiverName: "Bar", methodName: "makeBar", args: [
                     FunctionInvocationArgument(name: "foo", valueName: "foo")
                     ])
                 return Dependency(name: "bar", typeResolver: .provided(type, by: provider), storage: .prototype)
@@ -274,7 +274,7 @@ class SwordGeneratorTests: XCTestCase {
         container.dependencies.append(
             {
                 let type = Type(name: "Foo")
-                let provider = StaticMethodProvider(recieverName: "Foo", methodName: "makeFoo", args: [])
+                let provider = StaticMethodProvider(receiverName: "Foo", methodName: "makeFoo", args: [])
                 return Dependency(name: "foo", typeResolver: .provided(type, by: provider), storage: .singleton)
             }()
         )
@@ -282,7 +282,7 @@ class SwordGeneratorTests: XCTestCase {
             {
                 var type = Type(name: "Bar")
                 type.isOptional = true
-                let provider = StaticMethodProvider(recieverName: "Bar", methodName: "makeBar", args: [
+                let provider = StaticMethodProvider(receiverName: "Bar", methodName: "makeBar", args: [
                     FunctionInvocationArgument(name: "foo", valueName: "foo")
                     ])
                 return Dependency(name: "bar", typeResolver: .provided(type, by: provider), storage: .singleton)

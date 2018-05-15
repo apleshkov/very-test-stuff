@@ -72,7 +72,7 @@ class ContainerDataFactory {
                         data.readOnlyProperties.append(getter)
                     } else if let provider = provider as? StaticMethodProvider {
                         var getter = ContainerData.ReadOnlyProperty(name: dep.name, typeName: type.fullName)
-                        getter.body = ["return \(invoked(provider.recieverName, isOptional: false, with: provider.methodName, args: provider.args))"]
+                        getter.body = ["return \(invoked(provider.receiverName, isOptional: false, with: provider.methodName, args: provider.args))"]
                         data.readOnlyProperties.append(getter)
                     } else {
                         assertionFailure("Unknown provider: \(provider)")
@@ -107,7 +107,7 @@ class ContainerDataFactory {
                         )
                     } else if let provider = provider as? StaticMethodProvider {
                         data.storedProperties.append(ContainerData.StoredProperty(name: dep.name, typeName: type.fullName))
-                        let creation = invoked(provider.recieverName, isOptional: false, with: provider.methodName, args: provider.args)
+                        let creation = invoked(provider.receiverName, isOptional: false, with: provider.methodName, args: provider.args)
                         data.initializer.creations.append("let \(dep.name) = \(creation)")
                         data.initializer.storedProperties.append("self.\(dep.name) = \(dep.name)")
                     } else {
@@ -164,8 +164,8 @@ class ContainerDataFactory {
         return (creation, injections)
     }
     
-    private func invoked(_ recieverName: String, isOptional: Bool, with invocationName: String, args: [FunctionInvocationArgument]) -> String {
-        var src = recieverName
+    private func invoked(_ receiverName: String, isOptional: Bool, with invocationName: String, args: [FunctionInvocationArgument]) -> String {
+        var src = receiverName
         if isOptional {
             src += "?"
         }

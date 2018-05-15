@@ -137,7 +137,7 @@ struct TypedProvider: TypeProviding {
 
 struct StaticMethodProvider: TypeProviding {
     
-    var recieverName: String
+    var receiverName: String
     
     var methodName: String
     
