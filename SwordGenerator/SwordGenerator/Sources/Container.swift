@@ -76,7 +76,7 @@ struct InjectionSuite {
 }
 
 enum DependencyStorage {
-    case singleton
+    case cached
     case prototype
 }
 
@@ -120,6 +120,7 @@ extension Type: Hashable {
 enum TypeResolver {
     case explicit(Type)
     case provided(Type, by: TypeProviding)
+    case bound(Type, to: Type)
 }
 
 // MARK: Providers

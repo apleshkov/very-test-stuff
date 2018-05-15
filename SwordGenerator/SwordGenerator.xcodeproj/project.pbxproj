@@ -19,6 +19,10 @@
 		07788A872097CDBC0039A68C /* Renderer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07788A862097CDBC0039A68C /* Renderer.swift */; };
 		07862976209CE2FD00567B86 /* ContainerData+Test.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07862975209CE2FD00567B86 /* ContainerData+Test.swift */; };
 		07862978209F688900567B86 /* ContainerDataFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07862977209F688900567B86 /* ContainerDataFactory.swift */; };
+		53B058CC20A5B8120063F68C /* BoundTypeResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53B058CB20A5B8120063F68C /* BoundTypeResolverTests.swift */; };
+		53B058CE20A5BCF00063F68C /* ProvidedTypeResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53B058CD20A5BCF00063F68C /* ProvidedTypeResolverTests.swift */; };
+		53B058D020A5D2AE0063F68C /* ExplicitTypeResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53B058CF20A5D2AE0063F68C /* ExplicitTypeResolverTests.swift */; };
+		53B058D220A5D7BD0063F68C /* ParentContainerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53B058D120A5D7BD0063F68C /* ParentContainerTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -48,6 +52,10 @@
 		07788A862097CDBC0039A68C /* Renderer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Renderer.swift; sourceTree = "<group>"; };
 		07862975209CE2FD00567B86 /* ContainerData+Test.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ContainerData+Test.swift"; sourceTree = "<group>"; };
 		07862977209F688900567B86 /* ContainerDataFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContainerDataFactory.swift; sourceTree = "<group>"; };
+		53B058CB20A5B8120063F68C /* BoundTypeResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoundTypeResolverTests.swift; sourceTree = "<group>"; };
+		53B058CD20A5BCF00063F68C /* ProvidedTypeResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProvidedTypeResolverTests.swift; sourceTree = "<group>"; };
+		53B058CF20A5D2AE0063F68C /* ExplicitTypeResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExplicitTypeResolverTests.swift; sourceTree = "<group>"; };
+		53B058D120A5D7BD0063F68C /* ParentContainerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParentContainerTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -104,9 +112,11 @@
 		07788A71209783520039A68C /* SwordGeneratorTests */ = {
 			isa = PBXGroup;
 			children = (
+				53B058CA20A5B7FA0063F68C /* TypeResolver */,
 				07788A72209783520039A68C /* SwordGeneratorTests.swift */,
 				07788A74209783520039A68C /* Info.plist */,
 				07862975209CE2FD00567B86 /* ContainerData+Test.swift */,
+				53B058D120A5D7BD0063F68C /* ParentContainerTests.swift */,
 			);
 			path = SwordGeneratorTests;
 			sourceTree = "<group>";
@@ -120,6 +130,16 @@
 				07862977209F688900567B86 /* ContainerDataFactory.swift */,
 			);
 			path = Sources;
+			sourceTree = "<group>";
+		};
+		53B058CA20A5B7FA0063F68C /* TypeResolver */ = {
+			isa = PBXGroup;
+			children = (
+				53B058CB20A5B8120063F68C /* BoundTypeResolverTests.swift */,
+				53B058CD20A5BCF00063F68C /* ProvidedTypeResolverTests.swift */,
+				53B058CF20A5D2AE0063F68C /* ExplicitTypeResolverTests.swift */,
+			);
+			path = TypeResolver;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -237,8 +257,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				53B058CC20A5B8120063F68C /* BoundTypeResolverTests.swift in Sources */,
 				07788A73209783520039A68C /* SwordGeneratorTests.swift in Sources */,
+				53B058CE20A5BCF00063F68C /* ProvidedTypeResolverTests.swift in Sources */,
 				07862976209CE2FD00567B86 /* ContainerData+Test.swift in Sources */,
+				53B058D020A5D2AE0063F68C /* ExplicitTypeResolverTests.swift in Sources */,
+				53B058D220A5D7BD0063F68C /* ParentContainerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
