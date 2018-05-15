@@ -8,31 +8,30 @@
 
 import Foundation
 
-
-protocol Scope {}
-
-protocol Singleton: Scope {}
-
-protocol Container {}
-
-
-enum AppProvider {
-
-    var storage: UserDefaults { return UserDefaults.standard }
-}
-
-
 protocol AppContainer: Container, Singleton {
-
-    var storage: UserDefaults { get }
 }
 
 
 class SaberAppContainer: AppContainer {
+    
+    private var cachedUserManager: UserManager?
+}
 
-    let storage: UserDefaults
+extension SaberAppContainer {
+    
+    var userManager: UserManager {
+        guard let cachedUserManager = cachedUserManager else {
+            let userManager = UserManager(appContainer: self)
+            self.cachedUserManager = userManager
+            return userManager
+        }
+        return cachedUserManager
+    }
+}
 
-    init(storage: UserDefaults) {
-        self.storage = storage
+extension SaberAppContainer {
+    
+    func inject(to injectee: ViewController) {
+        injectee.userManager = self.userManager
     }
 }

@@ -10,50 +10,29 @@ import Foundation
 
 protocol UserScope: Scope {}
 
-class UserStorage: UserScope {
-
-    private let storage: UserDefaults
-
-    // @saber.inject
-    init(storage: UserDefaults) {
-        self.storage = storage
-    }
-
-    var userId: String {
-        return "1"
-    }
-}
-
 protocol UserContainer: Container, UserScope {
-
-
+    
+    var parentContainer: SaberAppContainer { get }
+    
+    var user: User { get }
 }
 
 class SaberUserContainer: UserContainer {
 
     unowned let parentContainer: SaberAppContainer
+    
+    let user: User
 
-    init(parentContainer: SaberAppContainer) {
+    init(parentContainer: SaberAppContainer, user: User) {
         self.parentContainer = parentContainer
+        self.user = user
     }
 }
 
 extension SaberUserContainer {
-
-    var storage: UserDefaults {
-        return parentContainer.storage
-    }
-}
-
-extension SaberUserContainer {
-
-    var userStorage: UserStorage {
-        let userStorage = UserStorage(storage: storage)
-        return userStorage
-    }
 
     var userVC: UserVC {
-        let userVC = UserVC(userStorage: userStorage)
+        let userVC = UserVC(user: user)
         return userVC
     }
 }

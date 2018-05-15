@@ -14,8 +14,8 @@ class UserVC: UIViewController, UserScope {
     private let userId: String
 
     // @saber.inject
-    init(userStorage: UserStorage) {
-        self.userId = userStorage.userId
+    init(user: User) {
+        self.userId = user.id
         
         super.init(nibName: nil, bundle: nil)
     }

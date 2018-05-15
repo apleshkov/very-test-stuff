@@ -8,16 +8,25 @@
 
 import UIKit
 
-class ViewController: UIViewController {
+class ViewController: UIViewController, ExplicitInjectee {
 
+    // @saber.inject
+    var userManager: UserManager!
+    
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        let userVC = UserVC(userId: "1")
+        let userVC = userManager.userContainer.userVC
         addChildViewController(userVC)
         userVC.view.frame = view.bounds
         userVC.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         view.addSubview(userVC.view)
+    }
+    
+    override func awakeFromNib() {
+        super.awakeFromNib()
+        
+        (UIApplication.shared.delegate as! AppDelegate).appContainer.inject(to: self)
     }
 }
 
