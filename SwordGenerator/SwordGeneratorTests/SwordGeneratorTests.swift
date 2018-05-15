@@ -61,7 +61,7 @@ class SwordGeneratorTests: XCTestCase {
         container.dependencies.append(
             {
                 let type = Type(name: "Foo")
-                let provider = StaticMethodProvider(recieverName: "Foo", methodName: "makeFoo", args: [])
+                let provider = StaticMethodProvider(receiverName: "Foo", methodName: "makeFoo", args: [])
                 return Dependency(name: "foo", typeResolver: .provided(type, by: provider), storage: .cached)
             }()
         )
