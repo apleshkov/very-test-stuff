@@ -26,11 +26,13 @@ struct ContainerData {
     enum AccessLevel {
         case `open`
         case `internal`
+        case `private`
         
         var source: String {
             switch self {
             case .open: return "open"
             case .internal: return "internal"
+            case .private: return "private"
             }
         }
     }
@@ -55,13 +57,19 @@ extension ContainerData {
     struct StoredProperty {
         
         var name: String
-        var typeName: String
+        var type: Type
         var accessLevel: AccessLevel = .open
         var referenceType: ReferenceType? = nil
         
-        init(name: String, typeName: String) {
+        init(name: String, type: Type) {
             self.name = name
-            self.typeName = typeName
+            self.type = type
+        }
+
+        func set(accessLevel: AccessLevel) -> StoredProperty {
+            var result = self
+            result.accessLevel = accessLevel
+            return result
         }
     }
     

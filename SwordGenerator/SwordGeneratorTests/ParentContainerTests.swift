@@ -16,7 +16,7 @@ class ParentContainerTests: XCTestCase {
         parentContainer.dependencies.append(
             {
                 let type = Type(name: "Foo")
-                return Dependency(name: "foo", typeResolver: .explicit(type), storage: .cached)
+                return Service(name: "foo", typeResolver: .explicit(type), storage: .cached)
             }()
         )
         var container = Container(name: "Test", parent: parentContainer)
@@ -26,7 +26,7 @@ class ParentContainerTests: XCTestCase {
                 type.injectionSuite.constructor = ConstructorInjection(args: [
                     FunctionInvocationArgument(name: "foo", valueName: "parentContainer.foo")
                     ])
-                return Dependency(name: "bar", typeResolver: .explicit(type), storage: .cached)
+                return Service(name: "bar", typeResolver: .explicit(type), storage: .cached)
             }()
         )
         container.dependencies.append(
@@ -35,7 +35,7 @@ class ParentContainerTests: XCTestCase {
                 type.injectionSuite.constructor = ConstructorInjection(args: [
                     FunctionInvocationArgument(name: "foo", valueName: "parentContainer.foo")
                     ])
-                return Dependency(name: "baz", typeResolver: .explicit(type), storage: .prototype)
+                return Service(name: "baz", typeResolver: .explicit(type), storage: .none)
             }()
         )
         let data = ContainerDataFactory().make(from: container)
@@ -77,21 +77,21 @@ class ParentContainerTests: XCTestCase {
         parentContainer.dependencies.append(
             {
                 let type = Type(name: "Foo")
-                return Dependency(name: "foo1", typeResolver: .explicit(type), storage: .cached)
+                return Service(name: "foo1", typeResolver: .explicit(type), storage: .cached)
             }()
         )
         parentContainer.dependencies.append(
             {
                 var type = Type(name: "Foo")
                 type.isOptional = true
-                return Dependency(name: "foo2", typeResolver: .explicit(type), storage: .cached)
+                return Service(name: "foo2", typeResolver: .explicit(type), storage: .cached)
             }()
         )
         parentContainer.dependencies.append(
             {
                 let type = Type(name: "Bar")
                 let provider = TypedProvider(Type(name: "BarProvider"))
-                return Dependency(name: "bar", typeResolver: .provided(type, by: provider), storage: .cached)
+                return Service(name: "bar", typeResolver: .provided(type, by: provider), storage: .cached)
             }()
         )
         parentContainer.dependencies.append(
@@ -99,7 +99,7 @@ class ParentContainerTests: XCTestCase {
                 let type = Type(name: "Baz")
                 var provider = TypedProvider(Type(name: "BazProvider"))
                 provider.type.isOptional = true
-                return Dependency(name: "baz", typeResolver: .provided(type, by: provider), storage: .cached)
+                return Service(name: "baz", typeResolver: .provided(type, by: provider), storage: .cached)
             }()
         )
         parentContainer.dependencies.append(
@@ -107,7 +107,7 @@ class ParentContainerTests: XCTestCase {
                 var type = Type(name: "Quux")
                 type.isOptional = true
                 let provider = TypedProvider(Type(name: "QuuxProvider"))
-                return Dependency(name: "quux", typeResolver: .provided(type, by: provider), storage: .cached)
+                return Service(name: "quux", typeResolver: .provided(type, by: provider), storage: .cached)
             }()
         )
         let container = Container(name: "Test", parent: parentContainer)
@@ -141,20 +141,20 @@ class ParentContainerTests: XCTestCase {
         parentContainer.dependencies.append(
             {
                 let type = Type(name: "Foo")
-                return Dependency(name: "foo", typeResolver: .explicit(type), storage: .cached)
+                return Service(name: "foo", typeResolver: .explicit(type), storage: .cached)
             }()
         )
         parentContainer.dependencies.append(
             {
                 let type = Type(name: "Bar")
-                return Dependency(name: "bar", typeResolver: .explicit(type), storage: .cached)
+                return Service(name: "bar", typeResolver: .explicit(type), storage: .cached)
             }()
         )
         var container = Container(name: "Test", parent: parentContainer)
         container.dependencies.append(
             {
                 let type = Type(name: "ReplacedFoo")
-                return Dependency(name: "foo", typeResolver: .explicit(type), storage: .cached)
+                return Service(name: "foo", typeResolver: .explicit(type), storage: .cached)
             }()
         )
         let data = ContainerDataFactory().make(from: container)
@@ -190,13 +190,13 @@ class ParentContainerTests: XCTestCase {
             container.dependencies.append(
                 {
                     let type = Type(name: "AFoo")
-                    return Dependency(name: "foo", typeResolver: .explicit(type), storage: .cached)
+                    return Service(name: "foo", typeResolver: .explicit(type), storage: .cached)
                 }()
             )
             container.dependencies.append(
                 {
                     let type = Type(name: "ABar")
-                    return Dependency(name: "bar", typeResolver: .explicit(type), storage: .cached)
+                    return Service(name: "bar", typeResolver: .explicit(type), storage: .cached)
                 }()
             )
             return container
@@ -206,13 +206,13 @@ class ParentContainerTests: XCTestCase {
             container.dependencies.append(
                 {
                     let type = Type(name: "BReplacedBar")
-                    return Dependency(name: "bar", typeResolver: .explicit(type), storage: .cached)
+                    return Service(name: "bar", typeResolver: .explicit(type), storage: .cached)
                 }()
             )
             container.dependencies.append(
                 {
                     let type = Type(name: "BBaz")
-                    return Dependency(name: "baz", typeResolver: .explicit(type), storage: .cached)
+                    return Service(name: "baz", typeResolver: .explicit(type), storage: .cached)
                 }()
             )
             return container
@@ -222,7 +222,7 @@ class ParentContainerTests: XCTestCase {
             container.dependencies.append(
                 {
                     let type = Type(name: "CReplacedBaz")
-                    return Dependency(name: "baz", typeResolver: .explicit(type), storage: .cached)
+                    return Service(name: "baz", typeResolver: .explicit(type), storage: .cached)
                 }()
             )
             return container

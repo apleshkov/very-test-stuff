@@ -24,7 +24,7 @@ class ProvidedTypeResolverTests: XCTestCase {
                     FunctionInvocationArgument(name: "named", valueName: "named")
                     ])
                 provider.type.injectionSuite.properties.append(PropertyInjection(name: "x", dependencyName: "x"))
-                return Dependency(name: "foo", typeResolver: .provided(type, by: provider), storage: .prototype)
+                return Service(name: "foo", typeResolver: .provided(type, by: provider), storage: .none)
             }()
         )
         let data = ContainerDataFactory().make(from: container)
@@ -53,7 +53,7 @@ class ProvidedTypeResolverTests: XCTestCase {
                     FunctionInvocationArgument(name: "named", valueName: "named")
                     ])
                 provider.type.injectionSuite.properties.append(PropertyInjection(name: "x", dependencyName: "x"))
-                return Dependency(name: "foo", typeResolver: .provided(type, by: provider), storage: .prototype)
+                return Service(name: "foo", typeResolver: .provided(type, by: provider), storage: .none)
             }()
         )
         let data = ContainerDataFactory().make(from: container)
@@ -79,7 +79,7 @@ class ProvidedTypeResolverTests: XCTestCase {
                 provider.type.isReference = true
                 provider.type.isOptional = true
                 provider.type.injectionSuite.properties.append(PropertyInjection(name: "x", dependencyName: "x"))
-                return Dependency(name: "foo", typeResolver: .provided(type, by: provider), storage: .cached)
+                return Service(name: "foo", typeResolver: .provided(type, by: provider), storage: .cached)
             }()
         )
         let data = ContainerDataFactory().make(from: container)
@@ -113,7 +113,7 @@ class ProvidedTypeResolverTests: XCTestCase {
                 var provider = TypedProvider(Type(name: "FooProvider"))
                 provider.type.isOptional = true
                 provider.type.injectionSuite.properties.append(PropertyInjection(name: "x", dependencyName: "x"))
-                return Dependency(name: "foo", typeResolver: .provided(type, by: provider), storage: .cached)
+                return Service(name: "foo", typeResolver: .provided(type, by: provider), storage: .cached)
             }()
         )
         let data = ContainerDataFactory().make(from: container)
@@ -151,7 +151,7 @@ class ProvidedTypeResolverTests: XCTestCase {
                     ])
                 provider.type.injectionSuite.properties.append(PropertyInjection(name: "x", dependencyName: "x"))
                 provider.type.injectionSuite.properties.append(PropertyInjection(name: "y", dependencyName: "y"))
-                return Dependency(name: "foo", typeResolver: .provided(type, by: provider), storage: .cached)
+                return Service(name: "foo", typeResolver: .provided(type, by: provider), storage: .cached)
             }()
         )
         let data = ContainerDataFactory().make(from: container)
@@ -184,7 +184,7 @@ class ProvidedTypeResolverTests: XCTestCase {
             {
                 let type = Type(name: "Foo")
                 let provider = TypedProvider(Type(name: "FooProvider"))
-                return Dependency(name: "foo", typeResolver: .provided(type, by: provider), storage: .cached)
+                return Service(name: "foo", typeResolver: .provided(type, by: provider), storage: .cached)
             }()
         )
         let data = ContainerDataFactory().make(from: container)

@@ -24,7 +24,7 @@ class ExplicitTypeResolverTests: XCTestCase {
                     ])
                 type.injectionSuite.properties.append(PropertyInjection(name: "x", dependencyName: "x"))
                 type.injectionSuite.properties.append(PropertyInjection(name: "y", dependencyName: "y"))
-                return Dependency(name: "foo", typeResolver: .explicit(type), storage: .cached)
+                return Service(name: "foo", typeResolver: .explicit(type), storage: .cached)
             }()
         )
         let data = ContainerDataFactory().make(from: container)
@@ -53,7 +53,7 @@ class ExplicitTypeResolverTests: XCTestCase {
                 type.isOptional = true
                 type.injectionSuite.properties.append(PropertyInjection(name: "x", dependencyName: "x"))
                 type.injectionSuite.properties.append(PropertyInjection(name: "y", dependencyName: "y"))
-                return Dependency(name: "foo", typeResolver: .explicit(type), storage: .cached)
+                return Service(name: "foo", typeResolver: .explicit(type), storage: .cached)
             }()
         )
         let data = ContainerDataFactory().make(from: container)
@@ -80,7 +80,7 @@ class ExplicitTypeResolverTests: XCTestCase {
             {
                 var type = Type(name: "Foo")
                 type.isOptional = true
-                return Dependency(name: "foo", typeResolver: .explicit(type), storage: .cached)
+                return Service(name: "foo", typeResolver: .explicit(type), storage: .cached)
             }()
         )
         let data = ContainerDataFactory().make(from: container)
@@ -95,7 +95,7 @@ class ExplicitTypeResolverTests: XCTestCase {
         container.dependencies.append(
             {
                 let type = Type(name: "Foo")
-                return Dependency(name: "foo", typeResolver: .explicit(type), storage: .cached)
+                return Service(name: "foo", typeResolver: .explicit(type), storage: .cached)
             }()
         )
         let data = ContainerDataFactory().make(from: container)
@@ -122,7 +122,7 @@ class ExplicitTypeResolverTests: XCTestCase {
                     FunctionInvocationArgument(name: nil, valueName: "unnamed"),
                     FunctionInvocationArgument(name: "named", valueName: "named")
                     ])
-                return Dependency(name: "foo", typeResolver: .explicit(type), storage: .cached)
+                return Service(name: "foo", typeResolver: .explicit(type), storage: .cached)
             }()
         )
         let data = ContainerDataFactory().make(from: container)

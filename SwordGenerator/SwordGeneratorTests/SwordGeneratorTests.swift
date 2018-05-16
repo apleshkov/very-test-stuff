@@ -17,7 +17,7 @@ class SwordGeneratorTests: XCTestCase {
             {
                 let type = Type(name: "Foo")
                 let provider = StaticMethodProvider(receiverName: "Foo", methodName: "makeFoo", args: [])
-                return Dependency(name: "foo", typeResolver: .provided(type, by: provider), storage: .prototype)
+                return Service(name: "foo", typeResolver: .provided(type, by: provider), storage: .none)
             }()
         )
         container.dependencies.append(
@@ -27,7 +27,7 @@ class SwordGeneratorTests: XCTestCase {
                 let provider = StaticMethodProvider(receiverName: "Bar", methodName: "makeBar", args: [
                     FunctionInvocationArgument(name: "foo", valueName: "foo")
                     ])
-                return Dependency(name: "bar", typeResolver: .provided(type, by: provider), storage: .prototype)
+                return Service(name: "bar", typeResolver: .provided(type, by: provider), storage: .none)
             }()
         )
         let data = ContainerDataFactory().make(from: container)
@@ -62,7 +62,7 @@ class SwordGeneratorTests: XCTestCase {
             {
                 let type = Type(name: "Foo")
                 let provider = StaticMethodProvider(receiverName: "Foo", methodName: "makeFoo", args: [])
-                return Dependency(name: "foo", typeResolver: .provided(type, by: provider), storage: .cached)
+                return Service(name: "foo", typeResolver: .provided(type, by: provider), storage: .cached)
             }()
         )
         container.dependencies.append(
@@ -72,7 +72,7 @@ class SwordGeneratorTests: XCTestCase {
                 let provider = StaticMethodProvider(receiverName: "Bar", methodName: "makeBar", args: [
                     FunctionInvocationArgument(name: "foo", valueName: "foo")
                     ])
-                return Dependency(name: "bar", typeResolver: .provided(type, by: provider), storage: .cached)
+                return Service(name: "bar", typeResolver: .provided(type, by: provider), storage: .cached)
             }()
         )
         let data = ContainerDataFactory().make(from: container)
@@ -117,7 +117,7 @@ class SwordGeneratorTests: XCTestCase {
                 type.injectionSuite.constructor = ConstructorInjection(args: [])
                 type.injectionSuite.properties.append(PropertyInjection(name: "x", dependencyName: "x"))
                 type.injectionSuite.properties.append(PropertyInjection(name: "y", dependencyName: "y"))
-                return Dependency(name: "foo", typeResolver: .explicit(type), storage: .prototype)
+                return Service(name: "foo", typeResolver: .explicit(type), storage: .none)
             }()
         )
         let data = ContainerDataFactory().make(from: container)
@@ -146,7 +146,7 @@ class SwordGeneratorTests: XCTestCase {
                     ])
                 type.injectionSuite.properties.append(PropertyInjection(name: "x", dependencyName: "x"))
                 type.injectionSuite.properties.append(PropertyInjection(name: "y", dependencyName: "y"))
-                return Dependency(name: "foo", typeResolver: .explicit(type), storage: .prototype)
+                return Service(name: "foo", typeResolver: .explicit(type), storage: .none)
             }()
         )
         let data = ContainerDataFactory().make(from: container)
@@ -172,7 +172,7 @@ class SwordGeneratorTests: XCTestCase {
                 type.injectionSuite.constructor = ConstructorInjection(args: [])
                 type.injectionSuite.properties.append(PropertyInjection(name: "x", dependencyName: "x"))
                 type.injectionSuite.properties.append(PropertyInjection(name: "y", dependencyName: "y"))
-                return Dependency(name: "foo", typeResolver: .explicit(type), storage: .prototype)
+                return Service(name: "foo", typeResolver: .explicit(type), storage: .none)
             }()
         )
         let data = ContainerDataFactory().make(from: container)
@@ -200,7 +200,7 @@ class SwordGeneratorTests: XCTestCase {
                     ])
                 type.injectionSuite.properties.append(PropertyInjection(name: "x", dependencyName: "x"))
                 type.injectionSuite.properties.append(PropertyInjection(name: "y", dependencyName: "y"))
-                return Dependency(name: "foo", typeResolver: .explicit(type), storage: .prototype)
+                return Service(name: "foo", typeResolver: .explicit(type), storage: .none)
             }()
         )
         let data = ContainerDataFactory().make(from: container)
@@ -226,7 +226,7 @@ class SwordGeneratorTests: XCTestCase {
                     FunctionInvocationArgument(name: nil, valueName: "unnamed"),
                     FunctionInvocationArgument(name: "named", valueName: "named")
                     ])
-                return Dependency(name: "foo", typeResolver: .explicit(type), storage: .prototype)
+                return Service(name: "foo", typeResolver: .explicit(type), storage: .none)
             }()
         )
         let data = ContainerDataFactory().make(from: container)
@@ -246,7 +246,7 @@ class SwordGeneratorTests: XCTestCase {
         container.dependencies.append(
             {
                 let type = Type(name: "Foo")
-                return Dependency(name: "foo", typeResolver: .explicit(type), storage: .prototype)
+                return Service(name: "foo", typeResolver: .explicit(type), storage: .none)
             }()
         )
         let data = ContainerDataFactory().make(from: container)
@@ -264,8 +264,8 @@ class SwordGeneratorTests: XCTestCase {
     
     func testInitArguments() {
         var container = Container(name: "Test")
-        container.args.append(ContainerArgument(name: "foo", typeName: "String", isStoredProperty: false))
-        container.args.append(ContainerArgument(name: "bar", typeName: "Int?", isStoredProperty: true))
+        container.externals.append(ContainerExternal(name: "foo", typeName: "String", isStoredProperty: false))
+        container.externals.append(ContainerExternal(name: "bar", typeName: "Int?", isStoredProperty: true))
         let data = ContainerDataFactory().make(from: container)
         XCTAssertEqual(
             data.initializer.args.map { "\($0.name): \($0.typeName)" },

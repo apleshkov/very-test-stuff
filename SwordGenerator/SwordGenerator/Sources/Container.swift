@@ -7,39 +7,35 @@
 
 import Foundation
 
-struct ContainerArgument {
+struct ContainerExternal {
     
-    var name: String
+    var type: Type
     
-    var typeName: String
-    
-    var isStoredProperty: Bool
-    
-    init(name: String, typeName: String, isStoredProperty: Bool) {
-        self.name = name
-        self.typeName = typeName
-        self.isStoredProperty = isStoredProperty
+    init(type: Type) {
+        self.type = type
     }
 }
 
 protocol Containing {
     
     var name: String { get }
+
+    var externals: [ContainerExternal] { get }
     
-    var args: [ContainerArgument] { get }
-    
-    var dependencies: [Dependency] { get }
+    var services: [Service] { get }
 }
 
 struct Container: Containing {
 
     var name: String
 
-    var parent: Containing? = nil
+    var parent: Containing?
+
+    var externals: [ContainerExternal] = []
     
-    var args: [ContainerArgument] = []
-    
-    var dependencies: [Dependency] = []
+    var services: [Service] = []
+
+    var isThreadSafe: Bool = false
 
     init(name: String, parent: Containing? = nil) {
         self.name = name
@@ -56,14 +52,19 @@ struct FunctionInvocationArgument {
 
 struct ConstructorInjection {
 
-    var args: [FunctionInvocationArgument]
+    struct Argument {
+        var name: String?
+        var type: Type
+    }
+
+    var args: [Argument]
 }
 
 struct PropertyInjection {
 
     var name: String
 
-    var dependencyName: String
+    var type: Type
 }
 
 struct InjectionSuite {
@@ -75,18 +76,16 @@ struct InjectionSuite {
     init() {}
 }
 
-enum DependencyStorage {
+enum ServiceStorage {
     case cached
-    case prototype
+    case none
 }
 
-struct Dependency {
-
-    var name: String
+struct Service {
 
     var typeResolver: TypeResolver
 
-    var storage: DependencyStorage
+    var storage: ServiceStorage
 }
 
 struct Type {
@@ -106,6 +105,12 @@ struct Type {
     var fullName: String {
         return "\(name)\(isOptional ? "?" : "")"
     }
+
+    func optional() -> Type {
+        var result = self
+        result.isOptional = true
+        return result
+    }
 }
 
 extension Type: Hashable {
@@ -121,6 +126,17 @@ enum TypeResolver {
     case explicit(Type)
     case provided(Type, by: TypeProviding)
     case bound(Type, to: Type)
+
+    var type: Type {
+        switch self {
+        case .explicit(let type):
+            return type
+        case .provided(let type, _):
+            return type
+        case .bound(let type, _):
+            return type
+        }
+    }
 }
 
 // MARK: Providers
