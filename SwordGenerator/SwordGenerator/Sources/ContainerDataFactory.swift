@@ -8,6 +8,8 @@
 
 import Foundation
 
+let indent = "    "
+
 class ContainerDataFactory {
     
     func make(from container: Container) -> ContainerData {
@@ -169,6 +171,70 @@ class ContainerDataFactory {
             return "\(name): \(valueName)"
         }
         return "\(type.name)(\(args.joined(separator: ", ")))"
+    }
+    
+    func getter(of type: Type, named name: String, cached: (memberName: String, isThreadSafe: Bool)? = nil) -> ContainerData.ReadOnlyProperty {
+        var getter = ContainerData.ReadOnlyProperty(name: name, typeName: type.fullName)
+        if let cached = cached {
+            if cached.isThreadSafe {
+                getter.body.append("self.lock.lock()")
+                getter.body.append("defer { self.lock.unlock() }")
+            }
+            getter.body.append("if let cached = self.\(cached.memberName) { return cached }")
+        }
+        if type.memberInjections.count > 0 {
+            let decl = type.isReference ? "let" : "var"
+            getter.body.append("\(decl) \(name): \(type.fullName) = self.make()")
+            let provided = type.isReference ? name : "&\(name)"
+            if type.isOptional {
+                getter.body.append("if \(decl) \(name) = \(name) { self.inject(to: \(provided)) }")
+            } else {
+                getter.body.append("self.inject(to: \(provided))")
+            }
+        } else {
+            getter.body.append("let \(name): \(type.fullName) = self.make()")
+        }
+        if let cached = cached {
+            getter.body.append("self.\(cached.memberName) = \(name)")
+        }
+        getter.body.append("return \(name)")
+        return getter
+    }
+    
+    func creator(for type: Type) -> [String] {
+        var lines = ["private func make() -> \(type.fullName) {"]
+        let args: [String] = type.constructorInjections.map {
+            let valueName = accessor(of: $0.typeResolver, owner: "self")
+            guard let name = $0.name else {
+                return valueName
+            }
+            return "\(name): \(valueName)"
+        }
+        lines.append("\(indent)return \(type.name)(\(args.joined(separator: ", ")))")
+        lines.append("}")
+        return lines
+    }
+    
+    func injector(for type: Type) -> [String]? {
+        let injections = type.memberInjections
+        guard injections.count > 0 else {
+            return nil
+        }
+        let varName = "injectee"
+        let typeString: String
+        if type.isReference {
+            typeString = type.set(isOptional: false).fullName
+        } else {
+            typeString = "inout " + type.set(isOptional: false).fullName
+        }
+        var lines = ["open func inject(to \(varName): \(typeString) {"]
+        injections.forEach {
+            let lvalue = "\(varName).\($0.name)"
+            let rvalue = self.accessor(of: $0.typeResolver, owner: "self")
+            lines.append("\(indent)\(lvalue) = \(rvalue)")
+        }
+        lines.append("}")
+        return lines
     }
     
     func create(type: Type, named name: String) -> (creation: String, injections: [String]) {
