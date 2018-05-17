@@ -15,7 +15,7 @@ extension ContainerData.StoredProperty {
         return [
             accessLevel.source,
             referenceType?.source,
-            "let \(name): \(typeName)"
+            "let \(name): \(type.fullName)"
             ].compactMap { $0 }.joined(separator: " ")
     }
 }

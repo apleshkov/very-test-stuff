@@ -17,17 +17,22 @@ struct ContainerData {
     var initializer: Initializer
     
     var readOnlyProperties: [ReadOnlyProperty] = []
+
+    var methods: [Method] = []
     
     init(name: String, initializer: Initializer) {
         self.name = name
         self.initializer = initializer
     }
-    
+}
+
+extension ContainerData {
+
     enum AccessLevel {
         case `open`
         case `internal`
         case `private`
-        
+
         var source: String {
             switch self {
             case .open: return "open"
@@ -36,12 +41,12 @@ struct ContainerData {
             }
         }
     }
-    
+
     enum ReferenceType {
         case `strong`
         case `weak`
         case `unowned`
-        
+
         var source: String {
             switch self {
             case .strong: return "strong"
@@ -50,10 +55,7 @@ struct ContainerData {
             }
         }
     }
-}
 
-extension ContainerData {
-    
     struct StoredProperty {
         
         var name: String
@@ -76,7 +78,6 @@ extension ContainerData {
     struct Initializer {
         
         var args: [(name: String, typeName: String)] = []
-        
         var creations: [String] = []
         var propertyInjections: [String] = []
         var storedProperties: [String] = []
@@ -96,5 +97,12 @@ extension ContainerData {
             self.typeName = typeName
             self.body = body
         }
+    }
+
+    struct Method {
+
+        var lines: [String] = []
+
+        init() {}
     }
 }

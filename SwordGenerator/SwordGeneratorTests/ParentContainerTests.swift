@@ -13,29 +13,29 @@ class ParentContainerTests: XCTestCase {
 
     func testParentContainerDependencies() {
         var parentContainer = Container(name: "Parent")
-        parentContainer.dependencies.append(
+        parentContainer.services.append(
             {
                 let type = Type(name: "Foo")
-                return Service(name: "foo", typeResolver: .explicit(type), storage: .cached)
+                return Service(typeResolver: .explicit(type), storage: .cached)
             }()
         )
         var container = Container(name: "Test", parent: parentContainer)
-        container.dependencies.append(
+        container.services.append(
             {
                 var type = Type(name: "Bar")
-                type.injectionSuite.constructor = ConstructorInjection(args: [
-                    FunctionInvocationArgument(name: "foo", valueName: "parentContainer.foo")
-                    ])
-                return Service(name: "bar", typeResolver: .explicit(type), storage: .cached)
+                type.constructorInjections = [
+                    ConstructorInjection(name: "foo", typeResolver: .explicit(Type(name: "Foo")))
+                ]
+                return Service(typeResolver: .explicit(type), storage: .cached)
             }()
         )
-        container.dependencies.append(
+        container.services.append(
             {
                 var type = Type(name: "Baz")
-                type.injectionSuite.constructor = ConstructorInjection(args: [
-                    FunctionInvocationArgument(name: "foo", valueName: "parentContainer.foo")
-                    ])
-                return Service(name: "baz", typeResolver: .explicit(type), storage: .none)
+                type.constructorInjections = [
+                    ConstructorInjection(name: "foo", typeResolver: .explicit(Type(name: "Foo")))
+                ]
+                return Service(typeResolver: .explicit(type), storage: .none)
             }()
         )
         let data = ContainerDataFactory().make(from: container)
@@ -74,40 +74,40 @@ class ParentContainerTests: XCTestCase {
 
     func testParentContainer() {
         var parentContainer = Container(name: "Parent")
-        parentContainer.dependencies.append(
+        parentContainer.services.append(
             {
                 let type = Type(name: "Foo")
-                return Service(name: "foo1", typeResolver: .explicit(type), storage: .cached)
+                return Service(typeResolver: .explicit(type), storage: .cached)
             }()
         )
-        parentContainer.dependencies.append(
+        parentContainer.services.append(
             {
                 var type = Type(name: "Foo")
                 type.isOptional = true
-                return Service(name: "foo2", typeResolver: .explicit(type), storage: .cached)
+                return Service(typeResolver: .explicit(type), storage: .cached)
             }()
         )
-        parentContainer.dependencies.append(
+        parentContainer.services.append(
             {
                 let type = Type(name: "Bar")
                 let provider = TypedProvider(Type(name: "BarProvider"))
-                return Service(name: "bar", typeResolver: .provided(type, by: provider), storage: .cached)
+                return Service(typeResolver: .provided(type, by: provider), storage: .cached)
             }()
         )
-        parentContainer.dependencies.append(
+        parentContainer.services.append(
             {
                 let type = Type(name: "Baz")
                 var provider = TypedProvider(Type(name: "BazProvider"))
                 provider.type.isOptional = true
-                return Service(name: "baz", typeResolver: .provided(type, by: provider), storage: .cached)
+                return Service(typeResolver: .provided(type, by: provider), storage: .cached)
             }()
         )
-        parentContainer.dependencies.append(
+        parentContainer.services.append(
             {
                 var type = Type(name: "Quux")
                 type.isOptional = true
                 let provider = TypedProvider(Type(name: "QuuxProvider"))
-                return Service(name: "quux", typeResolver: .provided(type, by: provider), storage: .cached)
+                return Service(typeResolver: .provided(type, by: provider), storage: .cached)
             }()
         )
         let container = Container(name: "Test", parent: parentContainer)
@@ -138,23 +138,23 @@ class ParentContainerTests: XCTestCase {
 
     func testParentContainerCollisions() {
         var parentContainer = Container(name: "Parent")
-        parentContainer.dependencies.append(
+        parentContainer.services.append(
             {
                 let type = Type(name: "Foo")
-                return Service(name: "foo", typeResolver: .explicit(type), storage: .cached)
+                return Service(typeResolver: .explicit(type), storage: .cached)
             }()
         )
-        parentContainer.dependencies.append(
+        parentContainer.services.append(
             {
                 let type = Type(name: "Bar")
-                return Service(name: "bar", typeResolver: .explicit(type), storage: .cached)
+                return Service(typeResolver: .explicit(type), storage: .cached)
             }()
         )
         var container = Container(name: "Test", parent: parentContainer)
-        container.dependencies.append(
+        container.services.append(
             {
                 let type = Type(name: "ReplacedFoo")
-                return Service(name: "foo", typeResolver: .explicit(type), storage: .cached)
+                return Service(typeResolver: .explicit(type), storage: .cached)
             }()
         )
         let data = ContainerDataFactory().make(from: container)
@@ -187,42 +187,42 @@ class ParentContainerTests: XCTestCase {
     func testMultipleChildContainers() {
         let containerA: Container = {
             var container = Container(name: "A")
-            container.dependencies.append(
+            container.services.append(
                 {
                     let type = Type(name: "AFoo")
-                    return Service(name: "foo", typeResolver: .explicit(type), storage: .cached)
+                    return Service(typeResolver: .explicit(type), storage: .cached)
                 }()
             )
-            container.dependencies.append(
+            container.services.append(
                 {
                     let type = Type(name: "ABar")
-                    return Service(name: "bar", typeResolver: .explicit(type), storage: .cached)
+                    return Service(typeResolver: .explicit(type), storage: .cached)
                 }()
             )
             return container
         }()
         let containerB: Container = {
             var container = Container(name: "B", parent: containerA)
-            container.dependencies.append(
+            container.services.append(
                 {
                     let type = Type(name: "BReplacedBar")
-                    return Service(name: "bar", typeResolver: .explicit(type), storage: .cached)
+                    return Service(typeResolver: .explicit(type), storage: .cached)
                 }()
             )
-            container.dependencies.append(
+            container.services.append(
                 {
                     let type = Type(name: "BBaz")
-                    return Service(name: "baz", typeResolver: .explicit(type), storage: .cached)
+                    return Service(typeResolver: .explicit(type), storage: .cached)
                 }()
             )
             return container
         }()
         let containerC: Container = {
             var container = Container(name: "C", parent: containerB)
-            container.dependencies.append(
+            container.services.append(
                 {
                     let type = Type(name: "CReplacedBaz")
-                    return Service(name: "baz", typeResolver: .explicit(type), storage: .cached)
+                    return Service(typeResolver: .explicit(type), storage: .cached)
                 }()
             )
             return container

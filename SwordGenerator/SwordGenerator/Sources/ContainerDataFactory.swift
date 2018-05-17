@@ -11,8 +11,6 @@ import Foundation
 class ContainerDataFactory {
     
     func make(from container: Container) -> ContainerData {
-        var externals = Set<TypeKey>()
-        var inherited = Set<TypeKey>()
         var data = ContainerData(name: "\(container.name)Container", initializer: ContainerData.Initializer())
         if let parent = container.parent {
             let parentName = "parentContainer"
@@ -26,15 +24,14 @@ class ContainerDataFactory {
             )
             data.initializer.storedProperties.append("self.\(parentName) = \(parentName)")
             data.initializer.args.append((name: parentName, typeName: parentType.fullName))
-            inherited = Set(parentServicesOf(container).map { TypeKey($0.typeResolver.type) })
+            parentServicesOf(container).forEach { (service) in
+                let type = service.typeResolver.type
+                var getter = ContainerData.ReadOnlyProperty(name: memberName(of: type), typeName: type.fullName)
+                getter.body = ["return \(accessor(of: type, owner: "self.\(parentName)"))"]
+            }
         }
         container.externals.forEach {
-            let key = TypeKey($0.type)
-            if externals.contains(key) {
-                assertionFailure()
-            }
-            externals.insert(key)
-            let name = varName(of: $0.type, prefix: "external")
+            let name = memberName(of: $0.type)
             data.storedProperties.append(ContainerData.StoredProperty(name: name, type: $0.type))
             data.initializer.args.append((name: name, typeName: $0.type.fullName))
             data.initializer.storedProperties.append("self.\(name) = \(name)")
@@ -44,9 +41,9 @@ class ContainerDataFactory {
             case .none:
                 switch service.typeResolver {
                 case .explicit(let type):
-                    let name = varName(of: type)
+                    let name = memberName(of: type)
                     var getter = ContainerData.ReadOnlyProperty(name: name, typeName: type.fullName)
-                    let created = create(type: type, named: name, externals: externals, inherited: inherited)
+                    let created = create(type: type, named: name)
                     getter.body.append(created.creation)
                     getter.body.append(contentsOf: created.injections)
                     getter.body.append("return \(name)")
@@ -57,24 +54,24 @@ class ContainerDataFactory {
                         if providerType.isOptional {
                             type.isOptional = true
                         }
-                        let name = varName(of: type)
+                        let name = memberName(of: type)
                         let providerName = "\(name)Provider"
-                        let created = create(type: providerType, named: providerName, externals: externals, inherited: inherited)
+                        let created = create(type: providerType, named: providerName)
                         var getter = ContainerData.ReadOnlyProperty(name: name, typeName: type.fullName)
                         getter.body.append(created.creation)
                         getter.body.append(contentsOf: created.injections)
                         getter.body.append("return \(invoked(providerName, isOptional: providerType.isOptional, with: provideMethodName, args: []))")
                         data.readOnlyProperties.append(getter)
                     } else if let provider = provider as? StaticMethodProvider {
-                        var getter = ContainerData.ReadOnlyProperty(name: varName(of: type), typeName: type.fullName)
+                        var getter = ContainerData.ReadOnlyProperty(name: memberName(of: type), typeName: type.fullName)
                         getter.body = ["return \(invoked(provider.receiverName, isOptional: false, with: provider.methodName, args: provider.args))"]
                         data.readOnlyProperties.append(getter)
                     } else {
                         assertionFailure("Unknown provider: \(provider)")
                     }
                 case .bound(let mimicType, let type):
-                    let name = varName(of: mimicType)
-                    let created = create(type: type, named: name, externals: externals, inherited: inherited)
+                    let name = memberName(of: mimicType)
+                    let created = create(type: type, named: name)
                     var getter = ContainerData.ReadOnlyProperty(name: name, typeName: mimicType.fullName)
                     getter.body.append(created.creation)
                     getter.body.append(contentsOf: created.injections)
@@ -84,12 +81,17 @@ class ContainerDataFactory {
             case .cached:
                 switch service.typeResolver {
                 case .explicit(let type):
-                    let name = varName(of: type)
-                    let cachedName = varName(of: type, prefix: "cached")
-                    data.storedProperties.append(ContainerData.StoredProperty(name: cachedName, type: type.optional()).set(accessLevel: .private))
+                    let name = memberName(of: type)
+                    let cachedName = "cached\(type.name)"
+                    data.storedProperties.append(
+                        ContainerData.StoredProperty(
+                            name: cachedName,
+                            type: type.set(isOptional: true)
+                        ).set(accessLevel: .private)
+                    )
                     var getter = ContainerData.ReadOnlyProperty(name: name, typeName: type.fullName)
                     getter.body.append("if let \(cachedName) = self.\(cachedName) { return \(cachedName) }")
-                    let created = create(type: type, named: name, externals: externals, inherited: inherited)
+                    let created = create(type: type, named: name)
                     getter.body.append(created.creation)
                     getter.body.append(contentsOf: created.injections)
                     getter.body.append("self.\(cachedName) = \(name)")
@@ -100,21 +102,21 @@ class ContainerDataFactory {
                         if providerType.isOptional {
                             type.isOptional = true
                         }
-                        let name = varName(of: type)
-                        let cachedName = varName(of: type, prefix: "cached")
-                        data.storedProperties.append(ContainerData.StoredProperty(name: cachedName, type: type.optional()).set(accessLevel: .private))
+                        let name = memberName(of: type)
+                        let cachedName = "cached\(type.name)"
+                        data.storedProperties.append(ContainerData.StoredProperty(name: cachedName, type: type.set(isOptional: true)).set(accessLevel: .private))
                         let providerName = "\(name)Provider"
                         var getter = ContainerData.ReadOnlyProperty(name: name, typeName: type.fullName)
                         getter.body.append("if let \(cachedName) = self.\(cachedName) { return \(cachedName) }")
-                        let created = create(type: providerType, named: providerName, externals: externals, inherited: inherited)
+                        let created = create(type: providerType, named: providerName)
                         getter.body.append(created.creation)
                         getter.body.append(contentsOf: created.injections)
                         getter.body.append("let \(name) = \(invoked(providerName, isOptional: providerType.isOptional, with: provideMethodName, args: []))")
                         getter.body.append("self.\(cachedName) = \(name)")
                         getter.body.append("return \(name)")
                     } else if let provider = provider as? StaticMethodProvider {
-                        let name = varName(of: type)
-                        let cachedName = varName(of: type, prefix: "cached")
+                        let name = memberName(of: type)
+                        let cachedName = "cached\(type.name)"
                         data.storedProperties.append(ContainerData.StoredProperty(name: cachedName, type: type))
                         var getter = ContainerData.ReadOnlyProperty(name: name, typeName: type.fullName)
                         getter.body.append("if let \(cachedName) = self.\(cachedName) { return \(cachedName) }")
@@ -126,12 +128,12 @@ class ContainerDataFactory {
                         assertionFailure("Unknown provider: \(provider)")
                     }
                 case .bound(let mimicType, let type):
-                    let name = varName(of: type)
-                    let cachedName = varName(of: type, prefix: "cached")
-                    data.storedProperties.append(ContainerData.StoredProperty(name: cachedName, type: mimicType.optional()).set(accessLevel: .private))
+                    let name = memberName(of: type)
+                    let cachedName = "cached\(type.name)"
+                    data.storedProperties.append(ContainerData.StoredProperty(name: cachedName, type: mimicType.set(isOptional: true)).set(accessLevel: .private))
                     var getter = ContainerData.ReadOnlyProperty(name: name, typeName: mimicType.fullName)
                     getter.body.append("if let \(cachedName) = self.\(cachedName) { return \(cachedName) }")
-                    let created = create(type: type, named: name, externals: externals, inherited: inherited)
+                    let created = create(type: type, named: name)
                     getter.body.append(created.creation)
                     getter.body.append(contentsOf: created.injections)
                     getter.body.append("self.\(cachedName) = \(name)")
@@ -142,13 +144,10 @@ class ContainerDataFactory {
         return data
     }
 
-    private func varName(of type: Type, prefix: String? = nil) -> String {
+    private func memberName(of type: Type) -> String {
         let name = type.name
-        guard let prefix = prefix else {
-            let first = String(name.first!).lowercased()
-            return first + name.dropFirst()
-        }
-        return "\(prefix)\(name)"
+        let first = String(name.first!).lowercased()
+        return first + name.dropFirst()
     }
 
     private func parentServicesOf(_ container: Container) -> [Service] {
@@ -158,14 +157,12 @@ class ContainerDataFactory {
         return parent.services + parentServicesOf(parent)
     }
     
-    private func constructing(_ type: Type,
-                              externals: Set<TypeKey>,
-                              inherited: Set<TypeKey>) -> String {
-        guard let injection = type.injectionSuite.constructor, injection.args.count > 0 else {
+    private func constructing(_ type: Type) -> String {
+        guard type.constructorInjections.count > 0 else {
             return "\(type.name)()"
         }
-        let args: [String] = injection.args.map {
-            let valueName = value(of: $0.type, externals: externals, inherited: inherited)
+        let args: [String] = type.constructorInjections.map {
+            let valueName = accessor(of: $0.typeResolver, owner: "self")
             guard let name = $0.name else {
                 return valueName
             }
@@ -174,38 +171,29 @@ class ContainerDataFactory {
         return "\(type.name)(\(args.joined(separator: ", ")))"
     }
     
-    private func create(type: Type,
-                        named name: String,
-                        externals: Set<TypeKey>,
-                        inherited: Set<TypeKey>) -> (creation: String, injections: [String]) {
+    func create(type: Type, named name: String) -> (creation: String, injections: [String]) {
         var injections: [String] = []
         let decl: String
-        let properties = type.injectionSuite.properties
-        if properties.count > 0 {
+        if type.memberInjections.count > 0 {
             decl = (type.isReference ? "let" : "var")
-            properties.forEach {
+            type.memberInjections.forEach {
                 let lvalue = [name, type.isOptional ? "?" : "", ".\($0.name)"].joined()
-                let rvalue = value(of: $0.type, externals: externals, inherited: inherited)
+                let rvalue = self.accessor(of: $0.typeResolver, owner: "self")
                 injections.append("\(lvalue) = \(rvalue)")
             }
         } else {
             decl = "let"
         }
-        let creation = "\(decl) \(name) = \(constructing(type, externals: externals, inherited: inherited))"
+        let creation = "\(decl) \(name) = \(constructing(type))"
         return (creation, injections)
     }
 
-    private func value(of type: Type,
-                       externals: Set<TypeKey>,
-                       inherited: Set<TypeKey>) -> String {
-        let typeKey = TypeKey(type)
-        if externals.contains(typeKey) {
-            return "self.\(varName(of: type, prefix: "external"))"
-        }
-        if inherited.contains(typeKey) {
-            return "self.\(varName(of: type, prefix: "parent"))"
-        }
-        return "self.\(varName(of: type))"
+    func accessor(of type: Type, owner: String) -> String {
+        return "\(owner).\(memberName(of: type))"
+    }
+
+    func accessor(of typeResolver: TypeResolver, owner: String) -> String {
+        return accessor(of: typeResolver.type, owner: owner)
     }
     
     private func invoked(_ receiverName: String, isOptional: Bool, with invocationName: String, args: [FunctionInvocationArgument]) -> String {

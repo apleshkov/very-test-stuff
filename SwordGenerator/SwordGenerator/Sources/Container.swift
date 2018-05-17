@@ -50,33 +50,8 @@ struct FunctionInvocationArgument {
     var valueName: String
 }
 
-struct ConstructorInjection {
-
-    struct Argument {
-        var name: String?
-        var type: Type
-    }
-
-    var args: [Argument]
-}
-
-struct PropertyInjection {
-
-    var name: String
-
-    var type: Type
-}
-
-struct InjectionSuite {
-
-    var constructor: ConstructorInjection? = nil
-
-    var properties: [PropertyInjection] = []
-
-    init() {}
-}
-
 enum ServiceStorage {
+
     case cached
     case none
 }
@@ -88,6 +63,20 @@ struct Service {
     var storage: ServiceStorage
 }
 
+struct ConstructorInjection {
+
+    var name: String?
+
+    var typeResolver: TypeResolver
+}
+
+struct MemberInjection {
+
+    var name: String
+
+    var typeResolver: TypeResolver
+}
+
 struct Type {
 
     var name: String
@@ -96,7 +85,9 @@ struct Type {
 
     var isReference: Bool = false
     
-    var injectionSuite = InjectionSuite()
+    var constructorInjections: [ConstructorInjection] = []
+
+    var memberInjections: [MemberInjection] = []
 
     init(name: String) {
         self.name = name
@@ -106,9 +97,9 @@ struct Type {
         return "\(name)\(isOptional ? "?" : "")"
     }
 
-    func optional() -> Type {
+    func set(isOptional: Bool) -> Type {
         var result = self
-        result.isOptional = true
+        result.isOptional = isOptional
         return result
     }
 }
