@@ -21,10 +21,10 @@ class SwordGeneratorTests: XCTestCase {
             ["env: Env", "user: User?"]
         )
         XCTAssertEqual(
-            data.storedProperties.map { $0.declaration },
+            data.storedProperties,
             [
-                "open let env: Env",
-                "open let user: User?"
+                ["open let env: Env"],
+                ["open let user: User?"]
             ]
         )
         XCTAssertEqual(

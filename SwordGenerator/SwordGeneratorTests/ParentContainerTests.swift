@@ -16,25 +16,13 @@ class ParentContainerTests: XCTestCase {
         parentContainer.services.append(
             {
                 let type = Type(name: "Foo")
-                return Service(typeResolver: .explicit(type), storage: .cached)
+                return Service(typeResolver: .explicit(type), storage: .none)
             }()
         )
         var container = Container(name: "Test", parent: parentContainer)
         container.services.append(
             {
-                var type = Type(name: "Bar")
-                type.constructorInjections = [
-                    ConstructorInjection(name: "foo", typeResolver: .explicit(Type(name: "Foo")))
-                ]
-                return Service(typeResolver: .explicit(type), storage: .cached)
-            }()
-        )
-        container.services.append(
-            {
-                var type = Type(name: "Baz")
-                type.constructorInjections = [
-                    ConstructorInjection(name: "foo", typeResolver: .explicit(Type(name: "Foo")))
-                ]
+                let type = Type(name: "Bar")
                 return Service(typeResolver: .explicit(type), storage: .none)
             }()
         )
@@ -44,30 +32,35 @@ class ParentContainerTests: XCTestCase {
             ["parentContainer: ParentContainer"]
         )
         XCTAssertEqual(
-            data.storedProperties.map { $0.declaration },
+            data.storedProperties,
             [
-                "open unowned let parentContainer: ParentContainer",
-                "open let bar: Bar"
+                ["open unowned let parentContainer: ParentContainer"]
             ]
         )
         XCTAssertEqual(
             data.initializer.creations,
-            [
-                "let bar = Bar(foo: parentContainer.foo)"
-            ]
+            []
         )
         XCTAssertEqual(
             data.initializer.storedProperties,
             [
-                "self.parentContainer = parentContainer",
-                "self.bar = bar"
+                "self.parentContainer = parentContainer"
             ]
         )
         XCTAssertEqual(
-            data.readOnlyProperties.map { "\($0.declaration) { \($0.body.joined(separator: "; ")) }" },
+            data.getters,
             [
-                "open var foo: Foo { return self.parentContainer.foo }",
-                "open var baz: Baz { let baz = Baz(foo: parentContainer.foo); return baz }"
+                [
+                    "private var foo: Foo {",
+                    "    return self.parentContainer.foo",
+                    "}"
+                ],
+                [
+                    "open var bar: Bar {",
+                    "    let bar: Bar = self.make()",
+                    "    return bar",
+                    "}"
+                ]
             ]
         )
     }
@@ -80,36 +73,6 @@ class ParentContainerTests: XCTestCase {
                 return Service(typeResolver: .explicit(type), storage: .cached)
             }()
         )
-        parentContainer.services.append(
-            {
-                var type = Type(name: "Foo")
-                type.isOptional = true
-                return Service(typeResolver: .explicit(type), storage: .cached)
-            }()
-        )
-        parentContainer.services.append(
-            {
-                let type = Type(name: "Bar")
-                let provider = TypedProvider(Type(name: "BarProvider"))
-                return Service(typeResolver: .provided(type, by: provider), storage: .cached)
-            }()
-        )
-        parentContainer.services.append(
-            {
-                let type = Type(name: "Baz")
-                var provider = TypedProvider(Type(name: "BazProvider"))
-                provider.type.isOptional = true
-                return Service(typeResolver: .provided(type, by: provider), storage: .cached)
-            }()
-        )
-        parentContainer.services.append(
-            {
-                var type = Type(name: "Quux")
-                type.isOptional = true
-                let provider = TypedProvider(Type(name: "QuuxProvider"))
-                return Service(typeResolver: .provided(type, by: provider), storage: .cached)
-            }()
-        )
         let container = Container(name: "Test", parent: parentContainer)
         let data = ContainerDataFactory().make(from: container)
         XCTAssertEqual(
@@ -117,21 +80,23 @@ class ParentContainerTests: XCTestCase {
             ["parentContainer: ParentContainer"]
         )
         XCTAssertEqual(
-            data.storedProperties.map { $0.declaration },
-            ["open unowned let parentContainer: ParentContainer"]
+            data.storedProperties,
+            [
+                ["open unowned let parentContainer: ParentContainer"]
+            ]
         )
         XCTAssertEqual(
             data.initializer.storedProperties,
             ["self.parentContainer = parentContainer"]
         )
         XCTAssertEqual(
-            data.readOnlyProperties.map { "\($0.declaration) { \($0.body.joined()) }" },
+            data.getters,
             [
-                "open var foo1: Foo { return self.parentContainer.foo1 }",
-                "open var foo2: Foo? { return self.parentContainer.foo2 }",
-                "open var bar: Bar { return self.parentContainer.bar }",
-                "open var baz: Baz? { return self.parentContainer.baz }",
-                "open var quux: Quux? { return self.parentContainer.quux }"
+                [
+                    "private var foo: Foo {",
+                    "    return self.parentContainer.foo",
+                    "}"
+                ]
             ]
         )
     }
@@ -141,45 +106,31 @@ class ParentContainerTests: XCTestCase {
         parentContainer.services.append(
             {
                 let type = Type(name: "Foo")
-                return Service(typeResolver: .explicit(type), storage: .cached)
-            }()
-        )
-        parentContainer.services.append(
-            {
-                let type = Type(name: "Bar")
-                return Service(typeResolver: .explicit(type), storage: .cached)
+                return Service(typeResolver: .explicit(type), storage: .none)
             }()
         )
         var container = Container(name: "Test", parent: parentContainer)
         container.services.append(
             {
-                let type = Type(name: "ReplacedFoo")
-                return Service(typeResolver: .explicit(type), storage: .cached)
+                let type = Type(name: "Foo")
+                return Service(typeResolver: .explicit(type), storage: .none)
             }()
         )
         let data = ContainerDataFactory().make(from: container)
         XCTAssertEqual(
-            data.storedProperties.map { $0.declaration },
+            data.getters,
             [
-                "open unowned let parentContainer: ParentContainer",
-                "open let foo: ReplacedFoo"
-            ]
-        )
-        XCTAssertEqual(
-            data.initializer.creations,
-            ["let foo = ReplacedFoo()"]
-        )
-        XCTAssertEqual(
-            data.initializer.storedProperties,
-            [
-                "self.parentContainer = parentContainer",
-                "self.foo = foo"
-            ]
-        )
-        XCTAssertEqual(
-            data.readOnlyProperties.map { "\($0.declaration) { \($0.body.joined()) }" },
-            [
-                "open var bar: Bar { return self.parentContainer.bar }"
+                [
+                    "private var foo: Foo {",
+                    "    return self.parentContainer.foo",
+                    "}"
+                ],
+                [
+                    "open var foo: Foo {",
+                    "    let foo: Foo = self.make()",
+                    "    return foo",
+                    "}"
+                ]
             ]
         )
     }
@@ -190,13 +141,7 @@ class ParentContainerTests: XCTestCase {
             container.services.append(
                 {
                     let type = Type(name: "AFoo")
-                    return Service(typeResolver: .explicit(type), storage: .cached)
-                }()
-            )
-            container.services.append(
-                {
-                    let type = Type(name: "ABar")
-                    return Service(typeResolver: .explicit(type), storage: .cached)
+                    return Service(typeResolver: .explicit(type), storage: .none)
                 }()
             )
             return container
@@ -205,14 +150,8 @@ class ParentContainerTests: XCTestCase {
             var container = Container(name: "B", parent: containerA)
             container.services.append(
                 {
-                    let type = Type(name: "BReplacedBar")
-                    return Service(typeResolver: .explicit(type), storage: .cached)
-                }()
-            )
-            container.services.append(
-                {
-                    let type = Type(name: "BBaz")
-                    return Service(typeResolver: .explicit(type), storage: .cached)
+                    let type = Type(name: "BBar")
+                    return Service(typeResolver: .explicit(type), storage: .none)
                 }()
             )
             return container
@@ -221,66 +160,49 @@ class ParentContainerTests: XCTestCase {
             var container = Container(name: "C", parent: containerB)
             container.services.append(
                 {
-                    let type = Type(name: "CReplacedBaz")
-                    return Service(typeResolver: .explicit(type), storage: .cached)
+                    let type = Type(name: "CBaz")
+                    return Service(typeResolver: .explicit(type), storage: .none)
                 }()
             )
             return container
         }()
         let dataB = ContainerDataFactory().make(from: containerB)
         XCTAssertEqual(
-            dataB.storedProperties.map { $0.declaration },
+            dataB.getters,
             [
-                "open unowned let parentContainer: AContainer",
-                "open let bar: BReplacedBar",
-                "open let baz: BBaz"
-            ]
-        )
-        XCTAssertEqual(
-            dataB.initializer.creations,
-            [
-                "let bar = BReplacedBar()",
-                "let baz = BBaz()"
-            ]
-        )
-        XCTAssertEqual(
-            dataB.initializer.storedProperties,
-            [
-                "self.parentContainer = parentContainer",
-                "self.bar = bar",
-                "self.baz = baz"
-            ]
-        )
-        XCTAssertEqual(
-            dataB.readOnlyProperties.map { "\($0.declaration) { \($0.body.joined()) }" },
-            [
-                "open var foo: AFoo { return self.parentContainer.foo }"
+                [
+                    "private var aFoo: AFoo {",
+                    "    return self.parentContainer.aFoo",
+                    "}"
+                ],
+                [
+                    "open var bBar: BBar {",
+                    "    let bBar: BBar = self.make()",
+                    "    return bBar",
+                    "}"
+                ]
             ]
         )
         let dataC = ContainerDataFactory().make(from: containerC)
         XCTAssertEqual(
-            dataC.storedProperties.map { $0.declaration },
+            dataC.getters,
             [
-                "open unowned let parentContainer: BContainer",
-                "open let baz: CReplacedBaz"
-            ]
-        )
-        XCTAssertEqual(
-            dataC.initializer.creations,
-            ["let baz = CReplacedBaz()"]
-        )
-        XCTAssertEqual(
-            dataC.initializer.storedProperties,
-            [
-                "self.parentContainer = parentContainer",
-                "self.baz = baz"
-            ]
-        )
-        XCTAssertEqual(
-            dataC.readOnlyProperties.map { "\($0.declaration) { \($0.body.joined()) }" },
-            [
-                "open var bar: BReplacedBar { return self.parentContainer.bar }",
-                "open var foo: AFoo { return self.parentContainer.foo }"
+                [
+                    "private var bBar: BBar {",
+                    "    return self.parentContainer.bBar",
+                    "}"
+                ],
+                [
+                    "private var aFoo: AFoo {",
+                    "    return self.parentContainer.aFoo",
+                    "}"
+                ],
+                [
+                    "open var cBaz: CBaz {",
+                    "    let cBaz: CBaz = self.make()",
+                    "    return cBaz",
+                    "}"
+                ]
             ]
         )
     }

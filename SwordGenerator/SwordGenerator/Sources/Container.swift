@@ -47,7 +47,7 @@ struct FunctionInvocationArgument {
     
     var name: String?
     
-    var valueName: String
+    var typeResolver: TypeResolver
 }
 
 enum ServiceStorage {
@@ -97,6 +97,10 @@ struct Type {
         return "\(name)\(isOptional ? "?" : "")"
     }
 
+    var initializerName: String {
+        return name
+    }
+
     func set(isOptional: Bool) -> Type {
         var result = self
         result.isOptional = isOptional
@@ -115,7 +119,7 @@ extension Type: Hashable {
 
 enum TypeResolver {
     case explicit(Type)
-    case provided(Type, by: TypeProviding)
+    case provided(Type, by: TypeProvider)
     case bound(Type, to: Type)
 
     var type: Type {
@@ -132,18 +136,26 @@ enum TypeResolver {
 
 // MARK: Providers
 
-protocol TypeProviding {}
+enum TypeProvider {
+    case typed(TypedProvider)
+    case staticMethod(StaticMethodProvider)
+}
 
-struct TypedProvider: TypeProviding {
-    
+struct TypedProvider {
+
     var type: Type
+
+    var methodName: String
+
+    var args: [FunctionInvocationArgument] = []
     
-    init(_ type: Type) {
+    init(type: Type, methodName: String) {
         self.type = type
+        self.methodName = methodName
     }
 }
 
-struct StaticMethodProvider: TypeProviding {
+struct StaticMethodProvider {
     
     var receiverName: String
     

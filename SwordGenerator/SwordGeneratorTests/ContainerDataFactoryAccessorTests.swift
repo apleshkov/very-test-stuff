@@ -27,7 +27,8 @@ class ContainerDataFactoryAccessorTests: XCTestCase {
     }
 
     func testProvidedByType() {
-        let resolver = TypeResolver.provided(Type(name: "Foo"), by: TypedProvider(Type(name: "FooProvider")))
+        let provider = TypedProvider(type: Type(name: "FooProvider"), methodName: "provide")
+        let resolver = TypeResolver.provided(Type(name: "Foo"), by: .typed(provider))
         XCTAssertEqual(
             ContainerDataFactory().accessor(of: resolver, owner: "self"),
             "self.foo"
@@ -35,7 +36,8 @@ class ContainerDataFactoryAccessorTests: XCTestCase {
     }
 
     func testProvidedByStaticMethod() {
-        let resolver = TypeResolver.provided(Type(name: "Foo"), by: StaticMethodProvider(receiverName: "Foo", methodName: "provide", args: []))
+        let provider = StaticMethodProvider(receiverName: "Foo", methodName: "provide", args: [])
+        let resolver = TypeResolver.provided(Type(name: "Foo"), by: .staticMethod(provider))
         XCTAssertEqual(
             ContainerDataFactory().accessor(of: resolver, owner: "self"),
             "self.foo"
