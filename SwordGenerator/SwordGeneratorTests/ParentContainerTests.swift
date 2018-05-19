@@ -57,7 +57,7 @@ class ParentContainerTests: XCTestCase {
                 ],
                 [
                     "open var bar: Bar {",
-                    "    let bar: Bar = self.make()",
+                    "    let bar = self.makeBar()",
                     "    return bar",
                     "}"
                 ]
@@ -127,7 +127,7 @@ class ParentContainerTests: XCTestCase {
                 ],
                 [
                     "open var foo: Foo {",
-                    "    let foo: Foo = self.make()",
+                    "    let foo = self.makeFoo()",
                     "    return foo",
                     "}"
                 ]
@@ -177,7 +177,7 @@ class ParentContainerTests: XCTestCase {
                 ],
                 [
                     "open var bBar: BBar {",
-                    "    let bBar: BBar = self.make()",
+                    "    let bBar = self.makeBBar()",
                     "    return bBar",
                     "}"
                 ]
@@ -199,7 +199,7 @@ class ParentContainerTests: XCTestCase {
                 ],
                 [
                     "open var cBaz: CBaz {",
-                    "    let cBaz: CBaz = self.make()",
+                    "    let cBaz = self.makeCBaz()",
                     "    return cBaz",
                     "}"
                 ]

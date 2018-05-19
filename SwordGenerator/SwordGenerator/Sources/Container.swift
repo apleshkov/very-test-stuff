@@ -41,6 +41,12 @@ struct Container: Containing {
         self.name = name
         self.parent = parent
     }
+    
+    func add(service: Service) -> Container {
+        var result = self
+        result.services.append(service)
+        return result
+    }
 }
 
 struct FunctionInvocationArgument {
@@ -77,17 +83,33 @@ struct MemberInjection {
     var typeResolver: TypeResolver
 }
 
+struct InstanceMethodInjection {
+    
+    var methodName: String
+    
+    var args: [FunctionInvocationArgument]
+}
+
 struct Type {
 
+    enum Initializer {
+        case none
+        case some(args: [ConstructorInjection])
+    }
+    
     var name: String
 
     var isOptional: Bool = false
 
     var isReference: Bool = false
     
-    var constructorInjections: [ConstructorInjection] = []
+    var initializer: Initializer = .some(args: [])
+    
+    var generics: [Type] = []
 
     var memberInjections: [MemberInjection] = []
+    
+    var methodInjections: [InstanceMethodInjection] = []
 
     init(name: String) {
         self.name = name
@@ -97,13 +119,21 @@ struct Type {
         return "\(name)\(isOptional ? "?" : "")"
     }
 
-    var initializerName: String {
-        return name
+    func set(initializer: Initializer) -> Type {
+        var result = self
+        result.initializer = initializer
+        return result
     }
-
+    
     func set(isOptional: Bool) -> Type {
         var result = self
         result.isOptional = isOptional
+        return result
+    }
+    
+    func set(isReference: Bool) -> Type {
+        var result = self
+        result.isReference = isReference
         return result
     }
 }
@@ -149,7 +179,7 @@ struct TypedProvider {
 
     var args: [FunctionInvocationArgument] = []
     
-    init(type: Type, methodName: String) {
+    init(type: Type, methodName: String, args: [FunctionInvocationArgument] = []) {
         self.type = type
         self.methodName = methodName
     }

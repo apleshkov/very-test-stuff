@@ -13,12 +13,12 @@ class ContainerDataFactoryGetterTests: XCTestCase {
     
     func testValueWithoutMemberInjections() {
         let type = Type(name: "Foo")
-        let getter = ContainerDataFactory().getter(of: type, named: "foo")
+        let getter = ContainerDataFactory().getter(of: type, accessLevel: "open")
         XCTAssertEqual(
             getter,
             [
                 "open var foo: Foo {",
-                "    let foo: Foo = self.make()",
+                "    let foo = self.makeFoo()",
                 "    return foo",
                 "}"
             ]
@@ -28,12 +28,12 @@ class ContainerDataFactoryGetterTests: XCTestCase {
     func testReferenceWithoutMemberInjections() {
         var type = Type(name: "Foo")
         type.isReference = true
-        let getter = ContainerDataFactory().getter(of: type, named: "foo")
+        let getter = ContainerDataFactory().getter(of: type, accessLevel: "open")
         XCTAssertEqual(
             getter,
             [
                 "open var foo: Foo {",
-                "    let foo: Foo = self.make()",
+                "    let foo = self.makeFoo()",
                 "    return foo",
                 "}"
             ]
@@ -45,13 +45,13 @@ class ContainerDataFactoryGetterTests: XCTestCase {
         type.memberInjections = [
             MemberInjection(name: "bar", typeResolver: .explicit(Type(name: "Bar")))
         ]
-        let getter = ContainerDataFactory().getter(of: type, named: "foo")
+        let getter = ContainerDataFactory().getter(of: type, accessLevel: "open")
         XCTAssertEqual(
             getter,
             [
                 "open var foo: Foo {",
-                "    var foo: Foo = self.make()",
-                "    self.inject(to: &foo)",
+                "    var foo = self.makeFoo()",
+                "    self.injectTo(foo: &foo)",
                 "    return foo",
                 "}"
             ]
@@ -64,13 +64,13 @@ class ContainerDataFactoryGetterTests: XCTestCase {
         type.memberInjections = [
             MemberInjection(name: "bar", typeResolver: .explicit(Type(name: "Bar")))
         ]
-        let getter = ContainerDataFactory().getter(of: type, named: "foo")
+        let getter = ContainerDataFactory().getter(of: type, accessLevel: "open")
         XCTAssertEqual(
             getter,
             [
                 "open var foo: Foo {",
-                "    let foo: Foo = self.make()",
-                "    self.inject(to: foo)",
+                "    let foo = self.makeFoo()",
+                "    self.injectTo(foo: foo)",
                 "    return foo",
                 "}"
             ]
@@ -83,13 +83,13 @@ class ContainerDataFactoryGetterTests: XCTestCase {
         type.memberInjections = [
             MemberInjection(name: "bar", typeResolver: .explicit(Type(name: "Bar")))
         ]
-        let getter = ContainerDataFactory().getter(of: type, named: "foo")
+        let getter = ContainerDataFactory().getter(of: type, accessLevel: "open")
         XCTAssertEqual(
             getter,
             [
                 "open var foo: Foo? {",
-                "    var foo: Foo? = self.make()",
-                "    if var foo = foo { self.inject(to: &foo) }",
+                "    var foo = self.makeFoo()",
+                "    if var foo = foo { self.injectTo(foo: &foo) }",
                 "    return foo",
                 "}"
             ]
@@ -103,13 +103,13 @@ class ContainerDataFactoryGetterTests: XCTestCase {
         type.memberInjections = [
             MemberInjection(name: "bar", typeResolver: .explicit(Type(name: "Bar")))
         ]
-        let getter = ContainerDataFactory().getter(of: type, named: "foo")
+        let getter = ContainerDataFactory().getter(of: type, accessLevel: "open")
         XCTAssertEqual(
             getter,
             [
                 "open var foo: Foo? {",
-                "    let foo: Foo? = self.make()",
-                "    if let foo = foo { self.inject(to: foo) }",
+                "    let foo = self.makeFoo()",
+                "    if let foo = foo { self.injectTo(foo: foo) }",
                 "    return foo",
                 "}"
             ]
@@ -121,14 +121,14 @@ class ContainerDataFactoryGetterTests: XCTestCase {
         type.memberInjections = [
             MemberInjection(name: "bar", typeResolver: .explicit(Type(name: "Bar")))
         ]
-        let getter = ContainerDataFactory().getter(of: type, named: "foo", cached: ("cachedFoo", false))
+        let getter = ContainerDataFactory().getter(of: type, accessLevel: "open", cached: ("cachedFoo", false))
         XCTAssertEqual(
             getter,
             [
                 "open var foo: Foo {",
                 "    if let cached = self.cachedFoo { return cached }",
-                "    var foo: Foo = self.make()",
-                "    self.inject(to: &foo)",
+                "    var foo = self.makeFoo()",
+                "    self.injectTo(foo: &foo)",
                 "    self.cachedFoo = foo",
                 "    return foo",
                 "}"
@@ -142,14 +142,14 @@ class ContainerDataFactoryGetterTests: XCTestCase {
         type.memberInjections = [
             MemberInjection(name: "bar", typeResolver: .explicit(Type(name: "Bar")))
         ]
-        let getter = ContainerDataFactory().getter(of: type, named: "foo", cached: ("cachedFoo", false))
+        let getter = ContainerDataFactory().getter(of: type, accessLevel: "open", cached: ("cachedFoo", false))
         XCTAssertEqual(
             getter,
             [
                 "open var foo: Foo {",
                 "    if let cached = self.cachedFoo { return cached }",
-                "    let foo: Foo = self.make()",
-                "    self.inject(to: foo)",
+                "    let foo = self.makeFoo()",
+                "    self.injectTo(foo: foo)",
                 "    self.cachedFoo = foo",
                 "    return foo",
                 "}"
@@ -162,7 +162,7 @@ class ContainerDataFactoryGetterTests: XCTestCase {
         type.memberInjections = [
             MemberInjection(name: "bar", typeResolver: .explicit(Type(name: "Bar")))
         ]
-        let getter = ContainerDataFactory().getter(of: type, named: "foo", cached: ("cachedFoo", true))
+        let getter = ContainerDataFactory().getter(of: type, accessLevel: "open", cached: ("cachedFoo", true))
         XCTAssertEqual(
             getter,
             [
@@ -170,8 +170,8 @@ class ContainerDataFactoryGetterTests: XCTestCase {
                 "    self.lock.lock()",
                 "    defer { self.lock.unlock() }",
                 "    if let cached = self.cachedFoo { return cached }",
-                "    var foo: Foo = self.make()",
-                "    self.inject(to: &foo)",
+                "    var foo = self.makeFoo()",
+                "    self.injectTo(foo: &foo)",
                 "    self.cachedFoo = foo",
                 "    return foo",
                 "}"
@@ -185,7 +185,7 @@ class ContainerDataFactoryGetterTests: XCTestCase {
         type.memberInjections = [
             MemberInjection(name: "bar", typeResolver: .explicit(Type(name: "Bar")))
         ]
-        let getter = ContainerDataFactory().getter(of: type, named: "foo", cached: ("cachedFoo", true))
+        let getter = ContainerDataFactory().getter(of: type, accessLevel: "open", cached: ("cachedFoo", true))
         XCTAssertEqual(
             getter,
             [
@@ -193,8 +193,8 @@ class ContainerDataFactoryGetterTests: XCTestCase {
                 "    self.lock.lock()",
                 "    defer { self.lock.unlock() }",
                 "    if let cached = self.cachedFoo { return cached }",
-                "    let foo: Foo = self.make()",
-                "    self.inject(to: foo)",
+                "    let foo = self.makeFoo()",
+                "    self.injectTo(foo: foo)",
                 "    self.cachedFoo = foo",
                 "    return foo",
                 "}"

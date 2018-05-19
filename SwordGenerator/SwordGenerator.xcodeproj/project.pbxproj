@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		070B227E20AF800700FC66A2 /* ContainerDataFactoryMemberNameTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 070B227D20AF800700FC66A2 /* ContainerDataFactoryMemberNameTests.swift */; };
 		07788A5E209783500039A68C /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07788A5D209783500039A68C /* AppDelegate.swift */; };
 		07788A60209783500039A68C /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07788A5F209783500039A68C /* ViewController.swift */; };
 		07788A63209783500039A68C /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 07788A61209783500039A68C /* Main.storyboard */; };
@@ -40,6 +41,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		070B227D20AF800700FC66A2 /* ContainerDataFactoryMemberNameTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContainerDataFactoryMemberNameTests.swift; sourceTree = "<group>"; };
 		07788A5A209783500039A68C /* SwordGenerator.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SwordGenerator.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		07788A5D209783500039A68C /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		07788A5F209783500039A68C /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -127,6 +129,7 @@
 				53B058FB20ADD6C70063F68C /* ContainerDataFactoryInjectorTests.swift */,
 				53B058FF20AF02000063F68C /* ContainerDataFactoryMakerTests.swift */,
 				53B058FD20ADDA560063F68C /* ContainerDataFactoryAccessorTests.swift */,
+				070B227D20AF800700FC66A2 /* ContainerDataFactoryMemberNameTests.swift */,
 				53B0590120AF03010063F68C /* ContainerDataFactoryGetterTests.swift */,
 				53B0590320AF26C80063F68C /* ContainerDataFactoryInvokedTests.swift */,
 			);
@@ -281,6 +284,7 @@
 				53B0590420AF26C80063F68C /* ContainerDataFactoryInvokedTests.swift in Sources */,
 				53B0590220AF03010063F68C /* ContainerDataFactoryGetterTests.swift in Sources */,
 				53B058FC20ADD6C70063F68C /* ContainerDataFactoryInjectorTests.swift in Sources */,
+				070B227E20AF800700FC66A2 /* ContainerDataFactoryMemberNameTests.swift in Sources */,
 				53B058CC20A5B8120063F68C /* BoundTypeResolverTests.swift in Sources */,
 				07788A73209783520039A68C /* SwordGeneratorTests.swift in Sources */,
 				53B058CE20A5BCF00063F68C /* ProvidedTypeResolverTests.swift in Sources */,
