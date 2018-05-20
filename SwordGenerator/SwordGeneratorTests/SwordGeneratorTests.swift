@@ -13,8 +13,8 @@ class SwordGeneratorTests: XCTestCase {
 
     func testInitArguments() {
         var container = Container(name: "Test")
-        container.externals.append(ContainerExternal(type: Type(name: "Env")))
-        container.externals.append(ContainerExternal(type: Type(name: "User").set(isOptional: true)))
+        container.externals.append(ContainerExternal(type: Type(name: "Env"), kinds: []))
+        container.externals.append(ContainerExternal(type: Type(name: "User").set(isOptional: true), kinds: []))
         let data = ContainerDataFactory().make(from: container)
         XCTAssertEqual(
             data.initializer.args.map { "\($0.name): \($0.typeName)" },

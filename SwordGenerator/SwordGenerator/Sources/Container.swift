@@ -7,29 +7,11 @@
 
 import Foundation
 
-struct ContainerExternal {
-    
-    var type: Type
-    
-    init(type: Type) {
-        self.type = type
-    }
-}
-
-protocol Containing {
-    
-    var name: String { get }
-
-    var externals: [ContainerExternal] { get }
-    
-    var services: [Service] { get }
-}
-
-struct Container: Containing {
+struct Container {
 
     var name: String
 
-    var parent: Containing?
+    var dependencies: [Type] = []
 
     var externals: [ContainerExternal] = []
     
@@ -37,9 +19,15 @@ struct Container: Containing {
 
     var isThreadSafe: Bool = false
 
-    init(name: String, parent: Containing? = nil) {
+    init(name: String, dependencies: [Type] = []) {
         self.name = name
-        self.parent = parent
+        self.dependencies = dependencies
+    }
+    
+    func add(dependency: Type) -> Container {
+        var result = self
+        result.dependencies.append(dependency)
+        return result
     }
     
     func add(service: Service) -> Container {
@@ -54,6 +42,23 @@ struct FunctionInvocationArgument {
     var name: String?
     
     var typeResolver: TypeResolver
+}
+
+struct ContainerExternal {
+    
+    enum Kind {
+        case property(name: String)
+        case method(name: String, args: [FunctionInvocationArgument])
+    }
+    
+    var type: Type
+    
+    var kinds: [Kind]
+    
+    init(type: Type, kinds: [Kind]) {
+        self.type = type
+        self.kinds = kinds
+    }
 }
 
 enum ServiceStorage {
@@ -147,21 +152,12 @@ extension Type: Hashable {
     var hashValue: Int { return name.hashValue }
 }
 
-enum TypeResolver {
+indirect enum TypeResolver {
     case explicit(Type)
     case provided(Type, by: TypeProvider)
     case bound(Type, to: Type)
-
-    var type: Type {
-        switch self {
-        case .explicit(let type):
-            return type
-        case .provided(let type, _):
-            return type
-        case .bound(let type, _):
-            return type
-        }
-    }
+    case derived(from: Type, typeResolver: TypeResolver)
+    case external(from: Type, kind: ContainerExternal.Kind)
 }
 
 // MARK: Providers

@@ -14,21 +14,12 @@ class ContainerDataFactory {
     
     func make(from container: Container) -> ContainerData {
         var data = ContainerData(name: "\(container.name)Container", initializer: ContainerData.Initializer())
-        if let parent = container.parent {
-            let parentName = "parentContainer"
-            let parentType = Type(name: "\(parent.name)Container")
-            data.storedProperties.append(["open unowned let \(parentName): \(parentType.fullName)"])
-            data.initializer.storedProperties.append("self.\(parentName) = \(parentName)")
-            data.initializer.args.append((name: parentName, typeName: parentType.fullName))
-            parentServicesOf(container).forEach { (service) in
-                let type = service.typeResolver.type
-                let name = memberName(of: type)
-                data.getters.append([
-                    "private var \(name): \(type.fullName) {",
-                    "\(indent)return self.\(parentName).\(name)",
-                    "}"
-                    ])
-            }
+        container.dependencies.forEach {
+            let name = memberName(of: $0)
+            let typeName = $0.fullName
+            data.storedProperties.append(["open unowned let \(name): \(typeName)"])
+            data.initializer.storedProperties.append("self.\(name) = \(name)")
+            data.initializer.args.append((name: name, typeName: typeName))
         }
         container.externals.forEach {
             let name = memberName(of: $0.type)
@@ -89,7 +80,7 @@ class ContainerDataFactory {
                 let providerType = typedProvider.type
                 data.makers.append([
                     "private func \(memberName(of: type, prefix: "make"))() -> \(type.fullName) {",
-                    "\(indent)let provider = \(accessor(of: providerType, owner: "self"))",
+                    "\(indent)let provider = \(accessor(of: .explicit(providerType), owner: "self"))",
                     "\(indent)return \(invoked("provider", isOptional: providerType.isOptional, with: typedProvider.methodName, args: typedProvider.args))",
                     "}"
                     ])
@@ -108,10 +99,14 @@ class ContainerDataFactory {
         case .bound(let mimicType, let type):
             data.getters.append([
                 "\(accessLevel) var \(memberName(of: mimicType)): \(mimicType.fullName) {",
-                "\(indent)return \(accessor(of: type, owner: "self"))",
+                "\(indent)return \(accessor(of: .explicit(type), owner: "self"))",
                 "}"
                 ])
             expand(data: &data, typeResolver: .explicit(type), isCached: isCached, isThreadSafe: isThreadSafe, accessLevel: "private")
+        case .derived(_, _):
+            break
+        case .external(_):
+            break
         }
     }
 
@@ -131,13 +126,6 @@ class ContainerDataFactory {
             }.joined(separator: "And")
         }
         return result
-    }
-
-    private func parentServicesOf(_ container: Container) -> [Service] {
-        guard let parent = container.parent as? Container else {
-            return []
-        }
-        return parent.services + parentServicesOf(parent)
     }
     
     func getter(of type: Type, accessLevel: String, cached: (memberName: String, isThreadSafe: Bool)? = nil) -> [String] {
@@ -216,12 +204,23 @@ class ContainerDataFactory {
         return lines
     }
 
-    func accessor(of type: Type, owner: String) -> String {
-        return "\(owner).\(memberName(of: type))"
-    }
-
     func accessor(of typeResolver: TypeResolver, owner: String) -> String {
-        return accessor(of: typeResolver.type, owner: owner)
+        switch typeResolver {
+        case .explicit(let type),
+             .provided(let type, _),
+             .bound(let type, _):
+            return "\(owner).\(memberName(of: type))"
+        case .derived(let containerType, let typeResolver):
+            return "\(owner).\(accessor(of: typeResolver, owner: memberName(of: containerType)))"
+        case .external(let externalType, let kind):
+            switch kind {
+            case .property(let name):
+                return "\(owner).\(memberName(of: externalType)).\(name)"
+            case .method(let name, let args):
+                let receiver = "\(owner).\(memberName(of: externalType))"
+                return invoked(receiver, isOptional: false, with: name, args: args)
+            }
+        }
     }
     
     func invoked(_ receiverName: String, isOptional: Bool, with invocationName: String, args: [FunctionInvocationArgument]) -> String {

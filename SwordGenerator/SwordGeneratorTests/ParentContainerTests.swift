@@ -12,17 +12,24 @@ import XCTest
 class ParentContainerTests: XCTestCase {
 
     func testParentContainerDependencies() {
-        var parentContainer = Container(name: "Parent")
+        let fooType = Type(name: "Foo")
+        var parentContainer = Container(name: "ParentContainer")
         parentContainer.services.append(
             {
-                let type = Type(name: "Foo")
-                return Service(typeResolver: .explicit(type), storage: .none)
+                return Service(typeResolver: .explicit(fooType), storage: .none)
             }()
         )
-        var container = Container(name: "Test", parent: parentContainer)
+        let parentType = Type(name: parentContainer.name)
+        var container = Container(name: "TestContainer").add(dependency: parentType)
         container.services.append(
             {
-                let type = Type(name: "Bar")
+                var type = Type(name: "Bar")
+                type.initializer = .some(args: [
+                    ConstructorInjection(
+                        name: "foo",
+                        typeResolver: .derived(from: parentType, typeResolver: .explicit(fooType))
+                    )
+                    ])
                 return Service(typeResolver: .explicit(type), storage: .none)
             }()
         )
@@ -51,11 +58,6 @@ class ParentContainerTests: XCTestCase {
             data.getters,
             [
                 [
-                    "private var foo: Foo {",
-                    "    return self.parentContainer.foo",
-                    "}"
-                ],
-                [
                     "open var bar: Bar {",
                     "    let bar = self.makeBar()",
                     "    return bar",
@@ -63,72 +65,12 @@ class ParentContainerTests: XCTestCase {
                 ]
             ]
         )
-    }
-
-    func testParentContainer() {
-        var parentContainer = Container(name: "Parent")
-        parentContainer.services.append(
-            {
-                let type = Type(name: "Foo")
-                return Service(typeResolver: .explicit(type), storage: .cached)
-            }()
-        )
-        let container = Container(name: "Test", parent: parentContainer)
-        let data = ContainerDataFactory().make(from: container)
         XCTAssertEqual(
-            data.initializer.args.map { "\($0.name): \($0.typeName)" },
-            ["parentContainer: ParentContainer"]
-        )
-        XCTAssertEqual(
-            data.storedProperties,
-            [
-                ["open unowned let parentContainer: ParentContainer"]
-            ]
-        )
-        XCTAssertEqual(
-            data.initializer.storedProperties,
-            ["self.parentContainer = parentContainer"]
-        )
-        XCTAssertEqual(
-            data.getters,
+            data.makers,
             [
                 [
-                    "private var foo: Foo {",
-                    "    return self.parentContainer.foo",
-                    "}"
-                ]
-            ]
-        )
-    }
-
-    func testParentContainerCollisions() {
-        var parentContainer = Container(name: "Parent")
-        parentContainer.services.append(
-            {
-                let type = Type(name: "Foo")
-                return Service(typeResolver: .explicit(type), storage: .none)
-            }()
-        )
-        var container = Container(name: "Test", parent: parentContainer)
-        container.services.append(
-            {
-                let type = Type(name: "Foo")
-                return Service(typeResolver: .explicit(type), storage: .none)
-            }()
-        )
-        let data = ContainerDataFactory().make(from: container)
-        XCTAssertEqual(
-            data.getters,
-            [
-                [
-                    "private var foo: Foo {",
-                    "    return self.parentContainer.foo",
-                    "}"
-                ],
-                [
-                    "open var foo: Foo {",
-                    "    let foo = self.makeFoo()",
-                    "    return foo",
+                    "private func makeBar() -> Bar {",
+                    "    return Bar(foo: self.parentContainer.foo)",
                     "}"
                 ]
             ]
@@ -136,71 +78,84 @@ class ParentContainerTests: XCTestCase {
     }
 
     func testMultipleChildContainers() {
-        let containerA: Container = {
-            var container = Container(name: "A")
+        let aDependency = Type(name: "ContainerA")
+        let bDependency = Type(name: "ContainerB")
+        let container: Container = {
+            var container = Container(name: "ContainerC")
+                .add(dependency: aDependency)
+                .add(dependency: bDependency)
             container.services.append(
                 {
-                    let type = Type(name: "AFoo")
+                    var type = Type(name: "Baz")
+                    type.memberInjections = [
+                        MemberInjection(
+                            name: "foo",
+                            typeResolver: .derived(
+                                from: aDependency,
+                                typeResolver: .explicit(Type(name: "Foo"))
+                            )
+                        ),
+                        MemberInjection(
+                            name: "bar",
+                            typeResolver: .derived(
+                                from: bDependency,
+                                typeResolver: .explicit(Type(name: "Bar"))
+                            )
+                        ),
+                        MemberInjection(
+                            name: "quux",
+                            typeResolver: .derived(
+                                from: bDependency,
+                                typeResolver: .derived(
+                                    from: aDependency,
+                                    typeResolver: .explicit(Type(name: "Quux"))
+                                )
+                            )
+                        )
+                    ]
                     return Service(typeResolver: .explicit(type), storage: .none)
                 }()
             )
             return container
         }()
-        let containerB: Container = {
-            var container = Container(name: "B", parent: containerA)
-            container.services.append(
-                {
-                    let type = Type(name: "BBar")
-                    return Service(typeResolver: .explicit(type), storage: .none)
-                }()
-            )
-            return container
-        }()
-        let containerC: Container = {
-            var container = Container(name: "C", parent: containerB)
-            container.services.append(
-                {
-                    let type = Type(name: "CBaz")
-                    return Service(typeResolver: .explicit(type), storage: .none)
-                }()
-            )
-            return container
-        }()
-        let dataB = ContainerDataFactory().make(from: containerB)
+        let data = ContainerDataFactory().make(from: container)
         XCTAssertEqual(
-            dataB.getters,
+            data.storedProperties,
+            [
+                ["open unowned let containerA: ContainerA"],
+                ["open unowned let containerB: ContainerB"]
+            ]
+        )
+        XCTAssertEqual(
+            data.getters,
             [
                 [
-                    "private var aFoo: AFoo {",
-                    "    return self.parentContainer.aFoo",
-                    "}"
-                ],
-                [
-                    "open var bBar: BBar {",
-                    "    let bBar = self.makeBBar()",
-                    "    return bBar",
+                    "open var baz: Baz {",
+                    "    var baz = self.makeBaz()",
+                    "    self.injectTo(baz: &baz)",
+                    "    return baz",
                     "}"
                 ]
             ]
         )
-        let dataC = ContainerDataFactory().make(from: containerC)
         XCTAssertEqual(
-            dataC.getters,
+            data.makers,
             [
                 [
-                    "private var bBar: BBar {",
-                    "    return self.parentContainer.bBar",
+                    "private func makeBaz() -> Baz {",
+                    "    return Baz()",
                     "}"
-                ],
+                ]
+            ]
+        )
+        XCTAssertEqual(
+            data.injectors,
+            [
                 [
-                    "private var aFoo: AFoo {",
-                    "    return self.parentContainer.aFoo",
-                    "}"
-                ],
-                [
-                    "open var cBaz: CBaz {",
-                    "    let cBaz = self.makeCBaz()",
-                    "    return cBaz",
+                    "private func injectTo(baz: inout Baz) {",
+                    "    baz.foo = self.containerA.foo",
+                    "    baz.bar = self.containerB.bar",
+                    "    baz.quux = self.containerB.containerA.quux",
                     "}"
                 ]
             ]
