@@ -10,6 +10,8 @@ import SourceKittenFramework
 
 class TypeParser {
 
+    private let methodParser = MethodParser()
+    
     func parse(_ rawString: String) -> ParsedType? {
         let rawString = rawString.trimmingCharacters(in: .whitespaces)
         guard rawString.count > 0 else {
@@ -42,46 +44,29 @@ class TypeParser {
     }
 
     func parse(_ structure: [String : SourceKitRepresentable], contents: String) -> ParsedType? {
-        guard let kind = structure.swiftDeclKind else {
+        guard let kind = structure.swiftDeclKind, let name = structure.swiftDeclName else {
             return nil
         }
         switch kind {
         case .struct, .class:
-            guard let name = parseName(from: structure, contents: contents) else {
-                return nil
-            }
             let isReference = (kind == .class)
-            return ParsedType(name: name, isReference: isReference)
+            var type = ParsedType(name: name, isReference: isReference)
+            if let inherited = structure[SwiftDocKey.inheritedtypes] as? [[String : SourceKitRepresentable]] {
+                inherited.forEach {
+                    guard let name = $0.swiftDeclName else {
+                        return
+                    }
+                    type.inheritedFrom.append(ParsedType(name: name))
+                }
+            }
+            structure.swiftSubstructures?.forEach {
+                if let method = methodParser.parse($0) {
+                    type.functions.append(method)
+                }
+            }
+            return type
         default:
             return nil
         }
-    }
-
-    private func parseName(from structure: [String : SourceKitRepresentable], contents: String) -> String? {
-        func range(offsetKey: SwiftDocKey, lengthKey: SwiftDocKey) -> (offset: Int64, length: Int64)? {
-            guard let offset = structure[offsetKey] as? Int64,
-                let length = structure[lengthKey] as? Int64 else {
-                    return nil
-            }
-            return (offset, length)
-        }
-        guard let nameRange = range(offsetKey: .nameOffset, lengthKey: .nameLength),
-            let bodyRange = range(offsetKey: .bodyOffset, lengthKey: .bodyLength) else {
-                return nil
-        }
-        let startIndex = nameRange.offset
-        let endIndex = bodyRange.offset
-        let xxx = substring(of: contents, with: startIndex..<endIndex)
-//        let range = contents.index(contents.startIndex, offsetBy: startIndex)..<contents.index(contents.startIndex, offsetBy: endIndex)
-//        let xxx = contents.substring(with: range)
-//        return String(xxx)
-        return nil
-    }
-
-    private func substring(of string: String, with range: Range<Int64>) -> String {
-        let startIndex = string.index(string.startIndex, offsetBy: range.lowerBound)
-        let endIndex = string.index(string.startIndex, offsetBy: range.upperBound)
-        let strRange = startIndex..<endIndex
-        return string.substring(with: strRange)
     }
 }

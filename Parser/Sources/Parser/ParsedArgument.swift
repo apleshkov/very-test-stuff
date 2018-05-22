@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct ParsedFunctionArgument: Equatable {
+struct ParsedArgument: Equatable {
 
     var name: String?
 

@@ -48,7 +48,7 @@ class TypeParserTests: XCTestCase {
         )
     }
 
-    func testSource1() {
+    func testSimpleDecl() {
         XCTAssertEqual(
             parse(contents: "class Foo {}"),
             [ParsedType(name: "Foo", isReference: true)]
@@ -59,10 +59,55 @@ class TypeParserTests: XCTestCase {
         )
     }
 
-    func testSource2() {
+    func testGenericDecl() {
         XCTAssertEqual(
             parse(contents: "struct Foo<T> {}"),
-            [ParsedType(name: "Foo").add(generic: ParsedType(name: "T"))]
+            [ParsedType(name: "Foo")]
+        )
+    }
+    
+    func testInheritedDecl() {
+        XCTAssertEqual(
+            parse(contents: "struct Foo: Bar {}"),
+            [ParsedType(name: "Foo").add(inheritedFrom: ParsedType(name: "Bar"))]
+        )
+    }
+    
+    func testMethodDecl() {
+        let barFun: ParsedFunction = {
+            let args: [ParsedArgument] = [
+                ParsedArgument(
+                    name: nil,
+                    type: ParsedType(name: "Int")
+                ),
+                ParsedArgument(
+                    name: "baz",
+                    type: ParsedType(name: "Baz")
+                ),
+                ParsedArgument(
+                    name: "quux",
+                    type: ParsedType(name: "Quux", isOptional: true)
+                )
+            ]
+            return ParsedFunction(
+                name: "bar",
+                args: args,
+                returnType: ParsedType(name: "Bar", isUnwrapped: true)
+            )
+        }()
+        let bazFun = ParsedFunction(
+            name: "baz",
+            args: [],
+            returnType: nil
+        )
+        XCTAssertEqual(
+            parse(contents: [
+                "struct Foo {",
+                "func bar(_ x: Int, baz: Baz, quux: Quux?) -> Bar! {}",
+                "func baz<T>() {}",
+                "}"
+                ].joined()),
+            [ParsedType(name: "Foo").add(function: barFun).add(function: bazFun)]
         )
     }
 }

@@ -46,7 +46,11 @@ extension Dictionary where Key == String, Value == SourceKitRepresentable {
     var swiftDeclName: String? {
         return self[SwiftDocKey.name] as? String
     }
-
+    
+    var swiftTypeName: String? {
+        return self[SwiftDocKey.typeName] as? String
+    }
+    
     var swiftSubstructures: [[String: SourceKitRepresentable]]? {
         return self[SwiftDocKey.substructure] as? [[String: SourceKitRepresentable]]
     }
