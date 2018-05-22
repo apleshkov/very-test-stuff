@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct ParsedType {
+struct ParsedType: Equatable {
 
     var name: String
 
@@ -17,10 +17,17 @@ struct ParsedType {
 
     var generics: [ParsedType] = []
 
-    init(name: String, isOptional: Bool = false, isUnwrapped: Bool = false) {
+    var members: [ParsedTypeMember] = []
+
+    var functions: [ParsedTypeFunction] = []
+
+    var isReference: Bool = false
+
+    init(name: String, isOptional: Bool = false, isUnwrapped: Bool = false, isReference: Bool = false) {
         self.name = name
         self.isOptional = isOptional
         self.isUnwrapped = isUnwrapped
+        self.isReference = isReference
     }
 
     func add(generic: ParsedType) -> ParsedType {
@@ -30,12 +37,16 @@ struct ParsedType {
     }
 }
 
-extension ParsedType: Equatable {
+struct ParsedTypeMember: Equatable {
 
-    static func == (lhs: ParsedType, rhs: ParsedType) -> Bool {
-        return lhs.name == rhs.name
-            && lhs.isOptional == rhs.isOptional
-            && lhs.isUnwrapped == rhs.isUnwrapped
-            && lhs.generics == rhs.generics
-    }
+    var name: String
+
+    var type: ParsedType
+}
+
+struct ParsedTypeFunction: Equatable {
+
+    var name: String
+
+    var args: [ParsedFunctionArgument] = []
 }

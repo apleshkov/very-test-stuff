@@ -7,8 +7,9 @@
 
 import XCTest
 @testable import Parser
+import SourceKittenFramework
 
-class ParserTests: XCTestCase {
+class TypeParserTests: XCTestCase {
 
     func testSimple() {
         XCTAssertEqual(
@@ -45,5 +46,30 @@ class ParserTests: XCTestCase {
             TypeParser().parse("Foo.Bar.Baz"),
             ParsedType(name: "Foo.Bar.Baz")
         )
+    }
+
+    func testSource1() {
+        XCTAssertEqual(
+            parse(contents: "class Foo {}"),
+            [ParsedType(name: "Foo", isReference: true)]
+        )
+        XCTAssertEqual(
+            parse(contents: "struct Foo {}"),
+            [ParsedType(name: "Foo")]
+        )
+    }
+
+    func testSource2() {
+        XCTAssertEqual(
+            parse(contents: "struct Foo<T> {}"),
+            [ParsedType(name: "Foo").add(generic: ParsedType(name: "T"))]
+        )
+    }
+}
+
+private func parse(contents: String) -> [ParsedType] {
+    let structure = try! Structure(file: File(contents: contents))
+    return structure.dictionary.swiftSubstructures!.compactMap {
+        return TypeParser().parse($0, contents: contents)
     }
 }

@@ -11,7 +11,7 @@ let package = Package(
     targets: [
         .target(
             name: "Parser",
-            dependencies: []
+            dependencies: ["SourceKittenFramework"]
         ),
         .testTarget(
             name: "ParserTests",

@@ -7,17 +7,9 @@
 
 import Foundation
 
-struct ParsedFunctionArgument {
+struct ParsedFunctionArgument: Equatable {
 
     var name: String?
 
     var type: ParsedType
-}
-
-extension ParsedFunctionArgument: Equatable {
-
-    static func == (lhs: ParsedFunctionArgument, rhs: ParsedFunctionArgument) -> Bool {
-        return (lhs.name ?? "") == (rhs.name ?? "")
-            && lhs.type == rhs.type
-    }
 }
