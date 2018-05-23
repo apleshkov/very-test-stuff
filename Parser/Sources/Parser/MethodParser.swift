@@ -10,13 +10,13 @@ import SourceKittenFramework
 
 class MethodParser {
     
-    func parse(_ structure: [String : SourceKitRepresentable]) -> ParsedFunction? {
+    static func parse(_ structure: [String : SourceKitRepresentable]) -> ParsedMethod? {
         guard let kind = structure.swiftDeclKind,
-            let rawName = structure.swiftDeclName else {
+            let rawName = structure.swiftName else {
             return nil
         }
         switch kind {
-        case .functionMethodInstance:
+        case .functionMethodInstance, .functionMethodStatic, .functionMethodClass:
             let name: String
             if let index = rawName.index(of: "(") {
                 name = String(rawName[..<index])
@@ -25,13 +25,14 @@ class MethodParser {
             }
             let args = parseArgs(structure)
             let returnType = parseType(structure)
-            return ParsedFunction(name: name, args: args, returnType: returnType)
+            let isStatic = (kind == .functionMethodStatic || kind == .functionMethodClass)
+            return ParsedMethod(name: name, args: args, returnType: returnType, isStatic: isStatic)
         default:
             return nil
         }
     }
     
-    func parseArgs(_ structure: [String : SourceKitRepresentable]) -> [ParsedArgument] {
+    static func parseArgs(_ structure: [String : SourceKitRepresentable]) -> [ParsedArgument] {
         return (structure.swiftSubstructures ?? []).compactMap { (structure) in
             guard let kind = structure.swiftDeclKind else {
                 return nil
@@ -40,7 +41,7 @@ class MethodParser {
             case .varParameter:
                 let name: String?
                 if let nameLength = structure[SwiftDocKey.nameLength] as? Int64, nameLength > 0 {
-                    name = structure.swiftDeclName
+                    name = structure.swiftName
                 } else {
                     name = nil
                 }
@@ -54,10 +55,10 @@ class MethodParser {
         }
     }
     
-    func parseType(_ structure: [String : SourceKitRepresentable]) -> ParsedType? {
+    static func parseType(_ structure: [String : SourceKitRepresentable]) -> ParsedType? {
         guard let rawType = structure.swiftTypeName else {
             return nil
         }
-        return TypeParser().parse(rawType)
+        return TypeParser.parse(rawType)
     }
 }

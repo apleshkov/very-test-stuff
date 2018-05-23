@@ -10,11 +10,28 @@ import SourceKittenFramework
 
 class TypeParser {
 
-    private let methodParser = MethodParser()
-    
-    func parse(_ rawString: String) -> ParsedType? {
-        let rawString = rawString.trimmingCharacters(in: .whitespaces)
+    private static func clearRawTypeString(_ rawString: String) -> String {
+        var rawString = rawString.trimmingCharacters(in: .whitespaces)
+        if rawString.hasPrefix("(") {
+            rawString = String(rawString.dropFirst())
+            rawString = clearRawTypeString(rawString)
+        }
+        if rawString.hasSuffix(")") {
+            rawString = String(rawString.dropLast())
+            rawString = clearRawTypeString(rawString)
+        }
+        return rawString
+    }
+
+    static func parse(_ rawString: String) -> ParsedType? {
+        if rawString.contains("->") || rawString.contains(":") {
+            return nil
+        }
+        let rawString = clearRawTypeString(rawString)
         guard rawString.count > 0 else {
+            return nil
+        }
+        if rawString == "()" {
             return nil
         }
         var isOptional = false
@@ -43,8 +60,8 @@ class TypeParser {
         return type
     }
 
-    func parse(_ structure: [String : SourceKitRepresentable], contents: String) -> ParsedType? {
-        guard let kind = structure.swiftDeclKind, let name = structure.swiftDeclName else {
+    static func parse(_ structure: [String : SourceKitRepresentable], contents: String) -> ParsedType? {
+        guard let kind = structure.swiftDeclKind, let name = structure.swiftName else {
             return nil
         }
         switch kind {
@@ -53,15 +70,18 @@ class TypeParser {
             var type = ParsedType(name: name, isReference: isReference)
             if let inherited = structure[SwiftDocKey.inheritedtypes] as? [[String : SourceKitRepresentable]] {
                 inherited.forEach {
-                    guard let name = $0.swiftDeclName else {
+                    guard let name = $0.swiftName else {
                         return
                     }
                     type.inheritedFrom.append(ParsedType(name: name))
                 }
             }
             structure.swiftSubstructures?.forEach {
-                if let method = methodParser.parse($0) {
-                    type.functions.append(method)
+                if let method = MethodParser.parse($0) {
+                    type.methods.append(method)
+                }
+                if let variable = VariableParser.parse($0) {
+                    type.variables.append(variable)
                 }
             }
             return type

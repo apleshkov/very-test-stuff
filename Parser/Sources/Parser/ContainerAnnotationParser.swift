@@ -16,8 +16,6 @@ private enum Prefix {
 
 class ContainerAnnotationParser {
 
-    private let typeParser = TypeParser()
-
     func parse(_ rawString: String) -> ContainerAnnotation? {
         let rawString = rawString.trimmingCharacters(in: .whitespaces)
         guard rawString.count > 0 else {
@@ -33,12 +31,12 @@ class ContainerAnnotationParser {
         }
         if rawString.hasPrefix(Prefix.dependsOn),
             let args = AnnotationParserHelper.arguments(from: rawString, prefix: Prefix.dependsOn) {
-            let types = args.compactMap { typeParser.parse($0) }
+            let types = args.compactMap { TypeParser.parse($0) }
             return ContainerAnnotation.dependsOn(types)
         }
         if rawString.hasPrefix(Prefix.externals),
             let args = AnnotationParserHelper.arguments(from: rawString, prefix: Prefix.externals) {
-            let types = args.compactMap { typeParser.parse($0) }
+            let types = args.compactMap { TypeParser.parse($0) }
             return ContainerAnnotation.externals(types)
         }
         return nil

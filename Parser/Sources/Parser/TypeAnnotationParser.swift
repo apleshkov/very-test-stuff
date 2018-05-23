@@ -14,8 +14,6 @@ private enum Prefix {
 
 class TypeAnnotationParser {
 
-    private let typeParser = TypeParser()
-
     func parse(_ rawString: String) -> TypeAnnotation? {
         let rawString = rawString.trimmingCharacters(in: .whitespaces)
         guard rawString.count > 0 else {
@@ -23,7 +21,7 @@ class TypeAnnotationParser {
         }
         if rawString.hasPrefix(Prefix.bound),
             let content = AnnotationParserHelper.argument(from: rawString, prefix: Prefix.bound),
-            let type = typeParser.parse(content) {
+            let type = TypeParser.parse(content) {
             return TypeAnnotation.bound(to: type)
         }
         if rawString == Prefix.cached {

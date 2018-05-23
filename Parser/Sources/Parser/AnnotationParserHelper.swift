@@ -43,7 +43,7 @@ extension Dictionary where Key == String, Value == SourceKitRepresentable {
         return (self[SwiftDocKey.kind] as? String).flatMap { SwiftDeclarationKind(rawValue: $0) }
     }
 
-    var swiftDeclName: String? {
+    var swiftName: String? {
         return self[SwiftDocKey.name] as? String
     }
     

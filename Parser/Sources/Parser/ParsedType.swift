@@ -19,9 +19,9 @@ struct ParsedType: Equatable {
     
     var inheritedFrom: [ParsedType] = []
 
-    var members: [ParsedTypeMember] = []
+    var variables: [ParsedVariable] = []
 
-    var functions: [ParsedFunction] = []
+    var methods: [ParsedMethod] = []
 
     var isReference: Bool = false
 
@@ -44,34 +44,9 @@ struct ParsedType: Equatable {
         return result
     }
     
-    func add(function: ParsedFunction) -> ParsedType {
+    func add(method: ParsedMethod) -> ParsedType {
         var result = self
-        result.functions.append(function)
+        result.methods.append(method)
         return result
-    }
-}
-
-struct ParsedTypeMember: Equatable {
-
-    var name: String
-
-    var type: ParsedType
-}
-
-struct ParsedFunction: Equatable {
-
-    var name: String
-
-    var args: [ParsedArgument] = []
-    
-    var returnType: ParsedType?
-    
-    var isStatic: Bool = false
-    
-    init(name: String, args: [ParsedArgument] = [], returnType: ParsedType? = nil, isStatic: Bool = false) {
-        self.name = name
-        self.args = args
-        self.returnType = returnType
-        self.isStatic = isStatic
     }
 }
