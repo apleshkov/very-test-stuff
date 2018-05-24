@@ -14,7 +14,7 @@ private enum Prefix {
 
 class TypeAnnotationParser {
 
-    func parse(_ rawString: String) -> TypeAnnotation? {
+    static func parse(_ rawString: String) -> TypeAnnotation? {
         let rawString = rawString.trimmingCharacters(in: .whitespaces)
         guard rawString.count > 0 else {
             return nil

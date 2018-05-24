@@ -60,7 +60,8 @@ class TypeParser {
         return type
     }
 
-    static func parse(_ structure: [String : SourceKitRepresentable], contents: String) -> ParsedType? {
+    static func parse(_ structure: [String : SourceKitRepresentable],
+                      rawAnnotations: RawAnnotations) -> ParsedType? {
         guard let kind = structure.swiftDeclKind, let name = structure.swiftName else {
             return nil
         }
@@ -83,6 +84,13 @@ class TypeParser {
                 if let variable = VariableParser.parse($0) {
                     type.variables.append(variable)
                 }
+            }
+            let annotations = rawAnnotations.annotations(for: structure)
+            type.typeAnnotations = annotations.compactMap {
+                return TypeAnnotationParser.parse($0)
+            }
+            type.containerAnnotations = annotations.compactMap {
+                return ContainerAnnotationParser.parse($0)
             }
             return type
         default:

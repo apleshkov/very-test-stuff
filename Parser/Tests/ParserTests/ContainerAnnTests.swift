@@ -12,68 +12,68 @@ class ContainerAnnTests: XCTestCase {
     
     func testName() {
         XCTAssertEqual(
-            ContainerAnnotationParser().parse("name(Foo)"),
+            ContainerAnnotationParser.parse("name(Foo)"),
             ContainerAnnotation.name("Foo")
         )
         XCTAssertEqual(
-            ContainerAnnotationParser().parse("name(  Bar )"),
+            ContainerAnnotationParser.parse("name(  Bar )"),
             ContainerAnnotation.name("Bar")
         )
         XCTAssertEqual(
-            ContainerAnnotationParser().parse("name()"),
+            ContainerAnnotationParser.parse("name()"),
             nil
         )
         XCTAssertEqual(
-            ContainerAnnotationParser().parse("name( )"),
+            ContainerAnnotationParser.parse("name( )"),
             nil
         )
     }
 
     func testScope() {
         XCTAssertEqual(
-            ContainerAnnotationParser().parse("scope(Foo)"),
+            ContainerAnnotationParser.parse("scope(Foo)"),
             ContainerAnnotation.scope("Foo")
         )
         XCTAssertEqual(
-            ContainerAnnotationParser().parse("scope(  Bar )"),
+            ContainerAnnotationParser.parse("scope(  Bar )"),
             ContainerAnnotation.scope("Bar")
         )
         XCTAssertEqual(
-            ContainerAnnotationParser().parse("scope()"),
+            ContainerAnnotationParser.parse("scope()"),
             nil
         )
         XCTAssertEqual(
-            ContainerAnnotationParser().parse("scope( )"),
+            ContainerAnnotationParser.parse("scope( )"),
             nil
         )
     }
 
     func testDependencies() {
         XCTAssertEqual(
-            ContainerAnnotationParser().parse("dependsOn()"),
+            ContainerAnnotationParser.parse("dependsOn()"),
             ContainerAnnotation.dependsOn([])
         )
         XCTAssertEqual(
-            ContainerAnnotationParser().parse("dependsOn(Foo)"),
+            ContainerAnnotationParser.parse("dependsOn(Foo)"),
             ContainerAnnotation.dependsOn([
                 ParsedType(name: "Foo")
                 ])
         )
         XCTAssertEqual(
-            ContainerAnnotationParser().parse("dependsOn(Foo, Bar)"),
+            ContainerAnnotationParser.parse("dependsOn(Foo, Bar)"),
             ContainerAnnotation.dependsOn([
                 ParsedType(name: "Foo"),
                 ParsedType(name: "Bar")
                 ])
         )
         XCTAssertEqual(
-            ContainerAnnotationParser().parse("dependsOn(,Foo,)"),
+            ContainerAnnotationParser.parse("dependsOn(,Foo,)"),
             ContainerAnnotation.dependsOn([
                 ParsedType(name: "Foo")
                 ])
         )
         XCTAssertEqual(
-            ContainerAnnotationParser().parse("dependsOn(Foo?, Bar!)"),
+            ContainerAnnotationParser.parse("dependsOn(Foo?, Bar!)"),
             ContainerAnnotation.dependsOn([
                 ParsedType(name: "Foo", isOptional: true),
                 ParsedType(name: "Bar", isUnwrapped: true)
@@ -83,30 +83,30 @@ class ContainerAnnTests: XCTestCase {
 
     func testExternals() {
         XCTAssertEqual(
-            ContainerAnnotationParser().parse("externals()"),
+            ContainerAnnotationParser.parse("externals()"),
             ContainerAnnotation.externals([])
         )
         XCTAssertEqual(
-            ContainerAnnotationParser().parse("externals(Foo)"),
+            ContainerAnnotationParser.parse("externals(Foo)"),
             ContainerAnnotation.externals([
                 ParsedType(name: "Foo")
                 ])
         )
         XCTAssertEqual(
-            ContainerAnnotationParser().parse("externals(Foo, Bar)"),
+            ContainerAnnotationParser.parse("externals(Foo, Bar)"),
             ContainerAnnotation.externals([
                 ParsedType(name: "Foo"),
                 ParsedType(name: "Bar")
                 ])
         )
         XCTAssertEqual(
-            ContainerAnnotationParser().parse("externals(,Foo,)"),
+            ContainerAnnotationParser.parse("externals(,Foo,)"),
             ContainerAnnotation.externals([
                 ParsedType(name: "Foo")
                 ])
         )
         XCTAssertEqual(
-            ContainerAnnotationParser().parse("externals(Foo?, Bar!)"),
+            ContainerAnnotationParser.parse("externals(Foo?, Bar!)"),
             ContainerAnnotation.externals([
                 ParsedType(name: "Foo", isOptional: true),
                 ParsedType(name: "Bar", isUnwrapped: true)

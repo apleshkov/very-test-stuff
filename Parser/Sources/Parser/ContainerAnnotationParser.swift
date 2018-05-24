@@ -16,7 +16,7 @@ private enum Prefix {
 
 class ContainerAnnotationParser {
 
-    func parse(_ rawString: String) -> ContainerAnnotation? {
+    static func parse(_ rawString: String) -> ContainerAnnotation? {
         let rawString = rawString.trimmingCharacters(in: .whitespaces)
         guard rawString.count > 0 else {
             return nil

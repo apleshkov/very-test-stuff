@@ -12,17 +12,17 @@ class TypeAnnTests: XCTestCase {
     
     func testBound() {
         XCTAssertEqual(
-            TypeAnnotationParser().parse("bindTo()"),
+            TypeAnnotationParser.parse("bindTo()"),
             nil
         )
         XCTAssertEqual(
-            TypeAnnotationParser().parse("bindTo(Foo)"),
+            TypeAnnotationParser.parse("bindTo(Foo)"),
             TypeAnnotation.bound(
                 to: ParsedType(name: "Foo")
             )
         )
         XCTAssertEqual(
-            TypeAnnotationParser().parse("bindTo(Foo?)"),
+            TypeAnnotationParser.parse("bindTo(Foo?)"),
             TypeAnnotation.bound(
                 to: ParsedType(name: "Foo", isOptional: true)
             )
@@ -31,11 +31,11 @@ class TypeAnnTests: XCTestCase {
 
     func testCached() {
         XCTAssertEqual(
-            TypeAnnotationParser().parse("cached()"),
+            TypeAnnotationParser.parse("cached()"),
             nil
         )
         XCTAssertEqual(
-            TypeAnnotationParser().parse("cached"),
+            TypeAnnotationParser.parse("cached"),
             TypeAnnotation.cached
         )
     }

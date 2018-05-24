@@ -116,9 +116,10 @@ class MethodParserTests: XCTestCase {
 }
 
 private func parse(contents: [String]) -> [ParsedMethod] {
-    let text = contents.joined()
-    let structure = try! Structure(file: File(contents: text))
+    let contents = contents.joined(separator: "\n")
+    let rawAnnotations = RawAnnotations(contents: contents)
+    let structure = try! Structure(file: File(contents: contents))
     let substructure = structure.dictionary.swiftSubstructures![0]
-    let type = TypeParser.parse(substructure, contents: text)
+    let type = TypeParser.parse(substructure, rawAnnotations: rawAnnotations)
     return type!.methods
 }
