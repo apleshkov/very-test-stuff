@@ -7,14 +7,14 @@
 
 import Foundation
 
-class FunctionAnnotationParser {
+class MethodAnnotationParser {
 
-    func parse(_ rawString: String) -> FunctionAnnotation? {
+    func parse(_ rawString: String) -> MethodAnnotation? {
         if rawString == "inject" {
-            return FunctionAnnotation.inject
+            return MethodAnnotation.inject
         }
         if rawString == "provider" {
-            return FunctionAnnotation.provider
+            return MethodAnnotation.provider
         }
         return nil
     }

@@ -24,7 +24,7 @@ enum VariableAnnotation: Equatable {
     case inject
 }
 
-enum FunctionAnnotation: Equatable {
+enum MethodAnnotation: Equatable {
     case inject
     case provider
 }
