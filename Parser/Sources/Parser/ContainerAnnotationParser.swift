@@ -8,7 +8,7 @@
 import Foundation
 
 private enum Prefix {
-    static let name = "name"
+    static let name = "container"
     static let scope = "scope"
     static let dependsOn = "dependsOn"
     static let externals = "externals"
@@ -32,7 +32,7 @@ class ContainerAnnotationParser {
         if rawString.hasPrefix(Prefix.dependsOn),
             let args = AnnotationParserHelper.arguments(from: rawString, prefix: Prefix.dependsOn) {
             let types = args.compactMap { TypeParser.parse($0) }
-            return ContainerAnnotation.dependsOn(types)
+            return ContainerAnnotation.dependencies(types)
         }
         if rawString.hasPrefix(Prefix.externals),
             let args = AnnotationParserHelper.arguments(from: rawString, prefix: Prefix.externals) {

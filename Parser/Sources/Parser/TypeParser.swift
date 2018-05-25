@@ -85,13 +85,9 @@ class TypeParser {
                     type.variables.append(variable)
                 }
             }
-            let annotations = rawAnnotations.annotations(for: structure)
-            type.typeAnnotations = annotations.compactMap {
-                return TypeAnnotationParser.parse($0)
-            }
-            type.containerAnnotations = annotations.compactMap {
-                return ContainerAnnotationParser.parse($0)
-            }
+            type.annotations = rawAnnotations
+                .annotations(for: structure)
+                .compactMap { TypeAnnotationParser.parse($0) }
             return type
         default:
             return nil

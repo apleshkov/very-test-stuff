@@ -12,19 +12,19 @@ class ContainerAnnTests: XCTestCase {
     
     func testName() {
         XCTAssertEqual(
-            ContainerAnnotationParser.parse("name(Foo)"),
+            ContainerAnnotationParser.parse("container(Foo)"),
             ContainerAnnotation.name("Foo")
         )
         XCTAssertEqual(
-            ContainerAnnotationParser.parse("name(  Bar )"),
+            ContainerAnnotationParser.parse("container(  Bar )"),
             ContainerAnnotation.name("Bar")
         )
         XCTAssertEqual(
-            ContainerAnnotationParser.parse("name()"),
+            ContainerAnnotationParser.parse("container()"),
             nil
         )
         XCTAssertEqual(
-            ContainerAnnotationParser.parse("name( )"),
+            ContainerAnnotationParser.parse("container( )"),
             nil
         )
     }
@@ -51,30 +51,30 @@ class ContainerAnnTests: XCTestCase {
     func testDependencies() {
         XCTAssertEqual(
             ContainerAnnotationParser.parse("dependsOn()"),
-            ContainerAnnotation.dependsOn([])
+            ContainerAnnotation.dependencies([])
         )
         XCTAssertEqual(
             ContainerAnnotationParser.parse("dependsOn(Foo)"),
-            ContainerAnnotation.dependsOn([
+            ContainerAnnotation.dependencies([
                 ParsedType(name: "Foo")
                 ])
         )
         XCTAssertEqual(
             ContainerAnnotationParser.parse("dependsOn(Foo, Bar)"),
-            ContainerAnnotation.dependsOn([
+            ContainerAnnotation.dependencies([
                 ParsedType(name: "Foo"),
                 ParsedType(name: "Bar")
                 ])
         )
         XCTAssertEqual(
             ContainerAnnotationParser.parse("dependsOn(,Foo,)"),
-            ContainerAnnotation.dependsOn([
+            ContainerAnnotation.dependencies([
                 ParsedType(name: "Foo")
                 ])
         )
         XCTAssertEqual(
             ContainerAnnotationParser.parse("dependsOn(Foo?, Bar!)"),
-            ContainerAnnotation.dependsOn([
+            ContainerAnnotation.dependencies([
                 ParsedType(name: "Foo", isOptional: true),
                 ParsedType(name: "Bar", isUnwrapped: true)
                 ])

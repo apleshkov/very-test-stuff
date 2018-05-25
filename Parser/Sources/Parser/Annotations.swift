@@ -10,7 +10,7 @@ import Foundation
 enum ContainerAnnotation: Equatable {
     case name(String)
     case scope(String)
-    case dependsOn([ParsedType])
+    case dependencies([ParsedType])
     case externals([ParsedType])
 }
 

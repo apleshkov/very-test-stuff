@@ -23,9 +23,7 @@ struct ParsedType: Equatable {
 
     var methods: [ParsedMethod] = []
     
-    var typeAnnotations: [TypeAnnotation] = []
-    
-    var containerAnnotations: [ContainerAnnotation] = []
+    var annotations: [TypeAnnotation] = []
 
     var isReference: Bool = false
 
@@ -54,15 +52,9 @@ struct ParsedType: Equatable {
         return result
     }
     
-    func add(typeAnnotation: TypeAnnotation) -> ParsedType {
+    func add(annotation: TypeAnnotation) -> ParsedType {
         var result = self
-        result.typeAnnotations.append(typeAnnotation)
-        return result
-    }
-    
-    func add(containerAnnotation: ContainerAnnotation) -> ParsedType {
-        var result = self
-        result.containerAnnotations.append(containerAnnotation)
+        result.annotations.append(annotation)
         return result
     }
 }

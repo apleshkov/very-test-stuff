@@ -87,43 +87,20 @@ class TypeParserTests: XCTestCase {
     
     func testTypeAnnotations() {
         XCTAssertEqual(
-            parse(contents: [
-                "struct Foo {}",
-                "// текст на русском",
-                "// @saber.cached",
-                "// @saber.bindTo(Baz)",
-                "struct Bar {}"
-                ]),
+            parse(contents:
+                """
+                struct Foo {}
+                // текст на русском
+                // @saber.cached
+                // @saber.bindTo(Baz)
+                struct Bar {}
+                """
+            ),
             [
                 ParsedType(name: "Foo"),
                 ParsedType(name: "Bar")
-                    .add(typeAnnotation: .bound(to: ParsedType(name: "Baz")))
-                    .add(typeAnnotation: .cached)
-            ]
-        )
-    }
-    
-    func testContainerAnnotations() {
-        XCTAssertEqual(
-            parse(contents: [
-                "// @saber.name(FooContainer)",
-                "// @saber.scope(FooScope)",
-                "// @saber.dependsOn(BarContainer, BazContainer)",
-                "// @saber.externals(FooExternals1, FooExternals2)",
-                "private struct FooContainerConfiguration {}"
-                ]),
-            [
-                ParsedType(name: "FooContainerConfiguration")
-                    .add(containerAnnotation: .externals([
-                        ParsedType(name: "FooExternals1"),
-                        ParsedType(name: "FooExternals2")
-                        ]))
-                    .add(containerAnnotation: .dependsOn([
-                        ParsedType(name: "BarContainer"),
-                        ParsedType(name: "BazContainer")
-                        ]))
-                    .add(containerAnnotation: .scope("FooScope"))
-                    .add(containerAnnotation: .name("FooContainer"))
+                    .add(annotation: .bound(to: ParsedType(name: "Baz")))
+                    .add(annotation: .cached)
             ]
         )
     }
@@ -135,8 +112,4 @@ private func parse(contents: String) -> [ParsedType] {
     return structure.dictionary.swiftSubstructures!.compactMap {
         return TypeParser.parse($0, rawAnnotations: rawAnnotations)
     }
-}
-
-private func parse(contents: [String]) -> [ParsedType] {
-    return parse(contents: contents.joined(separator: "\n"))
 }
