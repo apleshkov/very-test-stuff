@@ -54,4 +54,8 @@ extension Dictionary where Key == String, Value == SourceKitRepresentable {
     var swiftSubstructures: [[String: SourceKitRepresentable]]? {
         return self[SwiftDocKey.substructure] as? [[String: SourceKitRepresentable]]
     }
+
+    var swiftInherited: [[String: SourceKitRepresentable]]? {
+        return self[SwiftDocKey.inheritedtypes] as? [[String: SourceKitRepresentable]]
+    }
 }

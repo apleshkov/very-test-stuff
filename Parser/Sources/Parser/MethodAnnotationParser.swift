@@ -9,7 +9,7 @@ import Foundation
 
 class MethodAnnotationParser {
 
-    func parse(_ rawString: String) -> MethodAnnotation? {
+    static func parse(_ rawString: String) -> MethodAnnotation? {
         if rawString == "inject" {
             return MethodAnnotation.inject
         }

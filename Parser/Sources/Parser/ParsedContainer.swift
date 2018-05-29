@@ -15,15 +15,15 @@ struct ParsedContainer: Equatable {
 
     var protocolName: String
 
-    var dependencies: [ParsedType] = []
+    var dependencies: [ParsedTypeUsage] = []
 
-    var externals: [ParsedType] = []
+    var externals: [ParsedTypeUsage] = []
 
     init(name: String,
          scopeName: String,
          protocolName: String,
-         dependencies: [ParsedType] = [],
-         externals: [ParsedType] = []) {
+         dependencies: [ParsedTypeUsage] = [],
+         externals: [ParsedTypeUsage] = []) {
         self.name = name
         self.scopeName = scopeName
         self.protocolName = protocolName

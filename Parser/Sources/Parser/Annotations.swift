@@ -10,17 +10,16 @@ import Foundation
 enum ContainerAnnotation: Equatable {
     case name(String)
     case scope(String)
-    case dependencies([ParsedType])
-    case externals([ParsedType])
+    case dependencies([ParsedTypeUsage])
+    case externals([ParsedTypeUsage])
 }
 
 enum TypeAnnotation: Equatable {
-    case bound(to: ParsedType)
+    case bound(to: ParsedTypeUsage)
     case cached
-    case scope(String)
 }
 
-enum VariableAnnotation: Equatable {
+enum PropertyAnnotation: Equatable {
     case inject
 }
 

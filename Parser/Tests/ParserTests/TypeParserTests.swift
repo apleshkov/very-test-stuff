@@ -11,55 +11,6 @@ import SourceKittenFramework
 
 class TypeParserTests: XCTestCase {
 
-    func testSimple() {
-        XCTAssertEqual(
-            TypeParser.parse("Foo"),
-            ParsedType(name: "Foo")
-        )
-        XCTAssertEqual(
-            TypeParser.parse("(Foo)"),
-            ParsedType(name: "Foo")
-        )
-        XCTAssertEqual(
-            TypeParser.parse("( Foo  )"),
-            ParsedType(name: "Foo")
-        )
-        XCTAssertEqual(
-            TypeParser.parse("( (Foo )  )"),
-            ParsedType(name: "Foo")
-        )
-    }
-
-    func testOptional() {
-        XCTAssertEqual(
-            TypeParser.parse("Foo?"),
-            ParsedType(name: "Foo", isOptional: true)
-        )
-    }
-
-    func testUnwrapped() {
-        XCTAssertEqual(
-            TypeParser.parse("Foo!"),
-            ParsedType(name: "Foo", isUnwrapped: true)
-        )
-    }
-
-    func testGenrics() {
-        XCTAssertEqual(
-            TypeParser.parse("Foo<Bar, Baz?>"),
-            ParsedType(name: "Foo")
-                .add(generic: ParsedType(name: "Bar"))
-                .add(generic: ParsedType(name: "Baz", isOptional: true))
-        )
-    }
-
-    func testNested() {
-        XCTAssertEqual(
-            TypeParser.parse("Foo.Bar.Baz"),
-            ParsedType(name: "Foo.Bar.Baz")
-        )
-    }
-
     func testSimpleDecl() {
         XCTAssertEqual(
             parse(contents: "class Foo {}"),
@@ -81,7 +32,7 @@ class TypeParserTests: XCTestCase {
     func testInheritedDecl() {
         XCTAssertEqual(
             parse(contents: "struct Foo: Bar {}"),
-            [ParsedType(name: "Foo").add(inheritedFrom: ParsedType(name: "Bar"))]
+            [ParsedType(name: "Foo").add(inheritedFrom: ParsedTypeUsage(name: "Bar"))]
         )
     }
     
@@ -99,7 +50,7 @@ class TypeParserTests: XCTestCase {
             [
                 ParsedType(name: "Foo"),
                 ParsedType(name: "Bar")
-                    .add(annotation: .bound(to: ParsedType(name: "Baz")))
+                    .add(annotation: .bound(to: ParsedTypeUsage(name: "Baz")))
                     .add(annotation: .cached)
             ]
         )

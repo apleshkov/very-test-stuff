@@ -11,5 +11,5 @@ struct ParsedArgument: Equatable {
 
     var name: String?
 
-    var type: ParsedType
+    var type: ParsedTypeUsage
 }

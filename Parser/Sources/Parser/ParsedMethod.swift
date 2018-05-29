@@ -13,14 +13,21 @@ struct ParsedMethod: Equatable {
 
     var args: [ParsedArgument] = []
 
-    var returnType: ParsedType?
+    var returnType: ParsedTypeUsage?
 
     var isStatic: Bool = false
 
-    init(name: String, args: [ParsedArgument] = [], returnType: ParsedType? = nil, isStatic: Bool = false) {
+    var annotations: [MethodAnnotation] = []
+
+    init(name: String,
+         args: [ParsedArgument] = [],
+         returnType: ParsedTypeUsage? = nil,
+         isStatic: Bool = false,
+         annotations: [MethodAnnotation] = []) {
         self.name = name
         self.args = args
         self.returnType = returnType
         self.isStatic = isStatic
+        self.annotations = annotations
     }
 }

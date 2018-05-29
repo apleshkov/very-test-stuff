@@ -8,9 +8,10 @@
 import Foundation
 import SourceKittenFramework
 
-class VariableParser {
+class PropertyParser {
 
-    static func parse(_ structure: [String : SourceKitRepresentable]) -> ParsedVariable? {
+    static func parse(_ structure: [String : SourceKitRepresentable],
+                      rawAnnotations: RawAnnotations) -> ParsedProperty? {
         guard let kind = structure.swiftDeclKind,
             let name = structure.swiftName,
             let typeName = structure.swiftTypeName else {
@@ -18,10 +19,14 @@ class VariableParser {
         }
         switch kind {
         case .varInstance:
-            guard let type = TypeParser.parse(typeName) else {
+            guard let type = TypeUsageParser.parse(typeName) else {
                 return nil
             }
-            return ParsedVariable(name: name, type: type)
+            return ParsedProperty(
+                name: name,
+                type: type,
+                annotations: rawAnnotations.annotations(for: structure).compactMap { PropertyAnnotationParser.parse($0) }
+            )
         default:
             return nil
         }

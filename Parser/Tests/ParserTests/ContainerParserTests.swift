@@ -85,14 +85,14 @@ class ContainerParserTests: XCTestCase {
                     scopeName: "FooScope",
                     protocolName: "FooContaining",
                     dependencies: [
-                        ParsedType(name: "QuuxContainer"),
-                        ParsedType(name: "BarContainer"),
-                        ParsedType(name: "BazContainer")
+                        ParsedTypeUsage(name: "QuuxContainer"),
+                        ParsedTypeUsage(name: "BarContainer"),
+                        ParsedTypeUsage(name: "BazContainer")
                     ],
                     externals: [
-                        ParsedType(name: "FooExternals1"),
-                        ParsedType(name: "FooExternals2"),
-                        ParsedType(name: "FooExternals3")
+                        ParsedTypeUsage(name: "FooExternals1"),
+                        ParsedTypeUsage(name: "FooExternals2"),
+                        ParsedTypeUsage(name: "FooExternals3")
                     ]
                 )
             ]

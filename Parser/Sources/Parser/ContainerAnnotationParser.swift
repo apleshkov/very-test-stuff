@@ -31,12 +31,12 @@ class ContainerAnnotationParser {
         }
         if rawString.hasPrefix(Prefix.dependsOn),
             let args = AnnotationParserHelper.arguments(from: rawString, prefix: Prefix.dependsOn) {
-            let types = args.compactMap { TypeParser.parse($0) }
+            let types = args.compactMap { TypeUsageParser.parse($0) }
             return ContainerAnnotation.dependencies(types)
         }
         if rawString.hasPrefix(Prefix.externals),
             let args = AnnotationParserHelper.arguments(from: rawString, prefix: Prefix.externals) {
-            let types = args.compactMap { TypeParser.parse($0) }
+            let types = args.compactMap { TypeUsageParser.parse($0) }
             return ContainerAnnotation.externals(types)
         }
         return nil

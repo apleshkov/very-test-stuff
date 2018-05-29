@@ -18,13 +18,13 @@ class TypeAnnTests: XCTestCase {
         XCTAssertEqual(
             TypeAnnotationParser.parse("bindTo(Foo)"),
             TypeAnnotation.bound(
-                to: ParsedType(name: "Foo")
+                to: ParsedTypeUsage(name: "Foo")
             )
         )
         XCTAssertEqual(
             TypeAnnotationParser.parse("bindTo(Foo?)"),
             TypeAnnotation.bound(
-                to: ParsedType(name: "Foo", isOptional: true)
+                to: ParsedTypeUsage(name: "Foo", isOptional: true)
             )
         )
     }

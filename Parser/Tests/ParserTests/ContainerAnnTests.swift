@@ -56,27 +56,27 @@ class ContainerAnnTests: XCTestCase {
         XCTAssertEqual(
             ContainerAnnotationParser.parse("dependsOn(Foo)"),
             ContainerAnnotation.dependencies([
-                ParsedType(name: "Foo")
+                ParsedTypeUsage(name: "Foo")
                 ])
         )
         XCTAssertEqual(
             ContainerAnnotationParser.parse("dependsOn(Foo, Bar)"),
             ContainerAnnotation.dependencies([
-                ParsedType(name: "Foo"),
-                ParsedType(name: "Bar")
+                ParsedTypeUsage(name: "Foo"),
+                ParsedTypeUsage(name: "Bar")
                 ])
         )
         XCTAssertEqual(
             ContainerAnnotationParser.parse("dependsOn(,Foo,)"),
             ContainerAnnotation.dependencies([
-                ParsedType(name: "Foo")
+                ParsedTypeUsage(name: "Foo")
                 ])
         )
         XCTAssertEqual(
             ContainerAnnotationParser.parse("dependsOn(Foo?, Bar!)"),
             ContainerAnnotation.dependencies([
-                ParsedType(name: "Foo", isOptional: true),
-                ParsedType(name: "Bar", isUnwrapped: true)
+                ParsedTypeUsage(name: "Foo", isOptional: true),
+                ParsedTypeUsage(name: "Bar", isUnwrapped: true)
                 ])
         )
     }
@@ -89,27 +89,27 @@ class ContainerAnnTests: XCTestCase {
         XCTAssertEqual(
             ContainerAnnotationParser.parse("externals(Foo)"),
             ContainerAnnotation.externals([
-                ParsedType(name: "Foo")
+                ParsedTypeUsage(name: "Foo")
                 ])
         )
         XCTAssertEqual(
             ContainerAnnotationParser.parse("externals(Foo, Bar)"),
             ContainerAnnotation.externals([
-                ParsedType(name: "Foo"),
-                ParsedType(name: "Bar")
+                ParsedTypeUsage(name: "Foo"),
+                ParsedTypeUsage(name: "Bar")
                 ])
         )
         XCTAssertEqual(
             ContainerAnnotationParser.parse("externals(,Foo,)"),
             ContainerAnnotation.externals([
-                ParsedType(name: "Foo")
+                ParsedTypeUsage(name: "Foo")
                 ])
         )
         XCTAssertEqual(
             ContainerAnnotationParser.parse("externals(Foo?, Bar!)"),
             ContainerAnnotation.externals([
-                ParsedType(name: "Foo", isOptional: true),
-                ParsedType(name: "Bar", isUnwrapped: true)
+                ParsedTypeUsage(name: "Foo", isOptional: true),
+                ParsedTypeUsage(name: "Bar", isUnwrapped: true)
                 ])
         )
     }

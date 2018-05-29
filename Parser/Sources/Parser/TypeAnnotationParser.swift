@@ -21,7 +21,7 @@ class TypeAnnotationParser {
         }
         if rawString.hasPrefix(Prefix.bound),
             let content = AnnotationParserHelper.argument(from: rawString, prefix: Prefix.bound),
-            let type = TypeParser.parse(content) {
+            let type = TypeUsageParser.parse(content) {
             return TypeAnnotation.bound(to: type)
         }
         if rawString == Prefix.cached {

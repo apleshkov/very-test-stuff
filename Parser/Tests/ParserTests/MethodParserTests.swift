@@ -13,30 +13,34 @@ class MethodParserTests: XCTestCase {
 
     func testName() {
         XCTAssertEqual(
-            parse(contents: [
-                "struct Foo {",
-                "func foo() {}",
-                "func bar<T>(x: Int) {}",
-                "}"
-                ]).map { $0.name },
+            parse(contents:
+                """
+                struct Foo {
+                func foo() {}
+                func bar<T>(x: Int) {}
+                }
+                """
+                ).map { $0.name },
             ["foo", "bar"]
         )
     }
 
     func testVoid() {
         XCTAssertEqual(
-            parse(contents: [
-                "struct Foo {",
-                "func foo() {}",
-                "func bar() -> Void {}",
-                "func baz() -> Swift.Void {}",
-                "func quux() -> () {}",
-                "}"
-                ]).map { $0.returnType },
+            parse(contents:
+                """
+                struct Foo {
+                func foo() {}
+                func bar() -> Void {}
+                func baz() -> Swift.Void {}
+                func quux() -> () {}
+                }
+                """
+                ).map { $0.returnType },
             [
                 nil,
-                ParsedType(name: "Void"),
-                ParsedType(name: "Swift.Void"),
+                ParsedTypeUsage(name: "Void"),
+                ParsedTypeUsage(name: "Swift.Void"),
                 nil
             ]
         )
@@ -44,29 +48,31 @@ class MethodParserTests: XCTestCase {
 
     func testArgs() {
         XCTAssertEqual(
-            parse(contents: [
-                "struct Foo {",
-                "func bar(_ x: Int!, baz: Baz, quux: Quux?, promise: Promise<String>) {}",
-                "}"
-                ]).map { $0.args },
+            parse(contents:
+                """
+                struct Foo {
+                func bar(_ x: Int!, baz: Baz, quux: Quux?, promise: Promise<String>) {}
+                }
+                """
+                ).map { $0.args },
             [
                 [
                     ParsedArgument(
                         name: nil,
-                        type: ParsedType(name: "Int", isUnwrapped: true)
+                        type: ParsedTypeUsage(name: "Int", isUnwrapped: true)
                     ),
                     ParsedArgument(
                         name: "baz",
-                        type: ParsedType(name: "Baz")
+                        type: ParsedTypeUsage(name: "Baz")
                     ),
                     ParsedArgument(
                         name: "quux",
-                        type: ParsedType(name: "Quux", isOptional: true)
+                        type: ParsedTypeUsage(name: "Quux", isOptional: true)
                     ),
                     ParsedArgument(
                         name: "promise",
-                        type: ParsedType(name: "Promise")
-                            .add(generic: ParsedType(name: "String"))
+                        type: ParsedTypeUsage(name: "Promise")
+                            .add(generic: ParsedTypeUsage(name: "String"))
                     )
                 ]
             ]
@@ -75,11 +81,13 @@ class MethodParserTests: XCTestCase {
 
     func testTuple() {
         XCTAssertEqual(
-            parse(contents: [
-                "struct Foo {",
-                "func foo() -> (x: Int, y: Int, Dictionary<String, String>) {}",
-                "}"
-                ]).map { $0.returnType },
+            parse(contents:
+                """
+                struct Foo {
+                func foo() -> (x: Int, y: Int, Dictionary<String, String>) {}
+                }
+                """
+                ).map { $0.returnType },
             [
                 nil
             ]
@@ -88,11 +96,13 @@ class MethodParserTests: XCTestCase {
 
     func testLambda() {
         XCTAssertEqual(
-            parse(contents: [
-                "struct Foo {",
-                "func foo() -> (x: Int) -> () {}",
-                "}"
-                ]).map { $0.returnType },
+            parse(contents:
+                """
+                struct Foo {
+                func foo() -> (x: Int) -> () {}
+                }
+                """
+                ).map { $0.returnType },
             [
                 nil
             ]
@@ -101,22 +111,54 @@ class MethodParserTests: XCTestCase {
 
     func testStatic() {
         XCTAssertEqual(
-            parse(contents: [
-                "class Foo {",
-                "static func foo() {}",
-                "class func bar() {}",
-                "}"
-                ]),
+            parse(contents:
+                """
+                class Foo {
+                static func foo() {}
+                class func bar() {}
+                }
+                """
+            ),
             [
                 ParsedMethod(name: "foo", args: [], returnType: nil, isStatic: true),
                 ParsedMethod(name: "bar", args: [], returnType: nil, isStatic: true)
             ]
         )
     }
+
+    func testAnnotated() {
+        XCTAssertEqual(
+            parse(contents:
+                """
+                class Foo {
+                // @saber.inject
+                func set(bar: Bar, baz: Baz) {}
+                // @saber.provider
+                static func provide() -> Foo {}
+                }
+                """
+            ),
+            [
+                ParsedMethod(
+                    name: "set",
+                    args: [
+                        ParsedArgument(name: "bar", type: ParsedTypeUsage(name: "Bar")),
+                        ParsedArgument(name: "baz", type: ParsedTypeUsage(name: "Baz"))
+                    ],
+                    annotations: [.inject]
+                ),
+                ParsedMethod(
+                    name: "provide",
+                    returnType: ParsedTypeUsage(name: "Foo"),
+                    isStatic: true,
+                    annotations: [.provider]
+                )
+            ]
+        )
+    }
 }
 
-private func parse(contents: [String]) -> [ParsedMethod] {
-    let contents = contents.joined(separator: "\n")
+private func parse(contents: String) -> [ParsedMethod] {
     let rawAnnotations = RawAnnotations(contents: contents)
     let structure = try! Structure(file: File(contents: contents))
     let substructure = structure.dictionary.swiftSubstructures![0]

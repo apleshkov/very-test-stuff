@@ -22,8 +22,8 @@ class ContainerParser {
         }
         var foundName: String? = nil
         var foundScopeName: String? = nil
-        var foundDependencies: [ParsedType] = []
-        var foundExternals: [ParsedType] = []
+        var foundDependencies: [ParsedTypeUsage] = []
+        var foundExternals: [ParsedTypeUsage] = []
         annotations.forEach {
             switch $0 {
             case .name(let name):
