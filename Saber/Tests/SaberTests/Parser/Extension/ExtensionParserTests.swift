@@ -134,6 +134,30 @@ class ExtensionParserTests: XCTestCase {
             ]
         )
     }
+    
+    func testMembers() {
+        XCTAssertEqual(
+            parse(contents:
+                """
+                extension Foo {
+                    // @saber.inject
+                    func foo() {}
+                    // @saber.inject
+                    var bar: Int {
+                        get {}
+                        set {}
+                    }
+                }
+                """
+            ),
+            [
+                ParsedExtension(typeName: "Foo")
+                    .add(method: ParsedMethod(name: "foo", annotations: [.inject]))
+                    .add(property: ParsedProperty(name: "bar", type: ParsedTypeUsage(name: "Int"), annotations: [.inject]))
+            ]
+        )
+        
+    }
 }
 
 private func parse(contents: String) -> [ParsedExtension] {

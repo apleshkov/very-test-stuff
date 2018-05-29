@@ -23,9 +23,10 @@ struct ParsedType: Equatable {
 
     var nested: [NestedParsedDecl] = []
 
-    init(name: String, isOptional: Bool = false, isUnwrapped: Bool = false, isReference: Bool = false) {
+    init(name: String, isReference: Bool = false, nested: [NestedParsedDecl] = []) {
         self.name = name
         self.isReference = isReference
+        self.nested = nested
     }
 
     func add(inheritedFrom inherited: ParsedTypeUsage) -> ParsedType {

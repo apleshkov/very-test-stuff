@@ -22,15 +22,23 @@ class FileParser {
         self.moduleName = moduleName
     }
 
-    func parse(to data: inout ParsedData) throws {
+    func parse(to data: ParsedDataFactory) {
+        parse(structure, to: data)
+    }
+    
+    private func parse(_ structure: [String : SourceKitRepresentable], to data: ParsedDataFactory) {
         if let type = TypeParser.parse(structure, rawAnnotations: rawAnnotations) {
-            process(type, parent: nil, data: &data)
+            process(type, parent: nil, data: data)
         } else if let ext = ExtensionParser.parse(structure, rawAnnotations: rawAnnotations) {
-            process(ext, parent: nil, data: &data)
+            process(ext, parent: nil, data: data)
+        } else {
+            structure.swiftSubstructures?.forEach {
+                parse($0, to: data)
+            }
         }
     }
 
-    private func process(_ type: ParsedType, parent: NestedParsedDecl?, data: inout ParsedData) {
+    private func process(_ type: ParsedType, parent: NestedParsedDecl?, data: ParsedDataFactory) {
         var type = type
         if let parentName = parent?.name {
             type.name = "\(parentName).\(type.name)"
@@ -39,14 +47,14 @@ class FileParser {
         type.nested.forEach {
             switch $0 {
             case .type(let nestedType):
-                process(nestedType, parent: .type(type), data: &data)
+                process(nestedType, parent: .type(type), data: data)
             case .extension(let nestedExt):
-                process(nestedExt, parent: .type(type), data: &data)
+                process(nestedExt, parent: .type(type), data: data)
             }
         }
     }
 
-    private func process(_ ext: ParsedExtension, parent: NestedParsedDecl?, data: inout ParsedData) {
+    private func process(_ ext: ParsedExtension, parent: NestedParsedDecl?, data: ParsedDataFactory) {
         var ext = ext
         if let parentName = parent?.name {
             ext.typeName = "\(parentName).\(ext.typeName)"
@@ -55,9 +63,9 @@ class FileParser {
         ext.nested.forEach {
             switch $0 {
             case .type(let nestedType):
-                process(nestedType, parent: .extension(ext), data: &data)
+                process(nestedType, parent: .extension(ext), data: data)
             case .extension(let nestedExt):
-                process(nestedExt, parent: .extension(ext), data: &data)
+                process(nestedExt, parent: .extension(ext), data: data)
             }
         }
     }

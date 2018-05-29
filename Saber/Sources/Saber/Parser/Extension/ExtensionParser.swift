@@ -32,6 +32,12 @@ class ExtensionParser {
                 if let nestedExtension = ExtensionParser.parse($0, rawAnnotations: rawAnnotations) {
                     ext.nested.append(.extension(nestedExtension))
                 }
+                if let method = MethodParser.parse($0, rawAnnotations: rawAnnotations) {
+                    ext.methods.append(method)
+                }
+                if let property = PropertyParser.parse($0, rawAnnotations: rawAnnotations) {
+                    ext.properties.append(property)
+                }
             }
             return ext
         default:
