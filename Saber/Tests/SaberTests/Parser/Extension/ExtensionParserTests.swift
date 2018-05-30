@@ -123,13 +123,15 @@ class ExtensionParserTests: XCTestCase {
                 extension Foo {
                     struct Bar {}
                     extension Baz {}
+                    typealias Quux = Int
                 }
                 """
                 ).map { $0.nested },
             [
                 [
                     .type(ParsedType(name: "Bar")),
-                    .extension(ParsedExtension(typeName: "Baz"))
+                    .extension(ParsedExtension(typeName: "Baz")),
+                    .typealias(ParsedTypealias(name: "Quux", type: ParsedTypeUsage(name: "Int")))
                 ]
             ]
         )

@@ -34,6 +34,9 @@ class TypeParser {
                 if let nestedExtension = ExtensionParser.parse($0, rawAnnotations: rawAnnotations) {
                     type.nested.append(.extension(nestedExtension))
                 }
+                if let nestedTypealias = TypealiasParser.parse($0, rawAnnotations: rawAnnotations) {
+                    type.nested.append(.typealias(nestedTypealias))
+                }
                 if let method = MethodParser.parse($0, rawAnnotations: rawAnnotations) {
                     type.methods.append(method)
                 }

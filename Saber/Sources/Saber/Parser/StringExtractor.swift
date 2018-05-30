@@ -8,10 +8,9 @@
 import Foundation
 import SourceKittenFramework
 
-enum Substring {
+enum StringExtractor {
+
     case key
-    case name
-    case fullName
     
     private func extract(from structure: [String : SourceKitRepresentable], offsetKey: SwiftDocKey, lengthKey: SwiftDocKey) -> Range<Int>? {
         guard let offset = structure[offsetKey] as? Int64 else {
@@ -27,14 +26,6 @@ enum Substring {
         switch self {
         case .key:
             return extract(from: structure, offsetKey: .offset, lengthKey: .length)
-        case .name:
-            return extract(from: structure, offsetKey: .nameOffset, lengthKey: .nameLength)
-        case .fullName:
-            guard let nameRange = Substring.name.range(for: structure),
-                let keyRange = Substring.key.range(for: structure) else {
-                return nil
-            }
-            return nameRange.lowerBound..<keyRange.upperBound
         }
     }
     

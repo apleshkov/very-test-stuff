@@ -31,6 +31,8 @@ class FileParser {
             process(type, parent: nil, data: data)
         } else if let ext = ExtensionParser.parse(structure, rawAnnotations: rawAnnotations) {
             process(ext, parent: nil, data: data)
+        } else if let alias = TypealiasParser.parse(structure, rawAnnotations: rawAnnotations) {
+            process(alias, parent: nil, data: data)
         } else {
             structure.swiftSubstructures?.forEach {
                 parse($0, to: data)
@@ -40,6 +42,7 @@ class FileParser {
 
     private func process(_ type: ParsedType, parent: NestedParsedDecl?, data: ParsedDataFactory) {
         var type = type
+        type.moduleName = moduleName
         if let parentName = parent?.name {
             type.name = "\(parentName).\(type.name)"
         }
@@ -50,6 +53,8 @@ class FileParser {
                 process(nestedType, parent: .type(type), data: data)
             case .extension(let nestedExt):
                 process(nestedExt, parent: .type(type), data: data)
+            case .typealias(let alias):
+                process(alias, parent: .type(type), data: data)
             }
         }
     }
@@ -66,7 +71,18 @@ class FileParser {
                 process(nestedType, parent: .extension(ext), data: data)
             case .extension(let nestedExt):
                 process(nestedExt, parent: .extension(ext), data: data)
+            case .typealias(let alias):
+                process(alias, parent: .extension(ext), data: data)
             }
         }
+    }
+
+    private func process(_ alias: ParsedTypealias, parent: NestedParsedDecl?, data: ParsedDataFactory) {
+        var alias = alias
+        alias.moduleName = moduleName
+        if let parentName = parent?.name {
+            alias.name = "\(parentName).\(alias.name)"
+        }
+        data.register(alias)
     }
 }

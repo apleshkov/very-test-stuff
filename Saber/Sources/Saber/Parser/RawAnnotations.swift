@@ -22,6 +22,7 @@ class RawAnnotations {
     static let defaultPrefix = "@saber."
     
     let contents: String
+    
     private let lines: [ParsedLine]
 
     init(contents: String, prefix: String = RawAnnotations.defaultPrefix) {

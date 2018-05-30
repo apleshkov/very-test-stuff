@@ -15,6 +15,8 @@ class FileParserTests: XCTestCase {
         try! FileParser(contents:
             """
             extension Foo {
+                typealias FooInt = Int
+
                 extension Bar {
                     // @saber.inject
                     func set() {}
@@ -23,6 +25,8 @@ class FileParserTests: XCTestCase {
             extension Foo.Bar.Baz {
                 // @saber.inject
                 func set() {}
+
+                typealias BazInt = Int
             }
             """
         ).parse(to: factory)
@@ -32,6 +36,8 @@ class FileParserTests: XCTestCase {
                 struct Bar {
                     // @saber.cached
                     struct Baz {}
+
+                    typealias BarInt = Int
                 }
             }
             """
@@ -53,6 +59,37 @@ class FileParserTests: XCTestCase {
         XCTAssertEqual(
             data.types["Foo.Bar.Baz"]?.methods,
             [ParsedMethod(name: "set", annotations: [.inject])]
+        )
+        XCTAssertEqual(
+            data.aliases["Foo.FooInt"]?.type,
+            ParsedTypeUsage(name: "Int")
+        )
+        XCTAssertEqual(
+            data.aliases["Foo.Bar.BarInt"]?.type,
+            ParsedTypeUsage(name: "Int")
+        )
+        XCTAssertEqual(
+            data.aliases["Foo.Bar.Baz.BazInt"]?.type,
+            ParsedTypeUsage(name: "Int")
+        )
+    }
+
+    func testModuleName() {
+        let factory = ParsedDataFactory()
+        try! FileParser(contents:
+            """
+            class Foo {}
+            typealias Bar = Foo
+            """, moduleName: "A"
+            ).parse(to: factory)
+        let data = factory.make()
+        XCTAssertEqual(
+            data.types["Foo"]?.moduleName,
+            "A"
+        )
+        XCTAssertEqual(
+            data.aliases["Bar"]?.moduleName,
+            "A"
         )
     }
 }

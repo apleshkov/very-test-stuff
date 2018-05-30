@@ -11,8 +11,8 @@ import SourceKittenFramework
 
 extension FileParser {
     
-    convenience init(contents: String) throws {
+    convenience init(contents: String, moduleName: String? = nil) throws {
         let file = File(contents: contents)
-        try self.init(file: file, moduleName: nil)
+        try self.init(file: file, moduleName: moduleName)
     }
 }

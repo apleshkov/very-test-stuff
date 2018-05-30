@@ -10,7 +10,9 @@ import Foundation
 struct ParsedType: Equatable {
 
     var name: String
-    
+
+    var moduleName: String? = nil
+
     var inheritedFrom: [ParsedTypeUsage] = []
 
     var properties: [ParsedProperty] = []

@@ -10,6 +10,8 @@ import Foundation
 struct ParsedData: Equatable {
     
     var types: [String : ParsedType] = [:]
+
+    var aliases: [String : ParsedTypealias] = [:]
 }
 
 // MARK: Factory
@@ -18,6 +20,8 @@ class ParsedDataFactory {
 
     private var allTypes: [String : ParsedType] = [:]
 
+    private var aliases: [String : ParsedTypealias] = [:]
+
     private var postponed: [ParsedExtension] = []
     
     init() {}
@@ -25,6 +29,10 @@ class ParsedDataFactory {
     func register(_ type: ParsedType) {
         assert(allTypes[type.name] == nil)
         allTypes[type.name] = type
+    }
+
+    func register(_ alias: ParsedTypealias) {
+        aliases[alias.name] = alias
     }
 
     @discardableResult
@@ -40,12 +48,12 @@ class ParsedDataFactory {
         allTypes[type.name] = type
         return true
     }
-    
+
     func make() -> ParsedData {
         postponed = postponed.filter {
             return !register($0)
         }
         assert(postponed.count == 0)
-        return ParsedData(types: allTypes)
+        return ParsedData(types: allTypes, aliases: aliases)
     }
 }
