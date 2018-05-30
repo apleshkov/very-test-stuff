@@ -63,5 +63,7 @@ extension Type: Hashable {
         return lhs.name == rhs.name
     }
 
-    var hashValue: Int { return name.hashValue }
+    var hashValue: Int {
+        return name.hashValue
+    }
 }

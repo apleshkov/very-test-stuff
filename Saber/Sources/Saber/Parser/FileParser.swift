@@ -27,7 +27,9 @@ class FileParser {
     }
     
     private func parse(_ structure: [String : SourceKitRepresentable], to data: ParsedDataFactory) {
-        if let type = TypeParser.parse(structure, rawData: rawData) {
+        if let container = ContainerParser.parse(structure, rawData: rawData) {
+            data.register(container)
+        } else if let type = TypeParser.parse(structure, rawData: rawData) {
             process(type, parent: nil, data: data)
         } else if let ext = ExtensionParser.parse(structure, rawData: rawData) {
             process(ext, parent: nil, data: data)

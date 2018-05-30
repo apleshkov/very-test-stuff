@@ -9,6 +9,8 @@ import Foundation
 
 struct ParsedData: Equatable {
     
+    var containers: [String : ParsedContainer] = [:]
+    
     var types: [String : ParsedType] = [:]
 
     var aliases: [String : ParsedTypealias] = [:]
@@ -18,7 +20,9 @@ struct ParsedData: Equatable {
 
 class ParsedDataFactory {
 
-    private var allTypes: [String : ParsedType] = [:]
+    private var containers: [String : ParsedContainer] = [:]
+    
+    private var types: [String : ParsedType] = [:]
 
     private var aliases: [String : ParsedTypealias] = [:]
 
@@ -26,9 +30,14 @@ class ParsedDataFactory {
     
     init() {}
 
+    func register(_ container: ParsedContainer) {
+        assert(containers[container.name] == nil)
+        containers[container.name] = container
+    }
+    
     func register(_ type: ParsedType) {
-        assert(allTypes[type.name] == nil)
-        allTypes[type.name] = type
+        assert(types[type.name] == nil)
+        types[type.name] = type
     }
 
     func register(_ alias: ParsedTypealias) {
@@ -37,7 +46,7 @@ class ParsedDataFactory {
 
     @discardableResult
     func register(_ ext: ParsedExtension) -> Bool {
-        guard var type = allTypes[ext.typeName] else {
+        guard var type = types[ext.typeName] else {
             postponed.append(ext)
             return false
         }
@@ -45,7 +54,7 @@ class ParsedDataFactory {
         type.properties.append(contentsOf: ext.properties)
         type.methods.append(contentsOf: ext.methods)
         type.nested.append(contentsOf: ext.nested)
-        allTypes[type.name] = type
+        types[type.name] = type
         return true
     }
 
@@ -54,6 +63,10 @@ class ParsedDataFactory {
             return !register($0)
         }
         assert(postponed.count == 0)
-        return ParsedData(types: allTypes, aliases: aliases)
+        return ParsedData(
+            containers: containers,
+            types: types,
+            aliases: aliases
+        )
     }
 }

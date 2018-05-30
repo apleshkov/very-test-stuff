@@ -14,7 +14,7 @@ struct ParsedTypeUsage: Equatable {
     var isOptional: Bool
 
     var isUnwrapped: Bool
-
+    
     var generics: [ParsedTypeUsage] = []
 
     init(name: String, isOptional: Bool = false, isUnwrapped: Bool = false, isReference: Bool = false) {

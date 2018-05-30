@@ -92,4 +92,20 @@ class FileParserTests: XCTestCase {
             "A"
         )
     }
+    
+    func testContainer() {
+        let factory = ParsedDataFactory()
+        try! FileParser(contents:
+            """
+            // @saber.container(Foo)
+            // @saber.scope(Singleton)
+            protocol FooConfig {}
+            """
+            ).parse(to: factory)
+        let data = factory.make()
+        XCTAssertEqual(
+            data.containers["Foo"]?.scopeName,
+            "Singleton"
+        )
+    }
 }
