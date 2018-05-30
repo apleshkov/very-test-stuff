@@ -201,6 +201,10 @@ class ContainerDataFactory {
             let invocation = invoked(varName, isOptional: false, with: $0.methodName, args: $0.args)
             lines.append("\(indent)\(invocation)")
         }
+        if let handlerName = type.didInjectHandlerName {
+            let invocation = invoked(varName, isOptional: false, with: handlerName, args: [])
+            lines.append("\(indent)\(invocation)")
+        }
         lines.append("}")
         return lines
     }

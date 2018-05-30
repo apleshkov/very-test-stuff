@@ -129,4 +129,29 @@ class ContainerDataFactoryInjectorTests: XCTestCase {
             ]
         )
     }
+
+    func testDidInjectHandler() {
+        var type = Type(name: "Foo")
+        type.didInjectHandlerName = "postInit"
+        type.memberInjections = [
+            MemberInjection(name: "bar", typeResolver: .explicit(Type(name: "Bar")))
+        ]
+        type.methodInjections = [
+            InstanceMethodInjection(methodName: "set", args: [
+                FunctionInvocationArgument(name: nil, typeResolver: .explicit(Type(name: "Baz"))),
+                FunctionInvocationArgument(name: "quux", typeResolver: .explicit(Type(name: "Quux")))
+                ])
+        ]
+        let injector = ContainerDataFactory().injector(for: type, accessLevel: "open")
+        XCTAssertEqual(
+            injector,
+            [
+                "open func injectTo(foo: inout Foo) {",
+                "    foo.bar = self.bar",
+                "    foo.set(self.baz, quux: self.quux)",
+                "    foo.postInit()",
+                "}"
+            ]
+        )
+    }
 }
