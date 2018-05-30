@@ -10,23 +10,29 @@ import SourceKittenFramework
 
 class TypealiasParser {
 
-    static func parse(_ structure: [String : SourceKitRepresentable], rawAnnotations: RawAnnotations) -> ParsedTypealias? {
+    static func parse(_ structure: [String : SourceKitRepresentable], rawData: RawData) -> ParsedTypealias? {
         guard let kind = structure.swiftDeclKind, let name = structure.swiftName else {
             return nil
         }
         switch kind {
         case .typealias:
-            guard var rawString = StringExtractor.key.extract(from: structure, contents: rawAnnotations.contents) else {
+            guard var rawString = StringExtractor.key.extract(from: structure, contents: rawData.contents) else {
                 return nil
             }
             guard let assignIndex = rawString.index(of: "=") else {
                 return nil
             }
             rawString = String(rawString[assignIndex...].dropFirst()).trimmingCharacters(in: .whitespaces)
-            guard let type = TypeUsageParser.parse(rawString) else {
+            guard rawString.count > 0 else {
                 return nil
             }
-            return ParsedTypealias(name: name, type: type)
+            let target: ParsedTypealias.Target
+            if let type = TypeUsageParser.parse(rawString) {
+                target = .type(type)
+            } else {
+                target = .raw(rawString)
+            }
+            return ParsedTypealias(name: name, target: target)
         default:
             return nil
         }

@@ -12,13 +12,13 @@ class FileParser {
 
     private let structure: [String : SourceKitRepresentable]
 
-    private let rawAnnotations: RawAnnotations
+    private let rawData: RawData
 
     private let moduleName: String?
 
     init(file: File, moduleName: String? = nil) throws {
         self.structure = try Structure(file: file).dictionary
-        self.rawAnnotations = RawAnnotations(contents: file.contents)
+        self.rawData = RawData(contents: file.contents)
         self.moduleName = moduleName
     }
 
@@ -27,11 +27,11 @@ class FileParser {
     }
     
     private func parse(_ structure: [String : SourceKitRepresentable], to data: ParsedDataFactory) {
-        if let type = TypeParser.parse(structure, rawAnnotations: rawAnnotations) {
+        if let type = TypeParser.parse(structure, rawData: rawData) {
             process(type, parent: nil, data: data)
-        } else if let ext = ExtensionParser.parse(structure, rawAnnotations: rawAnnotations) {
+        } else if let ext = ExtensionParser.parse(structure, rawData: rawData) {
             process(ext, parent: nil, data: data)
-        } else if let alias = TypealiasParser.parse(structure, rawAnnotations: rawAnnotations) {
+        } else if let alias = TypealiasParser.parse(structure, rawData: rawData) {
             process(alias, parent: nil, data: data)
         } else {
             structure.swiftSubstructures?.forEach {

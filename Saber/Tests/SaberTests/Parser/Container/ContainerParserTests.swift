@@ -102,8 +102,8 @@ class ContainerParserTests: XCTestCase {
 
 private func parse(contents: String) -> [ParsedContainer] {
     let structure = try! Structure(file: File(contents: contents))
-    let rawAnnotations = RawAnnotations(contents: contents)
+    let rawData = RawData(contents: contents)
     return structure.dictionary.swiftSubstructures!.compactMap {
-        return ContainerParser.parse($0, rawAnnotations: rawAnnotations)
+        return ContainerParser.parse($0, rawData: rawData)
     }
 }

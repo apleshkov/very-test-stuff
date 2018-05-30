@@ -11,12 +11,17 @@ struct ParsedTypealias: Equatable {
 
     var name: String
 
-    var type: ParsedTypeUsage
+    var target: Target
 
     var moduleName: String? = nil
 
-    init(name: String, type: ParsedTypeUsage) {
+    init(name: String, target: Target) {
         self.name = name
-        self.type = type
+        self.target = target
+    }
+    
+    enum Target: Equatable {
+        case type(ParsedTypeUsage)
+        case raw(String)
     }
 }

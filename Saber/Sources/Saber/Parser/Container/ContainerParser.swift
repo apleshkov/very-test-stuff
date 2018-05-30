@@ -10,8 +10,8 @@ import SourceKittenFramework
 
 class ContainerParser {
 
-    static func parse(_ structure: [String : SourceKitRepresentable], rawAnnotations: RawAnnotations) -> ParsedContainer? {
-        let annotations = rawAnnotations
+    static func parse(_ structure: [String : SourceKitRepresentable], rawData: RawData) -> ParsedContainer? {
+        let annotations = rawData
             .annotations(for: structure)
             .compactMap { return ContainerAnnotationParser.parse($0) }
         guard structure.swiftDeclKind == .protocol, let protocolName = structure.swiftName else {

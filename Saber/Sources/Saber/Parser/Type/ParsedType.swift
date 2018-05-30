@@ -30,22 +30,4 @@ struct ParsedType: Equatable {
         self.isReference = isReference
         self.nested = nested
     }
-
-    func add(inheritedFrom inherited: ParsedTypeUsage) -> ParsedType {
-        var result = self
-        result.inheritedFrom.append(inherited)
-        return result
-    }
-    
-    func add(method: ParsedMethod) -> ParsedType {
-        var result = self
-        result.methods.append(method)
-        return result
-    }
-    
-    func add(annotation: TypeAnnotation) -> ParsedType {
-        var result = self
-        result.annotations.append(annotation)
-        return result
-    }
 }

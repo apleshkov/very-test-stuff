@@ -131,7 +131,12 @@ class ExtensionParserTests: XCTestCase {
                 [
                     .type(ParsedType(name: "Bar")),
                     .extension(ParsedExtension(typeName: "Baz")),
-                    .typealias(ParsedTypealias(name: "Quux", type: ParsedTypeUsage(name: "Int")))
+                    .typealias(
+                        ParsedTypealias(
+                            name: "Quux",
+                            target: .type(ParsedTypeUsage(name: "Int"))
+                        )
+                    )
                 ]
             ]
         )
@@ -164,8 +169,8 @@ class ExtensionParserTests: XCTestCase {
 
 private func parse(contents: String) -> [ParsedExtension] {
     let structure = try! Structure(file: File(contents: contents))
-    let rawAnnotations = RawAnnotations(contents: contents)
+    let rawData = RawData(contents: contents)
     return structure.dictionary.swiftSubstructures!.compactMap {
-        return ExtensionParser.parse($0, rawAnnotations: rawAnnotations)
+        return ExtensionParser.parse($0, rawData: rawData)
     }
 }

@@ -14,7 +14,7 @@ class TypealiasParserTests: XCTestCase {
     func testSimple() {
         XCTAssertEqual(
             parse(contents: "typealias Foo = Bar"),
-            [ParsedTypealias(name: "Foo", type: ParsedTypeUsage(name: "Bar"))]
+            [ParsedTypealias(name: "Foo", target: .type(ParsedTypeUsage(name: "Bar")))]
         )
     }
 
@@ -24,8 +24,34 @@ class TypealiasParserTests: XCTestCase {
             [
                 ParsedTypealias(
                     name: "Foo",
-                    type: ParsedTypeUsage(name: "Bar")
-                        .add(generic: ParsedTypeUsage(name: "Int"))
+                    target: .type(
+                        ParsedTypeUsage(name: "Bar")
+                            .add(generic: ParsedTypeUsage(name: "Int"))
+                    )
+                )
+            ]
+        )
+    }
+    
+    func testLambda() {
+        XCTAssertEqual(
+            parse(contents: "typealias Foo = () -> ()"),
+            [
+                ParsedTypealias(
+                    name: "Foo",
+                    target: .raw("() -> ()")
+                )
+            ]
+        )
+    }
+    
+    func testTuple() {
+        XCTAssertEqual(
+            parse(contents: "typealias Foo = (x: Int)"),
+            [
+                ParsedTypealias(
+                    name: "Foo",
+                    target: .raw("(x: Int)")
                 )
             ]
         )
@@ -33,9 +59,9 @@ class TypealiasParserTests: XCTestCase {
 }
 
 private func parse(contents: String) -> [ParsedTypealias] {
-    let rawAnnotations = RawAnnotations(contents: contents)
+    let rawData = RawData(contents: contents)
     let structure = try! Structure(file: File(contents: contents)).dictionary
     return structure.swiftSubstructures!.compactMap {
-        return TypealiasParser.parse($0, rawAnnotations: rawAnnotations)
+        return TypealiasParser.parse($0, rawData: rawData)
     }
 }

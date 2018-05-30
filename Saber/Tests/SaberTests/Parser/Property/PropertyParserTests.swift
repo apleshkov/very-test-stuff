@@ -59,9 +59,9 @@ class PropertyParserTests: XCTestCase {
 }
 
 private func parse(contents: String) -> [ParsedProperty] {
-    let rawAnnotations = RawAnnotations(contents: contents)
+    let rawData = RawData(contents: contents)
     let structure = try! Structure(file: File(contents: contents))
     let substructure = structure.dictionary.swiftSubstructures![0]
-    let type = TypeParser.parse(substructure, rawAnnotations: rawAnnotations)
+    let type = TypeParser.parse(substructure, rawData: rawData)
     return type!.properties
 }

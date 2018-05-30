@@ -10,7 +10,7 @@ import SourceKittenFramework
 
 class MethodParser {
     
-    static func parse(_ structure: [String : SourceKitRepresentable], rawAnnotations: RawAnnotations) -> ParsedMethod? {
+    static func parse(_ structure: [String : SourceKitRepresentable], rawData: RawData) -> ParsedMethod? {
         guard let kind = structure.swiftDeclKind,
             let rawName = structure.swiftName else {
             return nil
@@ -31,7 +31,9 @@ class MethodParser {
                 args: args,
                 returnType: returnType,
                 isStatic: isStatic,
-                annotations: rawAnnotations.annotations(for: structure).compactMap { MethodAnnotationParser.parse($0) }
+                annotations: rawData
+                    .annotations(for: structure)
+                    .compactMap { MethodAnnotationParser.parse($0) }
             )
         default:
             return nil

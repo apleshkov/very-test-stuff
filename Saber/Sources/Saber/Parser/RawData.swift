@@ -1,5 +1,5 @@
 //
-//  RawAnnotations.swift
+//  RawData.swift
 //  Parser
 //
 //  Created by andrey.pleshkov on 24/05/2018.
@@ -17,7 +17,7 @@ private struct ParsedLine: Equatable {
     var kind: Kind
 }
 
-class RawAnnotations {
+class RawData {
 
     static let defaultPrefix = "@saber."
     
@@ -25,7 +25,7 @@ class RawAnnotations {
     
     private let lines: [ParsedLine]
 
-    init(contents: String, prefix: String = RawAnnotations.defaultPrefix) {
+    init(contents: String, prefix: String = RawData.defaultPrefix) {
         self.contents = contents
         self.lines = parse(contents: contents, prefix: prefix)
     }

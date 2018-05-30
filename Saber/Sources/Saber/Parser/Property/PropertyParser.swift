@@ -11,7 +11,7 @@ import SourceKittenFramework
 class PropertyParser {
 
     static func parse(_ structure: [String : SourceKitRepresentable],
-                      rawAnnotations: RawAnnotations) -> ParsedProperty? {
+                      rawData: RawData) -> ParsedProperty? {
         guard let kind = structure.swiftDeclKind,
             let name = structure.swiftName,
             let typeName = structure.swiftTypeName else {
@@ -25,7 +25,9 @@ class PropertyParser {
             return ParsedProperty(
                 name: name,
                 type: type,
-                annotations: rawAnnotations.annotations(for: structure).compactMap { PropertyAnnotationParser.parse($0) }
+                annotations: rawData
+                    .annotations(for: structure)
+                    .compactMap { PropertyAnnotationParser.parse($0) }
             )
         default:
             return nil
