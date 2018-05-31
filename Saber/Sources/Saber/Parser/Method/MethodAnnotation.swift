@@ -10,4 +10,5 @@ import Foundation
 enum MethodAnnotation: Equatable {
     case inject
     case provider
+    case didInject
 }

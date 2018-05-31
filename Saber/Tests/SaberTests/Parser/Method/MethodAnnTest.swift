@@ -31,4 +31,15 @@ class MethodAnnTest: XCTestCase {
             MethodAnnotation.provider
         )
     }
+
+    func testDidInject() {
+        XCTAssertEqual(
+            MethodAnnotationParser.parse("didInject()"),
+            nil
+        )
+        XCTAssertEqual(
+            MethodAnnotationParser.parse("didInject"),
+            MethodAnnotation.didInject
+        )
+    }
 }

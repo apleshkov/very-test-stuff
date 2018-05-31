@@ -39,4 +39,15 @@ class TypeAnnTests: XCTestCase {
             TypeAnnotation.cached
         )
     }
+
+    func testInjectOnly() {
+        XCTAssertEqual(
+            TypeAnnotationParser.parse("injectOnly()"),
+            nil
+        )
+        XCTAssertEqual(
+            TypeAnnotationParser.parse("injectOnly"),
+            TypeAnnotation.injectOnly
+        )
+    }
 }

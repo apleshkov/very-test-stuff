@@ -8,6 +8,7 @@
 import Foundation
 
 private enum TypeKey: Hashable {
+
     case name(String)
     case modular(module: String, name: String)
     

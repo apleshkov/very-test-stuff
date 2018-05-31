@@ -156,6 +156,46 @@ class MethodParserTests: XCTestCase {
             ]
         )
     }
+
+    func testInitializer() {
+        XCTAssertEqual(
+            parse(contents:
+                """
+                struct Foo {
+                init(x: Int) {}
+                }
+                """
+            ),
+            [
+                ParsedMethod(
+                    name: "init",
+                    args: [
+                        ParsedArgument(name: "x", type: ParsedTypeUsage(name: "Int"))
+                    ]
+                )
+            ]
+        )
+    }
+
+    func testFailableInitializer() {
+        XCTAssertEqual(
+            parse(contents:
+                """
+                struct Foo {
+                init?(x: Int) {}
+                }
+                """
+                ),
+            [
+                ParsedMethod(
+                    name: "init",
+                    args: [
+                        ParsedArgument(name: "x", type: ParsedTypeUsage(name: "Int"))
+                    ]
+                )
+            ]
+        )
+    }
 }
 
 private func parse(contents: String) -> [ParsedMethod] {

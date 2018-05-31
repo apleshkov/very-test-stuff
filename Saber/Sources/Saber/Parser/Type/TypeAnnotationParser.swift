@@ -9,7 +9,6 @@ import Foundation
 
 private enum Prefix {
     static let bound = "bindTo"
-    static let cached = "cached"
 }
 
 class TypeAnnotationParser {
@@ -24,8 +23,11 @@ class TypeAnnotationParser {
             let type = TypeUsageParser.parse(content) {
             return TypeAnnotation.bound(to: type)
         }
-        if rawString == Prefix.cached {
+        if rawString == "cached" {
             return TypeAnnotation.cached
+        }
+        if rawString == "injectOnly" {
+            return TypeAnnotation.injectOnly
         }
         return nil
     }

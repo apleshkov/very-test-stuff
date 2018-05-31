@@ -16,6 +16,9 @@ class MethodAnnotationParser {
         if rawString == "provider" {
             return MethodAnnotation.provider
         }
+        if rawString == "didInject" {
+            return MethodAnnotation.didInject
+        }
         return nil
     }
 }
