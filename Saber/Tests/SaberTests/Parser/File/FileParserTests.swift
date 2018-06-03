@@ -100,12 +100,16 @@ class FileParserTests: XCTestCase {
             // @saber.container(Foo)
             // @saber.scope(Singleton)
             protocol FooConfig {}
-            """
+            """, moduleName: "A"
             ).parse(to: factory)
         let data = factory.make()
         XCTAssertEqual(
             data.containers["Foo"]?.scopeName,
             "Singleton"
+        )
+        XCTAssertEqual(
+            data.containers["Foo"]?.moduleName,
+            "A"
         )
     }
 }

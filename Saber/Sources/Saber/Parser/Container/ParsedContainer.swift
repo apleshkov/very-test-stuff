@@ -11,6 +11,8 @@ struct ParsedContainer: Equatable {
 
     var name: String
 
+    var moduleName: String? = nil
+    
     var scopeName: String
 
     var protocolName: String

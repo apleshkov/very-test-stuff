@@ -10,5 +10,6 @@ import Foundation
 enum TypeAnnotation: Equatable {
     case bound(to: ParsedTypeUsage)
     case cached
-    case injectOnly    
+    case injectOnly
+    case scope(String)
 }
