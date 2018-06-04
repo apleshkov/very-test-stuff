@@ -29,6 +29,57 @@ class TypeRepoResolverTests: XCTestCase {
             repo.resolver(for: .name("Foo"), scopeKey: .name("Singleton")),
             .explicit(.name("Foo"))
         )
+        XCTAssertEqual(
+            repo.resolver(for: .name("Bar"), scopeKey: .name("Singleton")),
+            nil
+        )
+    }
+    
+    func testExternal() {
+        let parsedData: ParsedData = {
+            let factory = ParsedDataFactory()
+            try! FileParser(contents:
+                """
+                // @saber.container(App)
+                // @saber.scope(Singleton)
+                // @saber.externals(AppExternal)
+                protocol AppConfig {}
+
+                struct AppExternal {
+                    var foo: Foo
+                    func bar() -> Bar {}
+                }
+                """
+                ).parse(to: factory)
+            return factory.make()
+        }()
+        let repo = try! TypeRepository(parsedData: parsedData)
+        XCTAssertEqual(
+            repo.resolver(for: .name("Foo"), scopeKey: .name("Singleton")),
+            .external(
+                member: .property(
+                    from: .name("AppExternal"),
+                    name: "foo",
+                    key: .name("Foo")
+                )
+            )
+        )
+        XCTAssertEqual(
+            repo.resolver(for: .name("Bar"), scopeKey: .name("Singleton")),
+            .external(
+                member: TypeRepository.ExternalMember.method(
+                    from: .name("AppExternal"),
+                    parsed: ParsedMethod(
+                        name: "bar",
+                        args: [],
+                        returnType: ParsedTypeUsage(name: "Bar"),
+                        isStatic: false,
+                        annotations: []
+                    ),
+                    key: .name("Bar")
+                )
+            )
+        )
     }
     
     func testProvided1() {
@@ -40,11 +91,16 @@ class TypeRepoResolverTests: XCTestCase {
                 // @saber.scope(Singleton)
                 protocol AppConfig {}
 
-                struct Foo {}
+                struct Foo {} // known type
 
                 class FooProvider: Singleton {
                     // @saber.provider
                     func provide() -> Foo {}
+                }
+
+                class BarProvider: Singleton {
+                    // @saber.provider
+                    func provide() -> Bar {} // returns unknown type
                 }
                 """
                 ).parse(to: factory)
@@ -53,10 +109,11 @@ class TypeRepoResolverTests: XCTestCase {
         let repo = try! TypeRepository(parsedData: parsedData)
         XCTAssertEqual(
             repo.resolver(for: .name("Foo"), scopeKey: .name("Singleton")),
-            .provided(
-                .name("Foo"),
-                resolver: .explicit(.name("FooProvider"))
-            )
+            .provided(.name("Foo"))
+        )
+        XCTAssertEqual(
+            repo.resolver(for: .name("Bar"), scopeKey: .name("Singleton")),
+            .provided(.name("Bar"))
         )
     }
     
@@ -71,7 +128,12 @@ class TypeRepoResolverTests: XCTestCase {
 
                 struct Foo {
                     // @saber.provider
-                    static func provide() -> Foo {}
+                    static func provide() -> Foo {} // returns known type
+                }
+
+                class BarFactory {
+                    // @saber.provider
+                    static func make() -> Bar {} // returns unknown type
                 }
                 """
                 ).parse(to: factory)
@@ -80,10 +142,11 @@ class TypeRepoResolverTests: XCTestCase {
         let repo = try! TypeRepository(parsedData: parsedData)
         XCTAssertEqual(
             repo.resolver(for: .name("Foo"), scopeKey: .name("Singleton")),
-            .provided(
-                .name("Foo"),
-                resolver: nil
-            )
+            .provided(.name("Foo"))
+        )
+        XCTAssertEqual(
+            repo.resolver(for: .name("Bar"), scopeKey: .name("Singleton")),
+            .provided(.name("Bar"))
         )
     }
 }

@@ -42,7 +42,8 @@ extension TypeRepository {
     struct Info: Equatable {
         var key: Key
         var scopeKey: ScopeKey?
-        var parsedType: ParsedType
+        var parsedType: ParsedType?
+        var parsedUsage: ParsedTypeUsage?
     }
     
     typealias ScopeKey = Key
@@ -62,7 +63,7 @@ extension TypeRepository {
     
     indirect enum Resolver: Equatable {
         case explicit(Key)
-        case provided(Key, resolver: Resolver?)
+        case provided(Key)
         case bound(Key, to: Key)
         case derived(from: ScopeKey, resolver: Resolver)
         case external(member: ExternalMember)
@@ -73,9 +74,6 @@ extension TypeRepository {
 
     func find(by key: Key) throws -> Info {
         if let info = typeInfos[key] {
-            return info
-        }
-        if let info = find(by: key.name, assumed: key.moduleName) {
             return info
         }
         if let usage = typedAliases[key], let info = find(by: usage.name, assumed: key.moduleName) {
@@ -207,7 +205,8 @@ extension TypeRepository {
             typeInfos[key] = Info(
                 key: key,
                 scopeKey: scopeKey,
-                parsedType: parsedType
+                parsedType: parsedType,
+                parsedUsage: nil
             )
             if let scopeKey = scopeKey {
                 scopes[scopeKey]?.keys.insert(key)
@@ -234,10 +233,19 @@ extension TypeRepository {
             guard let usage = method.returnType else {
                 throw Throwable.message("Unable to get provided type: '\(description(of: key)).\(method.name)' returns nothing")
             }
-            guard let providedInfo = find(by: usage.name, assumed: key.moduleName) else {
-                throw Throwable.message("Unable to find '\(description(of: usage))' provided by \(description(of: key))")
+            let providedKey: Key
+            if let providedInfo = find(by: usage.name, assumed: key.moduleName) {
+                providedKey = providedInfo.key
+            } else {
+                providedKey = .name(usage.name)
+                typeInfos[providedKey] = Info(
+                    key: providedKey,
+                    scopeKey: try find(by: key).scopeKey,
+                    parsedType: nil,
+                    parsedUsage: usage
+                )
             }
-            provided[providedInfo.key] = (provider: key, method: method)
+            provided[providedKey] = (provider: key, method: method)
         }
     }
     
@@ -248,9 +256,22 @@ extension TypeRepository {
                 guard let externalInfo = find(by: usage.name, assumed: parsedContainer.moduleName) else {
                     throw Throwable.message("Invalid '\(parsedContainer.name)' external: unable to find '\(description(of: usage))'")
                 }
-                try externalInfo.parsedType.properties.forEach {
-                    guard let info = find(by: $0.type.name, assumed: parsedContainer.moduleName) else {
-                        throw Throwable.message("Invalid '\(description(of: externalInfo.key))' property '\($0.name)': unable to find '\(description(of: $0.type))'")
+                guard let externalParsedType = externalInfo.parsedType else {
+                    throw Throwable.message("Invalid '\(parsedContainer.name)' external: unable to find '\(description(of: externalInfo.key))' parsed type")
+                }
+                externalParsedType.properties.forEach {
+                    let info: Info
+                    if let foundInfo = find(by: $0.type.name, assumed: parsedContainer.moduleName) {
+                        info = foundInfo
+                    } else {
+                        let key: Key = .name($0.type.name)
+                        info = Info(
+                            key: key,
+                            scopeKey: externalInfo.scopeKey,
+                            parsedType: nil,
+                            parsedUsage: $0.type
+                        )
+                        typeInfos[key] = info
                     }
                     members[info.key] = .property(
                         from: externalInfo.key,
@@ -258,12 +279,22 @@ extension TypeRepository {
                         key: info.key
                     )
                 }
-                try externalInfo.parsedType.methods.forEach {
+                externalParsedType.methods.forEach {
                     guard $0.isStatic == false, let usage = $0.returnType else {
                         return
                     }
-                    guard let info = find(by: usage.name, assumed: parsedContainer.moduleName) else {
-                        throw Throwable.message("Invalid '\(description(of: externalInfo.key))' method '\($0.name)': unable to find '\(description(of: usage))'")
+                    let info: Info
+                    if let foundInfo = find(by: usage.name, assumed: parsedContainer.moduleName) {
+                        info = foundInfo
+                    } else {
+                        let key: Key = .name(usage.name)
+                        info = Info(
+                            key: key,
+                            scopeKey: externalInfo.scopeKey,
+                            parsedType: nil,
+                            parsedUsage: usage
+                        )
+                        typeInfos[key] = info
                     }
                     members[info.key] = ExternalMember.method(
                         from: externalInfo.key,
@@ -288,36 +319,29 @@ extension TypeRepository {
     }
     
     private func makeResolver(for info: Info, in scope: Scope) throws -> Resolver? {
-        let key = info.key
-        if let providerData = provided[key] {
-            guard providerData.method.isStatic == false else {
-                return .provided(key, resolver: nil)
-            }
-            do {
-                let providerInfo = try find(by: providerData.provider)
-                let resolver = try makeResolver(for: providerInfo, in: scope)
-                return .provided(key, resolver: resolver)
-            } catch {
-                throw Throwable.message("Unknown provider for '\(description(of: key))'")
-            }
+        if info.scopeKey == nil {
+            var unscopedInfo = info
+            unscopedInfo.scopeKey = scope.key
+            return try makeResolver(for: unscopedInfo, in: scope)
         }
-        guard let scopeKey = info.scopeKey else {
-            return nil
-        }
-        guard scope.key == scopeKey else {
+        guard scope.key == info.scopeKey else {
             let dependencies = scope.dependencies.compactMap { scopes[$0] }
             for dep in dependencies {
                 if let resolver = try makeResolver(for: info, in: dep) {
-                    return Resolver.derived(from: dep.key, resolver: resolver)
+                    return .derived(from: dep.key, resolver: resolver)
                 }
             }
             return nil
         }
-        if scope.keys.contains(key) {
-            return .explicit(key)
+        let key = info.key
+        if provided[key] != nil {
+            return .provided(key)
         }
         if let binderKey = bound[key] {
             return .bound(key, to: binderKey)
+        }
+        if scope.keys.contains(key) {
+            return .explicit(key)
         }
         if let member = scope.externals[key] {
             return .external(member: member)
