@@ -10,12 +10,6 @@ import Foundation
 
 extension ParsedType {
     
-    func add(inheritedFrom inherited: ParsedTypeUsage) -> ParsedType {
-        var result = self
-        result.inheritedFrom.append(inherited)
-        return result
-    }
-    
     func add(method: ParsedMethod) -> ParsedType {
         var result = self
         result.methods.append(method)

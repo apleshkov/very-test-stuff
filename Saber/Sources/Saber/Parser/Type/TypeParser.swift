@@ -19,14 +19,6 @@ class TypeParser {
         case .struct, .class:
             let isReference = (kind == .class)
             var type = ParsedType(name: name, isReference: isReference)
-            if let inherited = structure.swiftInherited {
-                inherited.forEach {
-                    guard let name = $0.swiftName else {
-                        return
-                    }
-                    type.inheritedFrom.append(ParsedTypeUsage(name: name))
-                }
-            }
             structure.swiftSubstructures?.forEach {
                 if let nestedType = TypeParser.parse($0, rawData: rawData) {
                     type.nested.append(.type(nestedType))

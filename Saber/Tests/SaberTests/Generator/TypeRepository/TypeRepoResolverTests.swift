@@ -19,7 +19,8 @@ class TypeRepoResolverTests: XCTestCase {
                 // @saber.scope(Singleton)
                 protocol AppConfig {}
 
-                struct Foo: Singleton {}
+                // @saber.scope(Singleton)
+                struct Foo {}
                 """
                 ).parse(to: factory)
             return factory.make()
@@ -93,12 +94,14 @@ class TypeRepoResolverTests: XCTestCase {
 
                 struct Foo {} // known type
 
-                class FooProvider: Singleton {
+                // @saber.scope(Singleton)
+                class FooProvider {
                     // @saber.provider
                     func provide() -> Foo {}
                 }
 
-                class BarProvider: Singleton {
+                // @saber.scope(Singleton)
+                class BarProvider {
                     // @saber.provider
                     func provide() -> Bar {} // returns unknown type
                 }
@@ -161,7 +164,8 @@ class TypeRepoResolverTests: XCTestCase {
 
                 protocol Foo {}
 
-                class FooProvider: Singleton {
+                // @saber.scope(Singleton)
+                class FooProvider {
                     // @saber.provider
                     func provide() -> Foo {}
                 }
@@ -187,11 +191,13 @@ class TypeRepoResolverTests: XCTestCase {
 
                 protocol FooProtocol {}
 
+                // @saber.scope(Singleton)
                 // @saber.bindTo(FooProtocol)
-                struct Foo: Singleton {}
+                struct Foo {}
 
+                // @saber.scope(Singleton)
                 // @saber.bindTo(BarProtocol)
-                struct Bar: Singleton {}
+                struct Bar {}
                 """
                 ).parse(to: factory)
             return factory.make()

@@ -9,7 +9,26 @@ import XCTest
 @testable import Saber
 
 class TypeAnnTests: XCTestCase {
-    
+
+    func testScope() {
+        XCTAssertEqual(
+            TypeAnnotationParser.parse("scope(Foo)"),
+            TypeAnnotation.scope("Foo")
+        )
+        XCTAssertEqual(
+            TypeAnnotationParser.parse("scope(  Bar )"),
+            TypeAnnotation.scope("Bar")
+        )
+        XCTAssertEqual(
+            TypeAnnotationParser.parse("scope()"),
+            nil
+        )
+        XCTAssertEqual(
+            TypeAnnotationParser.parse("scope( )"),
+            nil
+        )
+    }
+
     func testBound() {
         XCTAssertEqual(
             TypeAnnotationParser.parse("bindTo()"),

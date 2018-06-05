@@ -13,7 +13,6 @@ class ParsedDataTests: XCTestCase {
     func testPostponed() {
         let type: ParsedType = {
             var type = ParsedType(name: "Foo")
-            type.inheritedFrom = [ParsedTypeUsage(name: "ParentFoo")]
             type.properties = [
                 ParsedProperty(name: "x", type: ParsedTypeUsage(name: "Float"))
             ]
@@ -41,10 +40,6 @@ class ParsedDataTests: XCTestCase {
         factory.register(ext)
         factory.register(type)
         let madeType = factory.make().types[type.name]
-        XCTAssertEqual(
-            madeType?.inheritedFrom,
-            type.inheritedFrom + ext.inheritedFrom
-        )
         XCTAssertEqual(
             madeType?.properties,
             type.properties + ext.properties

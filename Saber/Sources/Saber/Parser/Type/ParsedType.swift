@@ -13,8 +13,6 @@ struct ParsedType: Equatable {
 
     var moduleName: String? = nil
 
-    var inheritedFrom: [ParsedTypeUsage] = []
-
     var properties: [ParsedProperty] = []
 
     var methods: [ParsedMethod] = []

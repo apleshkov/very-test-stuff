@@ -9,6 +9,7 @@ import Foundation
 
 private enum Prefix {
     static let bound = "bindTo"
+    static let scope = "scope"
 }
 
 class TypeAnnotationParser {
@@ -17,6 +18,10 @@ class TypeAnnotationParser {
         let rawString = rawString.trimmingCharacters(in: .whitespaces)
         guard rawString.count > 0 else {
             return nil
+        }
+        if rawString.hasPrefix(Prefix.scope),
+            let scope = AnnotationParserHelper.argument(from: rawString, prefix: Prefix.scope) {
+            return TypeAnnotation.scope(scope)
         }
         if rawString.hasPrefix(Prefix.bound),
             let content = AnnotationParserHelper.argument(from: rawString, prefix: Prefix.bound),

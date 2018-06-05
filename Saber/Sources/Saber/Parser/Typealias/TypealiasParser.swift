@@ -32,7 +32,11 @@ class TypealiasParser {
             } else {
                 target = .raw(rawString)
             }
-            return ParsedTypealias(name: name, target: target)
+            var alias = ParsedTypealias(name: name, target: target)
+            alias.annotations = rawData
+                .annotations(for: structure)
+                .compactMap { TypeAnnotationParser.parse($0) }
+            return alias
         default:
             return nil
         }

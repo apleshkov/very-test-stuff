@@ -50,7 +50,6 @@ class ParsedDataFactory {
             postponed.append(ext)
             return false
         }
-        type.inheritedFrom.append(contentsOf: ext.inheritedFrom)
         type.properties.append(contentsOf: ext.properties)
         type.methods.append(contentsOf: ext.methods)
         type.nested.append(contentsOf: ext.nested)

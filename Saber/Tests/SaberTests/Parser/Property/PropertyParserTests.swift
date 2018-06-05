@@ -37,6 +37,20 @@ class PropertyParserTests: XCTestCase {
         )
     }
 
+    func testStatic() {
+        XCTAssertEqual(
+            parse(contents:
+                """
+                class Foo {
+                static let bar: Bar
+                class let baz: Baz
+                }
+                """
+            ),
+            []
+        )
+    }
+
     func testAnnotations() {
         XCTAssertEqual(
             parse(contents:

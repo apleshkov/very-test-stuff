@@ -11,14 +11,14 @@ class TypeRepository {
 
     private var scopes: [ScopeKey : Scope] = [:]
     
-    private var typedAliases: [Key : ParsedTypeUsage] = [:]
-    
-    private var rawAliasNames = Set<String>()
-    
     private var typeInfos: [Key : Info] = [:]
 
-    private var mudularKeys: [String : Key] = [:] // "module.name" -> key
-    
+    /// .modular(module: "A", name: "Foo") represented as "A.Foo"
+    private var modularNames: [String : Key] = [:]
+
+    /// "Foo" -> ["A", "B"] if "Foo" is declared in both "A" and "B"
+    private var shortenNameCollisions: [String : [String]] = [:]
+
     private var bound: [Key : Key] = [:] // mimic -> real
     
     private var provided: [Key : (provider: Key, method: ParsedMethod)] = [:]
@@ -27,7 +27,7 @@ class TypeRepository {
 
     init(parsedData: ParsedData) throws {
         try prepareScopes(parsedData: parsedData)
-        fillAliases(parsedData: parsedData)
+        try fillAliases(parsedData: parsedData)
         try fillTypes(parsedData: parsedData)
         try fillExternals(parsedData: parsedData)
         try fillResolvers()
@@ -75,34 +75,37 @@ extension TypeRepository {
 extension TypeRepository {
 
     func find(by key: Key) throws -> Info {
-        if let info = typeInfos[key] {
-            return info
+        if case .name(let name) = key, let collisions = shortenNameCollisions[name], collisions.count > 1 {
+            throw Throwable.declCollision(name: name, modules: collisions)
         }
-        if let usage = typedAliases[key], let info = find(by: usage.name, assumed: key.moduleName) {
-            return info
+        guard let info = typeInfos[key] else {
+            throw Throwable.message("Unable to find '\(description(of: key))'")
         }
-        
-        throw Throwable.message("Unable to find '\(description(of: key))'")
+        return info
     }
 
     func find(by name: String, assumed moduleName: String?) -> Info? {
-        if let key = mudularKeys[name] {
+        if let key = modularNames[name] {
             return try? find(by: key)
         }
-        if let info = typeInfos[.name(name)] {
+        if let info = try? find(by: .name(name)) {
             return info
         }
-        
-        
-        let chunks = name.split(separator: ".")
-        guard chunks.count > 1 else {
-            return try? find(by: Key(name: name, moduleName: moduleName))
+        return nil
+    }
+
+    private func register(_ info: Info) {
+        let key = info.key
+        typeInfos[key] = info
+        if let moduleName = key.moduleName {
+            modularNames["\(moduleName).\(key.name)"] = key
+            var collisions = shortenNameCollisions[key.name] ?? []
+            collisions.append(moduleName)
+            shortenNameCollisions[key.name] = collisions
         }
-        let key = Key.modular(
-            module: String(chunks[0]),
-            name: chunks.dropFirst().joined(separator: ".")
-        )
-        return try? find(by: key)
+        if let scopeKey = info.scopeKey {
+            scopes[scopeKey]?.keys.insert(key)
+        }
     }
     
     func resolver(for key: Key, scopeKey: ScopeKey) -> Resolver? {
@@ -148,16 +151,32 @@ extension TypeRepository {
     private func makeKey(for alias: ParsedTypealias) -> Key {
         return Key(name: alias.name, moduleName: alias.moduleName)
     }
-    
-    private func makeScopeKey(for name: String, assumed moduleName: String?) throws -> ScopeKey {
+
+    private func makeScopeKey(for name: String) throws -> ScopeKey {
         let chunks = name.split(separator: ".")
         if chunks.count == 1 {
-            return Key(name: name, moduleName: moduleName)
+            return .name(name)
         }
         guard chunks.count == 2 else {
             throw Throwable.message("Invalid scope name: '\(name)'")
         }
         return .modular(module: String(chunks[0]), name: String(chunks[1]))
+    }
+
+    private func makeScopeKey(from annotations: [TypeAnnotation], of typeName: String) throws -> ScopeKey? {
+        let foundNames: [String] = annotations.compactMap {
+            if case .scope(let name) = $0 {
+                return name
+            }
+            return nil
+        }
+        if foundNames.count > 1 {
+            throw Throwable.message("'\(typeName))' associated with multiple scopes: \(foundNames.joined(separator: ", "))")
+        }
+        if let name = foundNames.first {
+            return try makeScopeKey(for: name)
+        }
+        return nil
     }
 }
 
@@ -166,10 +185,9 @@ extension TypeRepository {
     private func prepareScopes(parsedData: ParsedData) throws {
         for (_, parsedContainer) in parsedData.containers {
             let scopeName = parsedContainer.scopeName
-            let moduleName = parsedContainer.moduleName
-            let key = try makeScopeKey(for: scopeName, assumed: moduleName)
+            let key = try makeScopeKey(for: scopeName)
             let deps = try parsedContainer.dependencies.map {
-                return try makeScopeKey(for: $0.name, assumed: moduleName)
+                return try makeScopeKey(for: $0.name)
             }
             let scope = Scope(
                 key: key,
@@ -181,16 +199,23 @@ extension TypeRepository {
             scopes[key] = scope
         }
     }
-    
-    private func fillAliases(parsedData: ParsedData) {
-        parsedData.aliases.forEach {
+
+    private func fillAliases(parsedData: ParsedData) throws {
+        try parsedData.aliases.forEach {
             let alias = $0.value
             switch alias.target {
             case .type(let usage):
                 let key = makeKey(for: alias)
-                typedAliases[key] = usage
+                register(
+                    Info(
+                        key: key,
+                        scopeKey: try makeScopeKey(from: alias.annotations, of: alias.name),
+                        parsedType: nil,
+                        parsedUsage: usage
+                    )
+                )
             case .raw(_):
-                rawAliasNames.insert(alias.name)
+                break
             }
         }
     }
@@ -200,28 +225,19 @@ extension TypeRepository {
         var providers: [Key : ParsedMethod] = [:]
         try parsedData.types.forEach {
             let parsedType = $0.value
-            let foundScopeKeys = parsedType.inheritedFrom
-                .compactMap { try? makeScopeKey(for: $0.name, assumed: parsedType.moduleName) }
-                .filter { scopes[$0] != nil }
-                .map { $0 }
-            if foundScopeKeys.count > 1 {
-                let names = foundScopeKeys.map { description(of: $0) }
-                throw Throwable.message("'\(description(of: parsedType))' associated with multiple scopes: \(names.joined(separator: ", "))")
-            }
-            let scopeKey = foundScopeKeys.first
-            let key = makeKey(for: parsedType)
-            typeInfos[key] = Info(
-                key: key,
-                scopeKey: scopeKey,
-                parsedType: parsedType,
-                parsedUsage: nil
+            let scopeKey: ScopeKey? = try makeScopeKey(
+                from: parsedType.annotations,
+                of: description(of: parsedType)
             )
-            if let moduleName = key.moduleName {
-                mudularKeys["\(moduleName).\(key.name)"] = key
-            }
-            if let scopeKey = scopeKey {
-                scopes[scopeKey]?.keys.insert(key)
-            }
+            let key = makeKey(for: parsedType)
+            register(
+                Info(
+                    key: key,
+                    scopeKey: scopeKey,
+                    parsedType: parsedType,
+                    parsedUsage: nil
+                )
+            )
             parsedType.annotations.forEach {
                 if case .bound(let to) = $0 {
                     binders[key] = to
@@ -239,11 +255,13 @@ extension TypeRepository {
                 bound[mimicInfo.key] = key
             } else {
                 let mimicKey: Key = .name(usage.name)
-                typeInfos[mimicKey] = Info(
-                    key: mimicKey,
-                    scopeKey: try find(by: key).scopeKey,
-                    parsedType: nil,
-                    parsedUsage: usage
+                register(
+                    Info(
+                        key: mimicKey,
+                        scopeKey: try find(by: key).scopeKey,
+                        parsedType: nil,
+                        parsedUsage: usage
+                    )
                 )
                 bound[mimicKey] = key
             }
@@ -257,11 +275,13 @@ extension TypeRepository {
                 providedKey = providedInfo.key
             } else {
                 providedKey = .name(usage.name)
-                typeInfos[providedKey] = Info(
-                    key: providedKey,
-                    scopeKey: try find(by: key).scopeKey,
-                    parsedType: nil,
-                    parsedUsage: usage
+                register(
+                    Info(
+                        key: providedKey,
+                        scopeKey: try find(by: key).scopeKey,
+                        parsedType: nil,
+                        parsedUsage: usage
+                    )
                 )
             }
             provided[providedKey] = (provider: key, method: method)
@@ -290,7 +310,7 @@ extension TypeRepository {
                             parsedType: nil,
                             parsedUsage: $0.type
                         )
-                        typeInfos[key] = info
+                        register(info)
                     }
                     members[info.key] = .property(
                         from: externalInfo.key,
@@ -313,7 +333,7 @@ extension TypeRepository {
                             parsedType: nil,
                             parsedUsage: usage
                         )
-                        typeInfos[key] = info
+                        register(info)
                     }
                     members[info.key] = ExternalMember.method(
                         from: externalInfo.key,
@@ -322,7 +342,7 @@ extension TypeRepository {
                     )
                 }
             }
-            let scopeKey = try makeScopeKey(for: parsedContainer.scopeName, assumed: parsedContainer.moduleName)
+            let scopeKey = try makeScopeKey(for: parsedContainer.scopeName)
             scopes[scopeKey]?.externals = members
         }
     }

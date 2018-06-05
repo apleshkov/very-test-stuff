@@ -56,6 +56,32 @@ class TypealiasParserTests: XCTestCase {
             ]
         )
     }
+
+    func testAnnotations() {
+        XCTAssertEqual(
+            parse(contents:
+                """
+                // @saber.cached
+                typealias Foo = (x: Int)
+
+                // @saber.scope(Singleton)
+                typealias Bar = Quux
+                """
+            ),
+            [
+                ParsedTypealias(
+                    name: "Foo",
+                    target: .raw("(x: Int)"),
+                    annotations: [.cached]
+                ),
+                ParsedTypealias(
+                    name: "Bar",
+                    target: .type(ParsedTypeUsage(name: "Quux")),
+                    annotations: [.scope("Singleton")]
+                )
+            ]
+        )
+    }
 }
 
 private func parse(contents: String) -> [ParsedTypealias] {

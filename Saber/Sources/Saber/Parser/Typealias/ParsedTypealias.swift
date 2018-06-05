@@ -15,9 +15,12 @@ struct ParsedTypealias: Equatable {
 
     var moduleName: String? = nil
 
-    init(name: String, target: Target) {
+    var annotations: [TypeAnnotation] = []
+
+    init(name: String, target: Target, annotations: [TypeAnnotation] = []) {
         self.name = name
         self.target = target
+        self.annotations = annotations
     }
     
     enum Target: Equatable {

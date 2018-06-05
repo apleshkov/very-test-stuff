@@ -29,13 +29,6 @@ class TypeParserTests: XCTestCase {
         )
     }
     
-    func testInheritedDecl() {
-        XCTAssertEqual(
-            parse(contents: "struct Foo: Bar {}"),
-            [ParsedType(name: "Foo").add(inheritedFrom: ParsedTypeUsage(name: "Bar"))]
-        )
-    }
-    
     func testTypeAnnotations() {
         XCTAssertEqual(
             parse(contents:
