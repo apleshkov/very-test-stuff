@@ -17,6 +17,8 @@ class TypeRepository {
     
     private var typeInfos: [Key : Info] = [:]
 
+    private var mudularKeys: [String : Key] = [:] // "module.name" -> key
+    
     private var bound: [Key : Key] = [:] // mimic -> real
     
     private var provided: [Key : (provider: Key, method: ParsedMethod)] = [:]
@@ -79,13 +81,19 @@ extension TypeRepository {
         if let usage = typedAliases[key], let info = find(by: usage.name, assumed: key.moduleName) {
             return info
         }
+        
         throw Throwable.message("Unable to find '\(description(of: key))'")
     }
 
     func find(by name: String, assumed moduleName: String?) -> Info? {
+        if let key = mudularKeys[name] {
+            return try? find(by: key)
+        }
         if let info = typeInfos[.name(name)] {
             return info
         }
+        
+        
         let chunks = name.split(separator: ".")
         guard chunks.count > 1 else {
             return try? find(by: Key(name: name, moduleName: moduleName))
@@ -208,6 +216,9 @@ extension TypeRepository {
                 parsedType: parsedType,
                 parsedUsage: nil
             )
+            if let moduleName = key.moduleName {
+                mudularKeys["\(moduleName).\(key.name)"] = key
+            }
             if let scopeKey = scopeKey {
                 scopes[scopeKey]?.keys.insert(key)
             }
@@ -224,10 +235,18 @@ extension TypeRepository {
             }
         }
         for (key, usage) in binders {
-            guard let mimicInfo = find(by: usage.name, assumed: key.moduleName) else {
-                throw Throwable.message("Unable to find '\(description(of: usage))' bound to \(description(of: key))")
+            if let mimicInfo = find(by: usage.name, assumed: key.moduleName) {
+                bound[mimicInfo.key] = key
+            } else {
+                let mimicKey: Key = .name(usage.name)
+                typeInfos[mimicKey] = Info(
+                    key: mimicKey,
+                    scopeKey: try find(by: key).scopeKey,
+                    parsedType: nil,
+                    parsedUsage: usage
+                )
+                bound[mimicKey] = key
             }
-            bound[mimicInfo.key] = key
         }
         for (key, method) in providers {
             guard let usage = method.returnType else {

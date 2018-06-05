@@ -149,4 +149,61 @@ class TypeRepoResolverTests: XCTestCase {
             .provided(.name("Bar"))
         )
     }
+    
+    func testProvided3() {
+        let parsedData: ParsedData = {
+            let factory = ParsedDataFactory()
+            try! FileParser(contents:
+                """
+                // @saber.container(App)
+                // @saber.scope(Singleton)
+                protocol AppConfig {}
+
+                protocol Foo {}
+
+                class FooProvider: Singleton {
+                    // @saber.provider
+                    func provide() -> Foo {}
+                }
+                """
+                ).parse(to: factory)
+            return factory.make()
+        }()
+        let repo = try! TypeRepository(parsedData: parsedData)
+        XCTAssertEqual(
+            repo.resolver(for: .name("Foo"), scopeKey: .name("Singleton")),
+            .provided(.name("Foo"))
+        )
+    }
+    
+    func testBound() {
+        let parsedData: ParsedData = {
+            let factory = ParsedDataFactory()
+            try! FileParser(contents:
+                """
+                // @saber.container(App)
+                // @saber.scope(Singleton)
+                protocol AppConfig {}
+
+                protocol FooProtocol {}
+
+                // @saber.bindTo(FooProtocol)
+                struct Foo: Singleton {}
+
+                // @saber.bindTo(BarProtocol)
+                struct Bar: Singleton {}
+                """
+                ).parse(to: factory)
+            return factory.make()
+        }()
+        let repo = try! TypeRepository(parsedData: parsedData)
+        XCTAssertEqual(
+            repo.resolver(for: .name("FooProtocol"), scopeKey: .name("Singleton")),
+            .bound(.name("FooProtocol"), to: .name("Foo"))
+        )
+        XCTAssertEqual(
+            repo.resolver(for: .name("BarProtocol"), scopeKey: .name("Singleton")),
+            .bound(.name("BarProtocol"), to: .name("Bar"))
+        )
+    }
 }
