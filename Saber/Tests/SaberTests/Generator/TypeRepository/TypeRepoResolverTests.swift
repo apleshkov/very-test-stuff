@@ -28,7 +28,7 @@ class TypeRepoResolverTests: XCTestCase {
         let repo = try! TypeRepository(parsedData: parsedData)
         XCTAssertEqual(
             repo.resolver(for: .name("Foo"), scopeKey: .name("Singleton")),
-            .explicit(.name("Foo"))
+            .explicit
         )
         XCTAssertEqual(
             repo.resolver(for: .name("Bar"), scopeKey: .name("Singleton")),
@@ -112,11 +112,11 @@ class TypeRepoResolverTests: XCTestCase {
         let repo = try! TypeRepository(parsedData: parsedData)
         XCTAssertEqual(
             repo.resolver(for: .name("Foo"), scopeKey: .name("Singleton")),
-            .provided(.name("Foo"))
+            .provider(.name("FooProvider"))
         )
         XCTAssertEqual(
             repo.resolver(for: .name("Bar"), scopeKey: .name("Singleton")),
-            .provided(.name("Bar"))
+            .provider(.name("BarProvider"))
         )
     }
     
@@ -129,11 +129,13 @@ class TypeRepoResolverTests: XCTestCase {
                 // @saber.scope(Singleton)
                 protocol AppConfig {}
 
+                // @saber.scope(Singleton)
                 struct Foo {
                     // @saber.provider
                     static func provide() -> Foo {} // returns known type
                 }
 
+                // @saber.scope(Singleton)
                 class BarFactory {
                     // @saber.provider
                     static func make() -> Bar {} // returns unknown type
@@ -145,11 +147,11 @@ class TypeRepoResolverTests: XCTestCase {
         let repo = try! TypeRepository(parsedData: parsedData)
         XCTAssertEqual(
             repo.resolver(for: .name("Foo"), scopeKey: .name("Singleton")),
-            .provided(.name("Foo"))
+            .provider(.name("Foo"))
         )
         XCTAssertEqual(
             repo.resolver(for: .name("Bar"), scopeKey: .name("Singleton")),
-            .provided(.name("Bar"))
+            .provider(.name("BarFactory"))
         )
     }
     
@@ -176,7 +178,7 @@ class TypeRepoResolverTests: XCTestCase {
         let repo = try! TypeRepository(parsedData: parsedData)
         XCTAssertEqual(
             repo.resolver(for: .name("Foo"), scopeKey: .name("Singleton")),
-            .provided(.name("Foo"))
+            .provider(.name("FooProvider"))
         )
     }
     
@@ -205,11 +207,11 @@ class TypeRepoResolverTests: XCTestCase {
         let repo = try! TypeRepository(parsedData: parsedData)
         XCTAssertEqual(
             repo.resolver(for: .name("FooProtocol"), scopeKey: .name("Singleton")),
-            .bound(.name("FooProtocol"), to: .name("Foo"))
+            .binder(.name("Foo"))
         )
         XCTAssertEqual(
             repo.resolver(for: .name("BarProtocol"), scopeKey: .name("Singleton")),
-            .bound(.name("BarProtocol"), to: .name("Bar"))
+            .binder(.name("Bar"))
         )
     }
 
@@ -222,30 +224,25 @@ class TypeRepoResolverTests: XCTestCase {
                 // @saber.scope(Singleton)
                 protocol AppConfig {}
 
-// @saber.container()
-protocol UserConfig {}
-
-                protocol FooProtocol {}
+                // @saber.container(SessionContainer)
+                // @saber.scope(Session)
+                // @saber.dependsOn(App)
+                protocol SessionConfig {}
 
                 // @saber.scope(Singleton)
                 // @saber.bindTo(FooProtocol)
                 struct Foo {}
-
-                // @saber.scope(Singleton)
-                // @saber.bindTo(BarProtocol)
-                struct Bar {}
                 """
                 ).parse(to: factory)
             return factory.make()
         }()
         let repo = try! TypeRepository(parsedData: parsedData)
         XCTAssertEqual(
-            repo.resolver(for: .name("FooProtocol"), scopeKey: .name("Singleton")),
-            .bound(.name("FooProtocol"), to: .name("Foo"))
-        )
-        XCTAssertEqual(
-            repo.resolver(for: .name("BarProtocol"), scopeKey: .name("Singleton")),
-            .bound(.name("BarProtocol"), to: .name("Bar"))
+            repo.resolver(for: .name("FooProtocol"), scopeKey: .name("Session")),
+            .derived(
+                from: .name("Singleton"),
+                resolver: .binder(.name("Foo"))
+            )
         )
     }
 }
