@@ -212,4 +212,40 @@ class TypeRepoResolverTests: XCTestCase {
             .bound(.name("BarProtocol"), to: .name("Bar"))
         )
     }
+
+    func testDerived1() {
+        let parsedData: ParsedData = {
+            let factory = ParsedDataFactory()
+            try! FileParser(contents:
+                """
+                // @saber.container(App)
+                // @saber.scope(Singleton)
+                protocol AppConfig {}
+
+// @saber.container()
+protocol UserConfig {}
+
+                protocol FooProtocol {}
+
+                // @saber.scope(Singleton)
+                // @saber.bindTo(FooProtocol)
+                struct Foo {}
+
+                // @saber.scope(Singleton)
+                // @saber.bindTo(BarProtocol)
+                struct Bar {}
+                """
+                ).parse(to: factory)
+            return factory.make()
+        }()
+        let repo = try! TypeRepository(parsedData: parsedData)
+        XCTAssertEqual(
+            repo.resolver(for: .name("FooProtocol"), scopeKey: .name("Singleton")),
+            .bound(.name("FooProtocol"), to: .name("Foo"))
+        )
+        XCTAssertEqual(
+            repo.resolver(for: .name("BarProtocol"), scopeKey: .name("Singleton")),
+            .bound(.name("BarProtocol"), to: .name("Bar"))
+        )
+    }
 }
