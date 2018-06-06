@@ -60,8 +60,7 @@ class TypeRepoResolverTests: XCTestCase {
             .external(
                 member: .property(
                     from: .name("AppExternal"),
-                    name: "foo",
-                    key: .name("Foo")
+                    name: "foo"
                 )
             )
         )
@@ -76,8 +75,7 @@ class TypeRepoResolverTests: XCTestCase {
                         returnType: ParsedTypeUsage(name: "Bar"),
                         isStatic: false,
                         annotations: []
-                    ),
-                    key: .name("Bar")
+                    )
                 )
             )
         )
@@ -215,23 +213,37 @@ class TypeRepoResolverTests: XCTestCase {
         )
     }
 
-    func testDerived1() {
+    func testDerived() {
         let parsedData: ParsedData = {
             let factory = ParsedDataFactory()
             try! FileParser(contents:
                 """
                 // @saber.container(App)
                 // @saber.scope(Singleton)
+                // @saber.externals(AppExternal)
                 protocol AppConfig {}
+
+                // @saber.scope(Singleton)
+                // @saber.bindTo(FooProtocol)
+                struct Foo {}
+
+                // @saber.scope(Singleton)
+                class BarProvider {
+                    // @saber.provider
+                    func provide() -> Bar {}
+                }
+
+                struct AppExternal {
+                    var baz: Baz
+                }
+
+                // @saber.scope(Singleton)
+                class Quux {}
 
                 // @saber.container(SessionContainer)
                 // @saber.scope(Session)
                 // @saber.dependsOn(App)
                 protocol SessionConfig {}
-
-                // @saber.scope(Singleton)
-                // @saber.bindTo(FooProtocol)
-                struct Foo {}
                 """
                 ).parse(to: factory)
             return factory.make()
@@ -242,6 +254,29 @@ class TypeRepoResolverTests: XCTestCase {
             .derived(
                 from: .name("Singleton"),
                 resolver: .binder(.name("Foo"))
+            )
+        )
+        XCTAssertEqual(
+            repo.resolver(for: .name("Bar"), scopeKey: .name("Session")),
+            .derived(
+                from: .name("Singleton"),
+                resolver: .provider(.name("BarProvider"))
+            )
+        )
+        XCTAssertEqual(
+            repo.resolver(for: .name("Baz"), scopeKey: .name("Session")),
+            .derived(
+                from: .name("Singleton"),
+                resolver: .external(
+                    member: .property(from: .name("AppExternal"), name: "baz")
+                )
+            )
+        )
+        XCTAssertEqual(
+            repo.resolver(for: .name("Quux"), scopeKey: .name("Session")),
+            .derived(
+                from: .name("Singleton"),
+                resolver: .explicit
             )
         )
     }

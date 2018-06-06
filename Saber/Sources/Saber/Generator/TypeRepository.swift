@@ -57,8 +57,8 @@ extension TypeRepository {
     }
     
     enum ExternalMember: Equatable {
-        case property(from: Key, name: String, key: Key)
-        case method(from: Key, parsed: ParsedMethod, key: Key)
+        case property(from: Key, name: String)
+        case method(from: Key, parsed: ParsedMethod)
     }
     
     indirect enum Resolver: Equatable {
@@ -322,8 +322,7 @@ extension TypeRepository {
                     }
                     members[info.key] = .property(
                         from: externalInfo.key,
-                        name: $0.name,
-                        key: info.key
+                        name: $0.name
                     )
                 }
                 externalParsedType.methods.forEach {
@@ -345,8 +344,7 @@ extension TypeRepository {
                     }
                     members[info.key] = ExternalMember.method(
                         from: externalInfo.key,
-                        parsed: $0,
-                        key: info.key
+                        parsed: $0
                     )
                 }
             }
