@@ -22,14 +22,14 @@ class FileParser {
         self.moduleName = moduleName
     }
 
-    func parse(to data: ParsedDataFactory) {
-        parse(structure, to: data)
+    func parse(to data: ParsedDataFactory) throws {
+        try parse(structure, to: data)
     }
     
-    private func parse(_ structure: [String : SourceKitRepresentable], to data: ParsedDataFactory) {
+    private func parse(_ structure: [String : SourceKitRepresentable], to data: ParsedDataFactory) throws {
         if var container = ContainerParser.parse(structure, rawData: rawData) {
             container.moduleName = moduleName
-            data.register(container)
+            try data.register(container)
         } else if let type = TypeParser.parse(structure, rawData: rawData) {
             process(type, parent: nil, data: data)
         } else if let ext = ExtensionParser.parse(structure, rawData: rawData) {
@@ -37,8 +37,8 @@ class FileParser {
         } else if let alias = TypealiasParser.parse(structure, rawData: rawData) {
             process(alias, parent: nil, data: data)
         } else {
-            structure.swiftSubstructures?.forEach {
-                parse($0, to: data)
+            try structure.swiftSubstructures?.forEach {
+                try parse($0, to: data)
             }
         }
     }
@@ -64,6 +64,7 @@ class FileParser {
 
     private func process(_ ext: ParsedExtension, parent: NestedParsedDecl?, data: ParsedDataFactory) {
         var ext = ext
+        ext.moduleName = moduleName
         if let parentName = parent?.name {
             ext.typeName = "\(parentName).\(ext.typeName)"
         }

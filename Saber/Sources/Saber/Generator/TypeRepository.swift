@@ -73,8 +73,11 @@ extension TypeRepository {
 extension TypeRepository {
 
     func find(by key: Key) throws -> Info {
-        if case .name(let name) = key, let collisions = shortenNameCollisions[name], collisions.count > 1 {
-            throw Throwable.declCollision(name: name, modules: collisions)
+        if case .name(let name) = key, let collisions = shortenNameCollisions[name], collisions.count > 0 {
+            guard collisions.count == 1 else {
+                throw Throwable.declCollision(name: name, modules: collisions)
+            }
+            return try find(by: .modular(module: collisions[0], name: name))
         }
         guard let info = typeInfos[key] else {
             throw Throwable.message("Unable to find '\(description(of: key))'")
@@ -205,7 +208,7 @@ extension TypeRepository {
 
     private func fillAliases(parsedData: ParsedData) throws {
         try parsedData.aliases.forEach {
-            let alias = $0.value
+            let alias = $0
             switch alias.target {
             case .type(let usage):
                 let key = makeKey(for: alias)
@@ -227,7 +230,7 @@ extension TypeRepository {
         var binders: [Key : (scopeKey: ScopeKey, usage: ParsedTypeUsage)] = [:]
         var providers: [Key : (scopeKey: ScopeKey, method: ParsedMethod)] = [:]
         try parsedData.types.forEach {
-            let parsedType = $0.value
+            let parsedType = $0
             let scopeKey: ScopeKey? = try makeScopeKey(
                 from: parsedType.annotations,
                 of: description(of: parsedType)

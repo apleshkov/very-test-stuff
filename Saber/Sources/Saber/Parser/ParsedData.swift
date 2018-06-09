@@ -11,9 +11,11 @@ struct ParsedData: Equatable {
     
     var containers: [String : ParsedContainer] = [:]
     
-    var types: [String : ParsedType] = [:]
+    var types: [ParsedType] = []
 
-    var aliases: [String : ParsedTypealias] = [:]
+    var extensions: [ParsedExtension] = []
+
+    var aliases: [ParsedTypealias] = []
 }
 
 // MARK: Factory
@@ -22,49 +24,39 @@ class ParsedDataFactory {
 
     private var containers: [String : ParsedContainer] = [:]
     
-    private var types: [String : ParsedType] = [:]
+    private var types: [ParsedType] = []
 
-    private var aliases: [String : ParsedTypealias] = [:]
+    private var aliases: [ParsedTypealias] = []
 
-    private var postponed: [ParsedExtension] = []
+    private var extensions: [ParsedExtension] = []
     
     init() {}
 
-    func register(_ container: ParsedContainer) {
-        assert(containers[container.name] == nil)
-        containers[container.name] = container
+    func register(_ container: ParsedContainer) throws {
+        let key = container.name
+        guard containers[key] == nil else {
+            throw Throwable.message("Container '\(container.name)' is already exist")
+        }
+        containers[key] = container
     }
     
     func register(_ type: ParsedType) {
-        assert(types[type.name] == nil)
-        types[type.name] = type
+        types.append(type)
     }
 
     func register(_ alias: ParsedTypealias) {
-        aliases[alias.name] = alias
+        aliases.append(alias)
     }
 
-    @discardableResult
-    func register(_ ext: ParsedExtension) -> Bool {
-        guard var type = types[ext.typeName] else {
-            postponed.append(ext)
-            return false
-        }
-        type.properties.append(contentsOf: ext.properties)
-        type.methods.append(contentsOf: ext.methods)
-        type.nested.append(contentsOf: ext.nested)
-        types[type.name] = type
-        return true
+    func register(_ ext: ParsedExtension) {
+        extensions.append(ext)
     }
 
     func make() -> ParsedData {
-        postponed = postponed.filter {
-            return !register($0)
-        }
-        assert(postponed.count == 0)
         return ParsedData(
             containers: containers,
             types: types,
+            extensions: extensions,
             aliases: aliases
         )
     }

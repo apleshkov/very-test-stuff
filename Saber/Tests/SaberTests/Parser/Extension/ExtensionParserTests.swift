@@ -163,7 +163,6 @@ class ExtensionParserTests: XCTestCase {
                     .add(property: ParsedProperty(name: "bar", type: ParsedTypeUsage(name: "Int"), annotations: [.inject]))
             ]
         )
-        
     }
 }
 

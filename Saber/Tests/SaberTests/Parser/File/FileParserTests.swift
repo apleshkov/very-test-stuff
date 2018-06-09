@@ -45,31 +45,31 @@ class FileParserTests: XCTestCase {
         let data = factory.make()
         XCTAssertEqual(data.types.count, 3)
         XCTAssertEqual(
-            data.types["Foo"]?.name,
+            data.type(name: "Foo")?.name,
             "Foo"
         )
         XCTAssertEqual(
-            data.types["Foo.Bar"]?.methods,
+            data.ext(typeName: "Foo.Bar")?.methods,
             [ParsedMethod(name: "set", annotations: [.inject])]
         )
         XCTAssertEqual(
-            data.types["Foo.Bar.Baz"]?.annotations,
+            data.type(name: "Foo.Bar.Baz")?.annotations,
             [.cached]
         )
         XCTAssertEqual(
-            data.types["Foo.Bar.Baz"]?.methods,
+            data.ext(typeName: "Foo.Bar.Baz")?.methods,
             [ParsedMethod(name: "set", annotations: [.inject])]
         )
         XCTAssertEqual(
-            data.aliases["Foo.FooInt"]?.type,
+            data.alias(name: "Foo.FooInt")?.type,
             ParsedTypeUsage(name: "Int")
         )
         XCTAssertEqual(
-            data.aliases["Foo.Bar.BarInt"]?.type,
+            data.alias(name: "Foo.Bar.BarInt")?.type,
             ParsedTypeUsage(name: "Int")
         )
         XCTAssertEqual(
-            data.aliases["Foo.Bar.Baz.BazInt"]?.type,
+            data.alias(name: "Foo.Bar.Baz.BazInt")?.type,
             ParsedTypeUsage(name: "Int")
         )
     }
@@ -80,15 +80,20 @@ class FileParserTests: XCTestCase {
             """
             class Foo {}
             typealias Bar = Foo
+            extension Foo {}
             """, moduleName: "A"
             ).parse(to: factory)
         let data = factory.make()
         XCTAssertEqual(
-            data.types["Foo"]?.moduleName,
+            data.type(name: "Foo")?.moduleName,
             "A"
         )
         XCTAssertEqual(
-            data.aliases["Bar"]?.moduleName,
+            data.alias(name: "Bar")?.moduleName,
+            "A"
+        )
+        XCTAssertEqual(
+            data.ext(typeName: "Foo")?.moduleName,
             "A"
         )
     }

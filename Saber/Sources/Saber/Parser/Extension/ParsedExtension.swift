@@ -11,6 +11,8 @@ struct ParsedExtension: Equatable {
 
     var typeName: String
 
+    var moduleName: String? = nil
+
     var inheritedFrom: [ParsedTypeUsage] = []
 
     var properties: [ParsedProperty] = []

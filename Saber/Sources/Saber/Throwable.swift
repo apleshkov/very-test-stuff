@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum Throwable: Error {
+enum Throwable: Error, Equatable {
     case message(String)
     case declCollision(name: String, modules: [String])
 }
