@@ -10,7 +10,7 @@ import Foundation
 
 extension Container {
 
-    init(name: String, dependencies: [Type] = []) {
+    init(name: String, dependencies: [TypeUsage] = []) {
         self.init(name: name, protocolName: "\(name)Protocol", dependencies: dependencies)
     }
 }

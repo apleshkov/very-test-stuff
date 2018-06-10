@@ -12,8 +12,8 @@ import XCTest
 class ExplicitTypeResolverTests: XCTestCase {
 
     func testValue() {
-        let type = Type(name: "FooBar")
-        let resolver = TypeResolver.explicit(type)
+        let decl = TypeDeclaration(name: "FooBar")
+        let resolver = TypeResolver.explicit(decl)
         let service = Service(typeResolver: resolver, storage: .none)
         let container = Container(name: "Test").add(service: service)
         let data = ContainerDataFactory().make(from: container)
@@ -49,9 +49,9 @@ class ExplicitTypeResolverTests: XCTestCase {
     }
     
     func testValueWithMemberInjections() {
-        var type = Type(name: "FooBar")
-        type.memberInjections = [MemberInjection(name: "quux", typeResolver: .explicit(Type(name: "Quux")))]
-        let resolver = TypeResolver.explicit(type)
+        var decl = TypeDeclaration(name: "FooBar")
+        decl.memberInjections = [MemberInjection(name: "quux", typeResolver: .explicit(TypeUsage(name: "Quux")))]
+        let resolver = TypeResolver.explicit(decl)
         let service = Service(typeResolver: resolver, storage: .none)
         let container = Container(name: "Test").add(service: service)
         let data = ContainerDataFactory().make(from: container)
@@ -94,9 +94,9 @@ class ExplicitTypeResolverTests: XCTestCase {
     }
     
     func testNoInitializer() {
-        var type = Type(name: "FooBar").set(initializer: .none)
-        type.memberInjections = [MemberInjection(name: "quux", typeResolver: .explicit(Type(name: "Quux")))]
-        let resolver = TypeResolver.explicit(type)
+        var decl = TypeDeclaration(name: "FooBar").set(initializer: .none)
+        decl.memberInjections = [MemberInjection(name: "quux", typeResolver: .explicit(TypeUsage(name: "Quux")))]
+        let resolver = TypeResolver.explicit(decl)
         let service = Service(typeResolver: resolver, storage: .none)
         let container = Container(name: "Test").add(service: service)
         let data = ContainerDataFactory().make(from: container)

@@ -13,7 +13,7 @@ struct Container {
 
     var protocolName: String
 
-    var dependencies: [Type] = []
+    var dependencies: [TypeUsage] = []
 
     var externals: [ContainerExternal] = []
     
@@ -21,13 +21,13 @@ struct Container {
 
     var isThreadSafe: Bool = false
 
-    init(name: String, protocolName: String, dependencies: [Type] = []) {
+    init(name: String, protocolName: String, dependencies: [TypeUsage] = []) {
         self.name = name
         self.dependencies = dependencies
         self.protocolName = protocolName
     }
     
-    func add(dependency: Type) -> Container {
+    func add(dependency: TypeUsage) -> Container {
         var result = self
         result.dependencies.append(dependency)
         return result
@@ -47,11 +47,11 @@ struct ContainerExternal {
         case method(name: String, args: [FunctionInvocationArgument])
     }
     
-    var type: Type
+    var type: TypeUsage
     
     var kinds: [Kind]
     
-    init(type: Type, kinds: [Kind]) {
+    init(type: TypeUsage, kinds: [Kind]) {
         self.type = type
         self.kinds = kinds
     }

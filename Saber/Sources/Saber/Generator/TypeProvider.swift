@@ -14,14 +14,14 @@ enum TypeProvider {
 
 struct TypedProvider {
 
-    var type: Type
+    var decl: TypeDeclaration
 
     var methodName: String
 
     var args: [FunctionInvocationArgument] = []
 
-    init(type: Type, methodName: String, args: [FunctionInvocationArgument] = []) {
-        self.type = type
+    init(decl: TypeDeclaration, methodName: String, args: [FunctionInvocationArgument] = []) {
+        self.decl = decl
         self.methodName = methodName
     }
 }

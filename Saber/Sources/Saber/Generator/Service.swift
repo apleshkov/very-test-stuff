@@ -14,7 +14,7 @@ enum ServiceStorage {
 
 struct Service {
 
-    var typeResolver: TypeResolver
+    var typeResolver: TypeResolver<TypeDeclaration>
 
     var storage: ServiceStorage
 }

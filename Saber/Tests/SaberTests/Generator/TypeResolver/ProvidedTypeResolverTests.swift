@@ -12,13 +12,13 @@ import XCTest
 class ProvidedTypeResolverTests: XCTestCase {
 
     func testTypedProvider() {
-        var type = Type(name: "FooBar")
-        type.memberInjections = [MemberInjection(name: "baz", typeResolver: .explicit(Type(name: "Baz")))]
+        var decl = TypeDeclaration(name: "FooBar")
+        decl.memberInjections = [MemberInjection(name: "baz", typeResolver: .explicit(TypeUsage(name: "Baz")))]
         let resolver = TypeResolver.provided(
-            type,
+            decl,
             by: .typed(
                 TypedProvider(
-                    type: Type(name: "CoolProvider"),
+                    decl: TypeDeclaration(name: "CoolProvider"),
                     methodName: "provide"
                 )
             )
@@ -77,16 +77,16 @@ class ProvidedTypeResolverTests: XCTestCase {
     }
     
     func testCachedTypedProvider() {
-        let type = Type(name: "FooBar")
+        let decl = TypeDeclaration(name: "FooBar")
         let resolver = TypeResolver.provided(
-            type,
+            decl,
             by: .typed(
                 TypedProvider(
-                    type: Type(name: "CoolProvider")
+                    decl: TypeDeclaration(name: "CoolProvider")
                         .set(initializer: .some(args: [
                             ConstructorInjection(
                                 name: "quux",
-                                typeResolver: .explicit(Type(name: "Quux"))
+                                typeResolver: .explicit(TypeUsage(name: "Quux"))
                             )
                             ])),
                     methodName: "provide"
@@ -144,16 +144,16 @@ class ProvidedTypeResolverTests: XCTestCase {
     }
     
     func testStaticMethodProvider() {
-        var type = Type(name: "FooBar")
-        type.memberInjections = [MemberInjection(name: "baz", typeResolver: .explicit(Type(name: "Baz")))]
+        var decl = TypeDeclaration(name: "FooBar")
+        decl.memberInjections = [MemberInjection(name: "baz", typeResolver: .explicit(TypeUsage(name: "Baz")))]
         let resolver = TypeResolver.provided(
-            type,
+            decl,
             by: .staticMethod(
                 StaticMethodProvider(
                     receiverName: "FooBar",
                     methodName: "provide",
                     args: [
-                        FunctionInvocationArgument(name: "quux", typeResolver: .explicit(Type(name: "Quux")))
+                        FunctionInvocationArgument(name: "quux", typeResolver: .explicit(TypeUsage(name: "Quux")))
                     ]
                 )
             )

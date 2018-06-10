@@ -13,8 +13,8 @@ class BoundTypeResolverTests: XCTestCase {
 
     func testOptional() {
         let resolver = TypeResolver.bound(
-            Type(name: "FooProtocol").set(isOptional: true),
-            to: Type(name: "Foo").set(isOptional: true)
+            TypeUsage(name: "FooProtocol").set(isOptional: true),
+            to: TypeDeclaration(name: "Foo").set(isOptional: true)
         )
         let service = Service(typeResolver: resolver, storage: .none)
         let container = Container(name: "Test").add(service: service)
@@ -56,11 +56,11 @@ class BoundTypeResolverTests: XCTestCase {
     }
 
     func testValueWithMemberInjections() {
-        var type = Type(name: "Foo")
-        type.memberInjections = [MemberInjection(name: "quux", typeResolver: .explicit(Type(name: "Quux")))]
+        var decl = TypeDeclaration(name: "Foo")
+        decl.memberInjections = [MemberInjection(name: "quux", typeResolver: .explicit(TypeUsage(name: "Quux")))]
         let resolver = TypeResolver.bound(
-            Type(name: "FooProtocol"),
-            to: type
+            TypeUsage(name: "FooProtocol"),
+            to: decl
         )
         let service = Service(typeResolver: resolver, storage: .none)
         let container = Container(name: "Test").add(service: service)

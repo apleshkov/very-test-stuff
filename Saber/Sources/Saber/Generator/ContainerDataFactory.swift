@@ -42,27 +42,35 @@ class ContainerDataFactory {
         return data
     }
 
-    private func expand(data: inout ContainerData, type: Type, isCached: Bool, isThreadSafe: Bool, accessLevel: String) {
+    private func expand(data: inout ContainerData,
+                        decl: TypeDeclaration,
+                        isCached: Bool,
+                        isThreadSafe: Bool,
+                        accessLevel: String) {
         if isCached {
-            let name = memberName(of: type)
+            let name = memberName(of: decl)
             let cachedName = "cached_\(name)"
-            data.storedProperties.append(["private var \(cachedName): \(type.set(isOptional: true).fullName)"])
+            data.storedProperties.append(["private var \(cachedName): \(decl.set(isOptional: true).fullName)"])
             data.getters.append(
-                getter(of: type, accessLevel: accessLevel, cached: (memberName: cachedName, isThreadSafe: isThreadSafe))
+                getter(of: decl, accessLevel: accessLevel, cached: (memberName: cachedName, isThreadSafe: isThreadSafe))
             )
         } else {
             data.getters.append(
-                getter(of: type, accessLevel: accessLevel)
+                getter(of: decl, accessLevel: accessLevel)
             )
         }
     }
     
-    private func expand(data: inout ContainerData, typeResolver: TypeResolver, isCached: Bool, isThreadSafe: Bool, accessLevel: String) {
+    private func expand(data: inout ContainerData,
+                        typeResolver: TypeResolver<TypeDeclaration>,
+                        isCached: Bool,
+                        isThreadSafe: Bool,
+                        accessLevel: String) {
         switch typeResolver {
         case .explicit(let type):
             let injectorAccessLevel: String
             if let maker = maker(for: type) {
-                expand(data: &data, type: type, isCached: isCached, isThreadSafe: isThreadSafe, accessLevel: accessLevel)
+                expand(data: &data, decl: type, isCached: isCached, isThreadSafe: isThreadSafe, accessLevel: accessLevel)
                 data.makers.append(maker)
                 injectorAccessLevel = "private"
             } else {
@@ -74,20 +82,20 @@ class ContainerDataFactory {
         case .provided(let type, let provider):
             switch provider {
             case .typed(let typedProvider):
-                expand(data: &data, type: type, isCached: isCached, isThreadSafe: isThreadSafe, accessLevel: accessLevel)
+                expand(data: &data, decl: type, isCached: isCached, isThreadSafe: isThreadSafe, accessLevel: accessLevel)
                 if let injector = injector(for: type, accessLevel: "private") {
                     data.injectors.append(injector)
                 }
-                let providerType = typedProvider.type
+                let providerDecl = typedProvider.decl
                 data.makers.append([
                     "private func \(memberName(of: type, prefix: "make"))() -> \(type.fullName) {",
-                    "\(indent)let provider = \(accessor(of: .explicit(providerType), owner: "self"))",
-                    "\(indent)return \(invoked("provider", isOptional: providerType.isOptional, with: typedProvider.methodName, args: typedProvider.args))",
+                    "\(indent)let provider = \(accessor(of: .explicit(providerDecl), owner: "self"))",
+                    "\(indent)return \(invoked("provider", isOptional: providerDecl.isOptional, with: typedProvider.methodName, args: typedProvider.args))",
                     "}"
                     ])
-                expand(data: &data, typeResolver: .explicit(providerType), isCached: false, isThreadSafe: false, accessLevel: "private")
+                expand(data: &data, typeResolver: .explicit(providerDecl), isCached: false, isThreadSafe: false, accessLevel: "private")
             case .staticMethod(let methodProvider):
-                expand(data: &data, type: type, isCached: isCached, isThreadSafe: isThreadSafe, accessLevel: accessLevel)
+                expand(data: &data, decl: type, isCached: isCached, isThreadSafe: isThreadSafe, accessLevel: accessLevel)
                 if let injector = injector(for: type, accessLevel: "private") {
                     data.injectors.append(injector)
                 }
@@ -111,7 +119,7 @@ class ContainerDataFactory {
         }
     }
 
-    func memberName(of type: Type, prefix: String? = nil) -> String {
+    func memberName(of type: SomeType, prefix: String? = nil) -> String {
         var result: String
         let name = type.name.split(separator: ".").joined()
         if let prefix = prefix {
@@ -120,16 +128,16 @@ class ContainerDataFactory {
             let first = String(name.first!).lowercased()
             result = first + name.dropFirst()
         }
-        if type.generics.count > 0 {
+        if let usage = type as? TypeUsage, usage.generics.count > 0 {
             result += "With"
-            result += type.generics.map {
-                return memberName(of: $0, prefix: "")
-            }.joined(separator: "And")
+            result += usage.generics
+                .map { memberName(of: $0, prefix: "") }
+                .joined(separator: "And")
         }
         return result
     }
     
-    func getter(of type: Type, accessLevel: String, cached: (memberName: String, isThreadSafe: Bool)? = nil) -> [String] {
+    func getter(of decl: TypeDeclaration, accessLevel: String, cached: (memberName: String, isThreadSafe: Bool)? = nil) -> [String] {
         var body: [String] = []
         if let cached = cached {
             if cached.isThreadSafe {
@@ -138,14 +146,14 @@ class ContainerDataFactory {
             }
             body.append("if let cached = self.\(cached.memberName) { return cached }")
         }
-        let maker = "self.\(memberName(of: type, prefix: "make"))()"
-        let name = memberName(of: type)
-        if type.memberInjections.count > 0 {
-            let decl = type.isReference ? "let" : "var"
-            body.append("\(decl) \(name) = \(maker)")
-            let providedValue = type.isReference ? name : "&\(name)"
-            if type.isOptional {
-                body.append("if \(decl) \(name) = \(name) { self.injectTo(\(name): \(providedValue)) }")
+        let maker = "self.\(memberName(of: decl, prefix: "make"))()"
+        let name = memberName(of: decl)
+        if decl.memberInjections.count > 0 {
+            let strDecl = decl.isReference ? "let" : "var"
+            body.append("\(strDecl) \(name) = \(maker)")
+            let providedValue = decl.isReference ? name : "&\(name)"
+            if decl.isOptional {
+                body.append("if \(strDecl) \(name) = \(name) { self.injectTo(\(name): \(providedValue)) }")
             } else {
                 body.append("self.injectTo(\(name): \(providedValue))")
             }
@@ -156,15 +164,15 @@ class ContainerDataFactory {
             body.append("self.\(cached.memberName) = \(name)")
         }
         body.append("return \(name)")
-        return ["\(accessLevel) var \(name): \(type.fullName) {"] + body.map { "\(indent)\($0)" } + ["}"]
+        return ["\(accessLevel) var \(name): \(decl.fullName) {"] + body.map { "\(indent)\($0)" } + ["}"]
     }
     
-    func maker(for type: Type) -> [String]? {
-        switch type.initializer {
+    func maker(for decl: TypeDeclaration) -> [String]? {
+        switch decl.initializer {
         case .none:
             return nil
         case .some(let args):
-            var lines: [String] = ["private func \(memberName(of: type, prefix: "make"))() -> \(type.fullName) {"]
+            var lines: [String] = ["private func \(memberName(of: decl, prefix: "make"))() -> \(decl.fullName) {"]
             let invocationArgs: [String] = args.map {
                 let valueName = accessor(of: $0.typeResolver, owner: "self")
                 guard let name = $0.name else {
@@ -172,24 +180,24 @@ class ContainerDataFactory {
                 }
                 return "\(name): \(valueName)"
             }
-            lines.append("\(indent)return \(type.name)(\(invocationArgs.joined(separator: ", ")))")
+            lines.append("\(indent)return \(decl.name)(\(invocationArgs.joined(separator: ", ")))")
             lines.append("}")
             return lines
         }
     }
     
-    func injector(for type: Type, accessLevel: String) -> [String]? {
-        let memberInjections = type.memberInjections
-        let methodInjections = type.methodInjections
+    func injector(for decl: TypeDeclaration, accessLevel: String) -> [String]? {
+        let memberInjections = decl.memberInjections
+        let methodInjections = decl.methodInjections
         guard memberInjections.count > 0 || methodInjections.count > 0 else {
             return nil
         }
-        let varName = memberName(of: type)
+        let varName = memberName(of: decl)
         let typeString: String
-        if type.isReference {
-            typeString = type.set(isOptional: false).fullName
+        if decl.isReference {
+            typeString = decl.set(isOptional: false).fullName
         } else {
-            typeString = "inout " + type.set(isOptional: false).fullName
+            typeString = "inout " + decl.set(isOptional: false).fullName
         }
         var lines = ["\(accessLevel) func injectTo(\(varName): \(typeString)) {"]
         memberInjections.forEach {
@@ -201,7 +209,7 @@ class ContainerDataFactory {
             let invocation = invoked(varName, isOptional: false, with: $0.methodName, args: $0.args)
             lines.append("\(indent)\(invocation)")
         }
-        if let handlerName = type.didInjectHandlerName {
+        if let handlerName = decl.didInjectHandlerName {
             let invocation = invoked(varName, isOptional: false, with: handlerName, args: [])
             lines.append("\(indent)\(invocation)")
         }
@@ -209,11 +217,13 @@ class ContainerDataFactory {
         return lines
     }
 
-    func accessor(of typeResolver: TypeResolver, owner: String) -> String {
+    func accessor<T>(of typeResolver: TypeResolver<T>, owner: String) -> String where T: SomeType {
         switch typeResolver {
-        case .explicit(let type),
-             .provided(let type, _),
-             .bound(let type, _):
+        case .explicit(let type):
+            return "\(owner).\(memberName(of: type))"
+        case .provided(let type, _):
+            return "\(owner).\(memberName(of: type))"
+        case .bound(let type, _):
             return "\(owner).\(memberName(of: type))"
         case .derived(let containerType, let typeResolver):
             return "\(owner).\(accessor(of: typeResolver, owner: memberName(of: containerType)))"

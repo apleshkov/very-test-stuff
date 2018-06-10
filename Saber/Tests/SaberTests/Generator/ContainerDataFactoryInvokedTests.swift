@@ -21,8 +21,8 @@ class ContainerDataFactoryInvokedTests: XCTestCase {
 
     func testAllNamedArgs() {
         let args: [FunctionInvocationArgument] = [
-            FunctionInvocationArgument(name: "baz", typeResolver: .explicit(Type(name: "Baz"))),
-            FunctionInvocationArgument(name: "quux", typeResolver: .explicit(Type(name: "Quux")))
+            FunctionInvocationArgument(name: "baz", typeResolver: .explicit(TypeUsage(name: "Baz"))),
+            FunctionInvocationArgument(name: "quux", typeResolver: .explicit(TypeUsage(name: "Quux")))
         ]
         let invoked = ContainerDataFactory().invoked("foo", isOptional: false, with: "bar", args: args)
         XCTAssertEqual(
@@ -33,8 +33,8 @@ class ContainerDataFactoryInvokedTests: XCTestCase {
 
     func testNotAllNamedArgs() {
         let args: [FunctionInvocationArgument] = [
-            FunctionInvocationArgument(name: nil, typeResolver: .explicit(Type(name: "Baz"))),
-            FunctionInvocationArgument(name: "quux", typeResolver: .explicit(Type(name: "Quux")))
+            FunctionInvocationArgument(name: nil, typeResolver: .explicit(TypeUsage(name: "Baz"))),
+            FunctionInvocationArgument(name: "quux", typeResolver: .explicit(TypeUsage(name: "Quux")))
         ]
         let invoked = ContainerDataFactory().invoked("foo", isOptional: false, with: "bar", args: args)
         XCTAssertEqual(
@@ -48,14 +48,14 @@ class ContainerDataFactoryInvokedTests: XCTestCase {
             FunctionInvocationArgument(
                 name: "baz",
                 typeResolver: .provided(
-                    Type(name: "Baz"),
-                    by: .typed(TypedProvider(type: Type(name: "BazProvider"), methodName: "provide"))
+                    TypeUsage(name: "Baz"),
+                    by: .typed(TypedProvider(decl: TypeDeclaration(name: "BazProvider"), methodName: "provide"))
                 )
             ),
             FunctionInvocationArgument(
                 name: "quux",
                 typeResolver: .provided(
-                    Type(name: "Quux"),
+                    TypeUsage(name: "Quux"),
                     by: .staticMethod(StaticMethodProvider(receiverName: "QuuxProvider", methodName: "provide", args: []))
                 )
             )
@@ -69,7 +69,7 @@ class ContainerDataFactoryInvokedTests: XCTestCase {
     
     func testBound() {
         let args: [FunctionInvocationArgument] = [
-            FunctionInvocationArgument(name: "quux", typeResolver: .bound(Type(name: "QuuxProtocol"), to: Type(name: "Quux")))
+            FunctionInvocationArgument(name: "quux", typeResolver: .bound(TypeUsage(name: "QuuxProtocol"), to: TypeUsage(name: "Quux")))
         ]
         let invoked = ContainerDataFactory().invoked("foo", isOptional: false, with: "bar", args: args)
         XCTAssertEqual(

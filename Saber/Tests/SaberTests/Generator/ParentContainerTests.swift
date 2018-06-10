@@ -12,25 +12,24 @@ import XCTest
 class ParentContainerTests: XCTestCase {
 
     func testParentContainerDependencies() {
-        let fooType = Type(name: "Foo")
         var parentContainer = Container(name: "ParentContainer")
         parentContainer.services.append(
             {
-                return Service(typeResolver: .explicit(fooType), storage: .none)
+                return Service(typeResolver: .explicit(TypeDeclaration(name: "Foo")), storage: .none)
             }()
         )
-        let parentType = Type(name: parentContainer.name)
+        let parentType = TypeUsage(name: parentContainer.name)
         var container = Container(name: "TestContainer").add(dependency: parentType)
         container.services.append(
             {
-                var type = Type(name: "Bar")
-                type.initializer = .some(args: [
+                var decl = TypeDeclaration(name: "Bar")
+                decl.initializer = .some(args: [
                     ConstructorInjection(
                         name: "foo",
-                        typeResolver: .derived(from: parentType, typeResolver: .explicit(fooType))
+                        typeResolver: .derived(from: parentType, typeResolver: .explicit(TypeUsage(name: "Foo")))
                     )
                     ])
-                return Service(typeResolver: .explicit(type), storage: .none)
+                return Service(typeResolver: .explicit(decl), storage: .none)
             }()
         )
         let data = ContainerDataFactory().make(from: container)
@@ -78,28 +77,28 @@ class ParentContainerTests: XCTestCase {
     }
 
     func testMultipleChildContainers() {
-        let aDependency = Type(name: "ContainerA")
-        let bDependency = Type(name: "ContainerB")
+        let aDependency = TypeUsage(name: "ContainerA")
+        let bDependency = TypeUsage(name: "ContainerB")
         let container: Container = {
             var container = Container(name: "ContainerC")
                 .add(dependency: aDependency)
                 .add(dependency: bDependency)
             container.services.append(
                 {
-                    var type = Type(name: "Baz")
-                    type.memberInjections = [
+                    var decl = TypeDeclaration(name: "Baz")
+                    decl.memberInjections = [
                         MemberInjection(
                             name: "foo",
                             typeResolver: .derived(
                                 from: aDependency,
-                                typeResolver: .explicit(Type(name: "Foo"))
+                                typeResolver: .explicit(TypeUsage(name: "Foo"))
                             )
                         ),
                         MemberInjection(
                             name: "bar",
                             typeResolver: .derived(
                                 from: bDependency,
-                                typeResolver: .explicit(Type(name: "Bar"))
+                                typeResolver: .explicit(TypeUsage(name: "Bar"))
                             )
                         ),
                         MemberInjection(
@@ -108,12 +107,12 @@ class ParentContainerTests: XCTestCase {
                                 from: bDependency,
                                 typeResolver: .derived(
                                     from: aDependency,
-                                    typeResolver: .explicit(Type(name: "Quux"))
+                                    typeResolver: .explicit(TypeUsage(name: "Quux"))
                                 )
                             )
                         )
                     ]
-                    return Service(typeResolver: .explicit(type), storage: .none)
+                    return Service(typeResolver: .explicit(decl), storage: .none)
                 }()
             )
             return container

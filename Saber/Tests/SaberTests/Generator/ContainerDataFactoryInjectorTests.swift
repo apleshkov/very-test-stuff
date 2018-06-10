@@ -12,17 +12,17 @@ import XCTest
 class ContainerDataFactoryInjectorTests: XCTestCase {
     
     func testNoInjections() {
-        let type = Type(name: "Foo")
-        let injector = ContainerDataFactory().injector(for: type, accessLevel: "open")
+        let decl = TypeDeclaration(name: "Foo")
+        let injector = ContainerDataFactory().injector(for: decl, accessLevel: "open")
         XCTAssertEqual(injector, nil)
     }
     
     func testValueInjections() {
-        var type = Type(name: "Foo")
-        type.memberInjections = [
-            MemberInjection(name: "bar", typeResolver: .explicit(Type(name: "Bar")))
+        var decl = TypeDeclaration(name: "Foo")
+        decl.memberInjections = [
+            MemberInjection(name: "bar", typeResolver: .explicit(TypeUsage(name: "Bar")))
         ]
-        let injector = ContainerDataFactory().injector(for: type, accessLevel: "open")
+        let injector = ContainerDataFactory().injector(for: decl, accessLevel: "open")
         XCTAssertEqual(
             injector,
             [
@@ -34,12 +34,12 @@ class ContainerDataFactoryInjectorTests: XCTestCase {
     }
 
     func testOptionalValueInjections() {
-        var type = Type(name: "Foo")
-        type.isOptional = true
-        type.memberInjections = [
-            MemberInjection(name: "bar", typeResolver: .explicit(Type(name: "Bar")))
+        var decl = TypeDeclaration(name: "Foo")
+        decl.isOptional = true
+        decl.memberInjections = [
+            MemberInjection(name: "bar", typeResolver: .explicit(TypeUsage(name: "Bar")))
         ]
-        let injector = ContainerDataFactory().injector(for: type, accessLevel: "open")
+        let injector = ContainerDataFactory().injector(for: decl, accessLevel: "open")
         XCTAssertEqual(
             injector,
             [
@@ -51,12 +51,12 @@ class ContainerDataFactoryInjectorTests: XCTestCase {
     }
 
     func testReferenceInjections() {
-        var type = Type(name: "Foo")
-        type.isReference = true
-        type.memberInjections = [
-            MemberInjection(name: "bar", typeResolver: .explicit(Type(name: "Bar")))
+        var decl = TypeDeclaration(name: "Foo")
+        decl.isReference = true
+        decl.memberInjections = [
+            MemberInjection(name: "bar", typeResolver: .explicit(TypeUsage(name: "Bar")))
         ]
-        let injector = ContainerDataFactory().injector(for: type, accessLevel: "open")
+        let injector = ContainerDataFactory().injector(for: decl, accessLevel: "open")
         XCTAssertEqual(
             injector,
             [
@@ -68,13 +68,13 @@ class ContainerDataFactoryInjectorTests: XCTestCase {
     }
 
     func testOptionalReferenceInjections() {
-        var type = Type(name: "Foo")
-        type.isReference = true
-        type.isOptional = true
-        type.memberInjections = [
-            MemberInjection(name: "bar", typeResolver: .explicit(Type(name: "Bar")))
+        var decl = TypeDeclaration(name: "Foo")
+        decl.isReference = true
+        decl.isOptional = true
+        decl.memberInjections = [
+            MemberInjection(name: "bar", typeResolver: .explicit(TypeUsage(name: "Bar")))
         ]
-        let injector = ContainerDataFactory().injector(for: type, accessLevel: "open")
+        let injector = ContainerDataFactory().injector(for: decl, accessLevel: "open")
         XCTAssertEqual(
             injector,
             [
@@ -86,16 +86,16 @@ class ContainerDataFactoryInjectorTests: XCTestCase {
     }
     
     func testMethodInjections() {
-        var type = Type(name: "Foo")
-        type.methodInjections = [
+        var decl = TypeDeclaration(name: "Foo")
+        decl.methodInjections = [
             InstanceMethodInjection(methodName: "set", args: [
-                FunctionInvocationArgument(name: "baz", typeResolver: .explicit(Type(name: "Baz")))
+                FunctionInvocationArgument(name: "baz", typeResolver: .explicit(TypeUsage(name: "Baz")))
                 ]),
             InstanceMethodInjection(methodName: "set", args: [
-                FunctionInvocationArgument(name: "quux", typeResolver: .explicit(Type(name: "Quux")))
+                FunctionInvocationArgument(name: "quux", typeResolver: .explicit(TypeUsage(name: "Quux")))
                 ])
         ]
-        let injector = ContainerDataFactory().injector(for: type, accessLevel: "open")
+        let injector = ContainerDataFactory().injector(for: decl, accessLevel: "open")
         XCTAssertEqual(
             injector,
             [
@@ -108,17 +108,17 @@ class ContainerDataFactoryInjectorTests: XCTestCase {
     }
     
     func testMemberAndMethodInjections() {
-        var type = Type(name: "Foo")
-        type.memberInjections = [
-            MemberInjection(name: "bar", typeResolver: .explicit(Type(name: "Bar")))
+        var decl = TypeDeclaration(name: "Foo")
+        decl.memberInjections = [
+            MemberInjection(name: "bar", typeResolver: .explicit(TypeUsage(name: "Bar")))
         ]
-        type.methodInjections = [
+        decl.methodInjections = [
             InstanceMethodInjection(methodName: "set", args: [
-                FunctionInvocationArgument(name: nil, typeResolver: .explicit(Type(name: "Baz"))),
-                FunctionInvocationArgument(name: "quux", typeResolver: .explicit(Type(name: "Quux")))
+                FunctionInvocationArgument(name: nil, typeResolver: .explicit(TypeUsage(name: "Baz"))),
+                FunctionInvocationArgument(name: "quux", typeResolver: .explicit(TypeUsage(name: "Quux")))
                 ])
         ]
-        let injector = ContainerDataFactory().injector(for: type, accessLevel: "open")
+        let injector = ContainerDataFactory().injector(for: decl, accessLevel: "open")
         XCTAssertEqual(
             injector,
             [
@@ -131,18 +131,18 @@ class ContainerDataFactoryInjectorTests: XCTestCase {
     }
 
     func testDidInjectHandler() {
-        var type = Type(name: "Foo")
-        type.didInjectHandlerName = "postInit"
-        type.memberInjections = [
-            MemberInjection(name: "bar", typeResolver: .explicit(Type(name: "Bar")))
+        var decl = TypeDeclaration(name: "Foo")
+        decl.didInjectHandlerName = "postInit"
+        decl.memberInjections = [
+            MemberInjection(name: "bar", typeResolver: .explicit(TypeUsage(name: "Bar")))
         ]
-        type.methodInjections = [
+        decl.methodInjections = [
             InstanceMethodInjection(methodName: "set", args: [
-                FunctionInvocationArgument(name: nil, typeResolver: .explicit(Type(name: "Baz"))),
-                FunctionInvocationArgument(name: "quux", typeResolver: .explicit(Type(name: "Quux")))
+                FunctionInvocationArgument(name: nil, typeResolver: .explicit(TypeUsage(name: "Baz"))),
+                FunctionInvocationArgument(name: "quux", typeResolver: .explicit(TypeUsage(name: "Quux")))
                 ])
         ]
-        let injector = ContainerDataFactory().injector(for: type, accessLevel: "open")
+        let injector = ContainerDataFactory().injector(for: decl, accessLevel: "open")
         XCTAssertEqual(
             injector,
             [

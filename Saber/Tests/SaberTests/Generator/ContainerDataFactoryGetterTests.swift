@@ -12,8 +12,8 @@ import XCTest
 class ContainerDataFactoryGetterTests: XCTestCase {
     
     func testValueWithoutMemberInjections() {
-        let type = Type(name: "Foo")
-        let getter = ContainerDataFactory().getter(of: type, accessLevel: "open")
+        let decl = TypeDeclaration(name: "Foo")
+        let getter = ContainerDataFactory().getter(of: decl, accessLevel: "open")
         XCTAssertEqual(
             getter,
             [
@@ -26,9 +26,9 @@ class ContainerDataFactoryGetterTests: XCTestCase {
     }
 
     func testReferenceWithoutMemberInjections() {
-        var type = Type(name: "Foo")
-        type.isReference = true
-        let getter = ContainerDataFactory().getter(of: type, accessLevel: "open")
+        var decl = TypeDeclaration(name: "Foo")
+        decl.isReference = true
+        let getter = ContainerDataFactory().getter(of: decl, accessLevel: "open")
         XCTAssertEqual(
             getter,
             [
@@ -41,11 +41,11 @@ class ContainerDataFactoryGetterTests: XCTestCase {
     }
 
     func testValueInjections() {
-        var type = Type(name: "Foo")
-        type.memberInjections = [
-            MemberInjection(name: "bar", typeResolver: .explicit(Type(name: "Bar")))
+        var decl = TypeDeclaration(name: "Foo")
+        decl.memberInjections = [
+            MemberInjection(name: "bar", typeResolver: .explicit(TypeUsage(name: "Bar")))
         ]
-        let getter = ContainerDataFactory().getter(of: type, accessLevel: "open")
+        let getter = ContainerDataFactory().getter(of: decl, accessLevel: "open")
         XCTAssertEqual(
             getter,
             [
@@ -59,12 +59,12 @@ class ContainerDataFactoryGetterTests: XCTestCase {
     }
 
     func testReferenceInjections() {
-        var type = Type(name: "Foo")
-        type.isReference = true
-        type.memberInjections = [
-            MemberInjection(name: "bar", typeResolver: .explicit(Type(name: "Bar")))
+        var decl = TypeDeclaration(name: "Foo")
+        decl.isReference = true
+        decl.memberInjections = [
+            MemberInjection(name: "bar", typeResolver: .explicit(TypeUsage(name: "Bar")))
         ]
-        let getter = ContainerDataFactory().getter(of: type, accessLevel: "open")
+        let getter = ContainerDataFactory().getter(of: decl, accessLevel: "open")
         XCTAssertEqual(
             getter,
             [
@@ -78,12 +78,12 @@ class ContainerDataFactoryGetterTests: XCTestCase {
     }
 
     func testOptionalValueInjections() {
-        var type = Type(name: "Foo")
-        type.isOptional = true
-        type.memberInjections = [
-            MemberInjection(name: "bar", typeResolver: .explicit(Type(name: "Bar")))
+        var decl = TypeDeclaration(name: "Foo")
+        decl.isOptional = true
+        decl.memberInjections = [
+            MemberInjection(name: "bar", typeResolver: .explicit(TypeUsage(name: "Bar")))
         ]
-        let getter = ContainerDataFactory().getter(of: type, accessLevel: "open")
+        let getter = ContainerDataFactory().getter(of: decl, accessLevel: "open")
         XCTAssertEqual(
             getter,
             [
@@ -97,13 +97,13 @@ class ContainerDataFactoryGetterTests: XCTestCase {
     }
 
     func testOptionalReferenceInjections() {
-        var type = Type(name: "Foo")
-        type.isReference = true
-        type.isOptional = true
-        type.memberInjections = [
-            MemberInjection(name: "bar", typeResolver: .explicit(Type(name: "Bar")))
+        var decl = TypeDeclaration(name: "Foo")
+        decl.isReference = true
+        decl.isOptional = true
+        decl.memberInjections = [
+            MemberInjection(name: "bar", typeResolver: .explicit(TypeUsage(name: "Bar")))
         ]
-        let getter = ContainerDataFactory().getter(of: type, accessLevel: "open")
+        let getter = ContainerDataFactory().getter(of: decl, accessLevel: "open")
         XCTAssertEqual(
             getter,
             [
@@ -117,11 +117,11 @@ class ContainerDataFactoryGetterTests: XCTestCase {
     }
 
     func testCachedValueInjections() {
-        var type = Type(name: "Foo")
-        type.memberInjections = [
-            MemberInjection(name: "bar", typeResolver: .explicit(Type(name: "Bar")))
+        var decl = TypeDeclaration(name: "Foo")
+        decl.memberInjections = [
+            MemberInjection(name: "bar", typeResolver: .explicit(TypeUsage(name: "Bar")))
         ]
-        let getter = ContainerDataFactory().getter(of: type, accessLevel: "open", cached: ("cachedFoo", false))
+        let getter = ContainerDataFactory().getter(of: decl, accessLevel: "open", cached: ("cachedFoo", false))
         XCTAssertEqual(
             getter,
             [
@@ -137,12 +137,12 @@ class ContainerDataFactoryGetterTests: XCTestCase {
     }
 
     func testCachedReferenceInjections() {
-        var type = Type(name: "Foo")
-        type.isReference = true
-        type.memberInjections = [
-            MemberInjection(name: "bar", typeResolver: .explicit(Type(name: "Bar")))
+        var decl = TypeDeclaration(name: "Foo")
+        decl.isReference = true
+        decl.memberInjections = [
+            MemberInjection(name: "bar", typeResolver: .explicit(TypeUsage(name: "Bar")))
         ]
-        let getter = ContainerDataFactory().getter(of: type, accessLevel: "open", cached: ("cachedFoo", false))
+        let getter = ContainerDataFactory().getter(of: decl, accessLevel: "open", cached: ("cachedFoo", false))
         XCTAssertEqual(
             getter,
             [
@@ -158,11 +158,11 @@ class ContainerDataFactoryGetterTests: XCTestCase {
     }
 
     func testThreadSafeCachedValueInjections() {
-        var type = Type(name: "Foo")
-        type.memberInjections = [
-            MemberInjection(name: "bar", typeResolver: .explicit(Type(name: "Bar")))
+        var decl = TypeDeclaration(name: "Foo")
+        decl.memberInjections = [
+            MemberInjection(name: "bar", typeResolver: .explicit(TypeUsage(name: "Bar")))
         ]
-        let getter = ContainerDataFactory().getter(of: type, accessLevel: "open", cached: ("cachedFoo", true))
+        let getter = ContainerDataFactory().getter(of: decl, accessLevel: "open", cached: ("cachedFoo", true))
         XCTAssertEqual(
             getter,
             [
@@ -180,12 +180,12 @@ class ContainerDataFactoryGetterTests: XCTestCase {
     }
 
     func testThreadSafeCachedReferenceInjections() {
-        var type = Type(name: "Foo")
-        type.isReference = true
-        type.memberInjections = [
-            MemberInjection(name: "bar", typeResolver: .explicit(Type(name: "Bar")))
+        var decl = TypeDeclaration(name: "Foo")
+        decl.isReference = true
+        decl.memberInjections = [
+            MemberInjection(name: "bar", typeResolver: .explicit(TypeUsage(name: "Bar")))
         ]
-        let getter = ContainerDataFactory().getter(of: type, accessLevel: "open", cached: ("cachedFoo", true))
+        let getter = ContainerDataFactory().getter(of: decl, accessLevel: "open", cached: ("cachedFoo", true))
         XCTAssertEqual(
             getter,
             [

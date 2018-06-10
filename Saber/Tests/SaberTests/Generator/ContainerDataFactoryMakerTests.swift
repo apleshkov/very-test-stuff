@@ -12,14 +12,14 @@ import XCTest
 class ContainerDataFactoryMakerTests: XCTestCase {
 
     func testNoInitializer() {
-        let type = Type(name: "Foo").set(initializer: .none)
-        let maker = ContainerDataFactory().maker(for: type)
+        let decl = TypeDeclaration(name: "Foo").set(initializer: .none)
+        let maker = ContainerDataFactory().maker(for: decl)
         XCTAssertEqual(maker, nil)
     }
     
     func testOptionalAndNoArgs() {
-        let type = Type(name: "Foo").set(isOptional: true)
-        let maker = ContainerDataFactory().maker(for: type)
+        let decl = TypeDeclaration(name: "Foo").set(isOptional: true)
+        let maker = ContainerDataFactory().maker(for: decl)
         XCTAssertEqual(
             maker,
             [
@@ -31,12 +31,12 @@ class ContainerDataFactoryMakerTests: XCTestCase {
     }
 
     func testAllNamedArgs() {
-        var type = Type(name: "Foo")
-        type.initializer = .some(args: [
-            ConstructorInjection(name: "bar", typeResolver: .explicit(Type(name: "Bar"))),
-            ConstructorInjection(name: "baz", typeResolver: .explicit(Type(name: "Baz")))
+        var decl = TypeDeclaration(name: "Foo")
+        decl.initializer = .some(args: [
+            ConstructorInjection(name: "bar", typeResolver: .explicit(TypeUsage(name: "Bar"))),
+            ConstructorInjection(name: "baz", typeResolver: .explicit(TypeUsage(name: "Baz")))
             ])
-        let maker = ContainerDataFactory().maker(for: type)
+        let maker = ContainerDataFactory().maker(for: decl)
         XCTAssertEqual(
             maker,
             [
@@ -48,12 +48,12 @@ class ContainerDataFactoryMakerTests: XCTestCase {
     }
 
     func testNotAllNamedArgs() {
-        var type = Type(name: "Foo")
-        type.initializer = .some(args: [
-            ConstructorInjection(name: nil, typeResolver: .explicit(Type(name: "Bar"))),
-            ConstructorInjection(name: "baz", typeResolver: .explicit(Type(name: "Baz")))
+        var decl = TypeDeclaration(name: "Foo")
+        decl.initializer = .some(args: [
+            ConstructorInjection(name: nil, typeResolver: .explicit(TypeUsage(name: "Bar"))),
+            ConstructorInjection(name: "baz", typeResolver: .explicit(TypeUsage(name: "Baz")))
             ])
-        let maker = ContainerDataFactory().maker(for: type)
+        let maker = ContainerDataFactory().maker(for: decl)
         XCTAssertEqual(
             maker,
             [

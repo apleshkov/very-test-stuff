@@ -11,5 +11,5 @@ struct FunctionInvocationArgument {
 
     var name: String?
 
-    var typeResolver: TypeResolver
+    var typeResolver: TypeResolver<TypeUsage>
 }

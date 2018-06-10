@@ -13,28 +13,28 @@ class ContainerDataFactoryMemberNameTests: XCTestCase {
     
     func testSimple() {
         XCTAssertEqual(
-            ContainerDataFactory().memberName(of: Type(name: "Foo")),
+            ContainerDataFactory().memberName(of: TypeUsage(name: "Foo")),
             "foo"
         )
     }
     
     func testCamelCase() {
         XCTAssertEqual(
-            ContainerDataFactory().memberName(of: Type(name: "FooBarQuux")),
+            ContainerDataFactory().memberName(of: TypeUsage(name: "FooBarQuux")),
             "fooBarQuux"
         )
     }
     
     func testNested() {
         XCTAssertEqual(
-            ContainerDataFactory().memberName(of: Type(name: "Foo.Bar.Quux")),
+            ContainerDataFactory().memberName(of: TypeUsage(name: "Foo.Bar.Quux")),
             "fooBarQuux"
         )
     }
     
     func testGeneric() {
-        var type = Type(name: "Array")
-        type.generics.append(Type(name: "Int"))
+        var type = TypeUsage(name: "Array")
+        type.generics.append(TypeUsage(name: "Int"))
         XCTAssertEqual(
             ContainerDataFactory().memberName(of: type),
             "arrayWithInt"
@@ -42,8 +42,8 @@ class ContainerDataFactoryMemberNameTests: XCTestCase {
     }
     
     func testOptionalGeneric() {
-        var type = Type(name: "Array")
-        type.generics.append(Type(name: "Int").set(isOptional: true))
+        var type = TypeUsage(name: "Array")
+        type.generics.append(TypeUsage(name: "Int").set(isOptional: true))
         XCTAssertEqual(
             ContainerDataFactory().memberName(of: type),
             "arrayWithInt"
@@ -51,9 +51,9 @@ class ContainerDataFactoryMemberNameTests: XCTestCase {
     }
     
     func testTwoGenerics() {
-        var type = Type(name: "Dictionary")
-        type.generics.append(Type(name: "String"))
-        type.generics.append(Type(name: "Foo.Bar").set(isOptional: true))
+        var type = TypeUsage(name: "Dictionary")
+        type.generics.append(TypeUsage(name: "String"))
+        type.generics.append(TypeUsage(name: "Foo.Bar").set(isOptional: true))
         XCTAssertEqual(
             ContainerDataFactory().memberName(of: type),
             "dictionaryWithStringAndFooBar"

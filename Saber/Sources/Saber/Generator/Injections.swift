@@ -11,14 +11,14 @@ struct ConstructorInjection {
 
     var name: String?
 
-    var typeResolver: TypeResolver
+    var typeResolver: TypeResolver<TypeUsage>
 }
 
 struct MemberInjection {
 
     var name: String
 
-    var typeResolver: TypeResolver
+    var typeResolver: TypeResolver<TypeUsage>
 }
 
 struct InstanceMethodInjection {

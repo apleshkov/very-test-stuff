@@ -12,7 +12,7 @@ import XCTest
 class ContainerDataFactoryAccessorTests: XCTestCase {
     
     func testType() {
-        let resolver = TypeResolver.explicit(Type(name: "FooBarQuux"))
+        let resolver = TypeResolver.explicit(TypeUsage(name: "FooBarQuux"))
         XCTAssertEqual(
             ContainerDataFactory().accessor(of: resolver, owner: "self"),
             "self.fooBarQuux"
@@ -20,7 +20,7 @@ class ContainerDataFactoryAccessorTests: XCTestCase {
     }
 
     func testExplicit() {
-        let resolver = TypeResolver.explicit(Type(name: "FooBarQuux"))
+        let resolver = TypeResolver.explicit(TypeUsage(name: "FooBarQuux"))
         XCTAssertEqual(
             ContainerDataFactory().accessor(of: resolver, owner: "self"),
             "self.fooBarQuux"
@@ -28,8 +28,8 @@ class ContainerDataFactoryAccessorTests: XCTestCase {
     }
 
     func testProvidedByType() {
-        let provider = TypedProvider(type: Type(name: "FooProvider"), methodName: "provide")
-        let resolver = TypeResolver.provided(Type(name: "Foo"), by: .typed(provider))
+        let provider = TypedProvider(decl: TypeDeclaration(name: "FooProvider"), methodName: "provide")
+        let resolver = TypeResolver.provided(TypeUsage(name: "Foo"), by: .typed(provider))
         XCTAssertEqual(
             ContainerDataFactory().accessor(of: resolver, owner: "self"),
             "self.foo"
@@ -38,7 +38,7 @@ class ContainerDataFactoryAccessorTests: XCTestCase {
 
     func testProvidedByStaticMethod() {
         let provider = StaticMethodProvider(receiverName: "Foo", methodName: "provide", args: [])
-        let resolver = TypeResolver.provided(Type(name: "Foo"), by: .staticMethod(provider))
+        let resolver = TypeResolver.provided(TypeUsage(name: "Foo"), by: .staticMethod(provider))
         XCTAssertEqual(
             ContainerDataFactory().accessor(of: resolver, owner: "self"),
             "self.foo"
@@ -46,7 +46,7 @@ class ContainerDataFactoryAccessorTests: XCTestCase {
     }
 
     func testBound() {
-        let resolver = TypeResolver.bound(Type(name: "FooProtocol"), to: Type(name: "Foo"))
+        let resolver = TypeResolver.bound(TypeUsage(name: "FooProtocol"), to: TypeUsage(name: "Foo"))
         XCTAssertEqual(
             ContainerDataFactory().accessor(of: resolver, owner: "self"),
             "self.fooProtocol"
@@ -55,8 +55,8 @@ class ContainerDataFactoryAccessorTests: XCTestCase {
     
     func testDependency() {
         let resolver = TypeResolver.derived(
-            from: Type(name: "containerA"),
-            typeResolver: .explicit(Type(name: "Foo"))
+            from: TypeUsage(name: "containerA"),
+            typeResolver: .explicit(TypeUsage(name: "Foo"))
         )
         XCTAssertEqual(
             ContainerDataFactory().accessor(of: resolver, owner: "self"),
@@ -66,10 +66,10 @@ class ContainerDataFactoryAccessorTests: XCTestCase {
     
     func testMultipleInheritance() {
         let resolver = TypeResolver.derived(
-            from: Type(name: "ContainerB"),
+            from: TypeUsage(name: "ContainerB"),
             typeResolver: .derived(
-                from: Type(name: "ContainerA"),
-                typeResolver: .explicit(Type(name: "Foo"))
+                from: TypeUsage(name: "ContainerA"),
+                typeResolver: .explicit(TypeUsage(name: "Foo"))
             )
         )
         XCTAssertEqual(
@@ -80,7 +80,7 @@ class ContainerDataFactoryAccessorTests: XCTestCase {
     
     func testExternalProperty() {
         let resolver = TypeResolver.external(
-            from: Type(name: "SomeExternal"),
+            from: TypeUsage(name: "SomeExternal"),
             kind: .property(name: "foo")
         )
         XCTAssertEqual(
@@ -91,24 +91,24 @@ class ContainerDataFactoryAccessorTests: XCTestCase {
     
     func testExternalFunction() {
         let bazResolver = TypeResolver.external(
-            from: Type(name: "SomeExternal"),
+            from: TypeUsage(name: "SomeExternal"),
             kind: .property(name: "baz")
         )
         let quuxResolver = TypeResolver.derived(
-            from: Type(name: "ContainerB"),
+            from: TypeUsage(name: "ContainerB"),
             typeResolver: .derived(
-                from: Type(name: "ContainerA"),
-                typeResolver: .explicit(Type(name: "Quux"))
+                from: TypeUsage(name: "ContainerA"),
+                typeResolver: .explicit(TypeUsage(name: "Quux"))
             )
         )
         let resolver = TypeResolver.external(
-            from: Type(name: "SomeExternal"),
+            from: TypeUsage(name: "SomeExternal"),
             kind: .method(
                 name: "foo",
                 args: [
                     FunctionInvocationArgument(
                         name: "bar",
-                        typeResolver: .explicit(Type(name: "Bar"))
+                        typeResolver: .explicit(TypeUsage(name: "Bar"))
                     ),
                     FunctionInvocationArgument(
                         name: "baz",
