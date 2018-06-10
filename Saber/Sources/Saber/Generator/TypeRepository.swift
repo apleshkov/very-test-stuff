@@ -9,17 +9,17 @@ import Foundation
 
 class TypeRepository {
 
-    private var scopes: [ScopeKey : Scope] = [:]
+    private var scopes: [ScopeName : Scope] = [:]
     
     private var typeInfos: [Key : Info] = [:]
 
-    /// .modular(module: "A", name: "Foo") represented as "A.Foo"
+    /// `.modular(module: "A", name: "Foo")` represented as "A.Foo"
     private var modularNames: [String : Key] = [:]
 
     /// "Foo" -> ["A", "B"] if "Foo" is declared in both "A" and "B"
     private var shortenNameCollisions: [String : [String]] = [:]
 
-    private var resolvers: [ScopeKey : [Key : Resolver]] = [:]
+    private var resolvers: [ScopeName : [Key : Resolver]] = [:]
 
     init(parsedData: ParsedData) throws {
         try prepareScopes(parsedData: parsedData)
@@ -39,18 +39,17 @@ extension TypeRepository {
     
     struct Info: Equatable {
         var key: Key
-        var scopeKey: ScopeKey?
+        var scopeKey: ScopeName?
         var parsedType: ParsedType?
         var parsedUsage: ParsedTypeUsage?
     }
     
-    typealias ScopeKey = Key
+    typealias ScopeName = String
     
     struct Scope {
-        var key: ScopeKey
-        var name: String
+        var name: ScopeName
         var keys: Set<Key>
-        var dependencies: Set<ScopeKey>
+        var dependencies: Set<ScopeName>
         var externals: [Key : ExternalMember]
         var providers: [Key : (of: Key, method: ParsedMethod)]
         var binders: [Key : Key]
@@ -65,7 +64,7 @@ extension TypeRepository {
         case explicit
         case provider(Key)
         case binder(Key)
-        case derived(from: ScopeKey, resolver: Resolver)
+        case derived(from: ScopeName, resolver: Resolver)
         case external(member: ExternalMember)
     }
 }
@@ -109,8 +108,8 @@ extension TypeRepository {
         }
     }
     
-    func resolver(for key: Key, scopeKey: ScopeKey) -> Resolver? {
-        return resolvers[scopeKey]?[key]
+    func resolver(for key: Key, scopeName: ScopeName) -> Resolver? {
+        return resolvers[scopeName]?[key]
     }
 }
 
@@ -153,18 +152,7 @@ extension TypeRepository {
         return Key(name: alias.name, moduleName: alias.moduleName)
     }
 
-    private func makeScopeKey(for name: String) throws -> ScopeKey {
-        let chunks = name.split(separator: ".")
-        if chunks.count == 1 {
-            return .name(name)
-        }
-        guard chunks.count == 2 else {
-            throw Throwable.message("Invalid scope name: '\(name)'")
-        }
-        return .modular(module: String(chunks[0]), name: String(chunks[1]))
-    }
-
-    private func makeScopeKey(from annotations: [TypeAnnotation], of typeName: String) throws -> ScopeKey? {
+    private func scopeName(from annotations: [TypeAnnotation], of typeName: String) throws -> ScopeName? {
         let foundNames: [String] = annotations.compactMap {
             if case .scope(let name) = $0 {
                 return name
@@ -174,10 +162,7 @@ extension TypeRepository {
         if foundNames.count > 1 {
             throw Throwable.message("'\(typeName))' associated with multiple scopes: \(foundNames.joined(separator: ", "))")
         }
-        if let name = foundNames.first {
-            return try makeScopeKey(for: name)
-        }
-        return nil
+        return foundNames.first
     }
 }
 
@@ -186,15 +171,14 @@ extension TypeRepository {
     private func prepareScopes(parsedData: ParsedData) throws {
         for (_, parsedContainer) in parsedData.containers {
             let scopeName = parsedContainer.scopeName
-            let key = try makeScopeKey(for: scopeName)
-            let deps: [ScopeKey] = try parsedContainer.dependencies.map {
+            let key = scopeName
+            let deps: [ScopeName] = try parsedContainer.dependencies.map {
                 guard let container = parsedData.containers[$0.name] else {
                     throw Throwable.message("Unknown '\(parsedContainer.name)' dependency: '\($0.name)' not found")
                 }
-                return try makeScopeKey(for: container.scopeName)
+                return container.scopeName
             }
             let scope = Scope(
-                key: key,
                 name: scopeName,
                 keys: [],
                 dependencies: Set(deps),
@@ -215,7 +199,7 @@ extension TypeRepository {
                 register(
                     Info(
                         key: key,
-                        scopeKey: try makeScopeKey(from: alias.annotations, of: alias.name),
+                        scopeKey: try scopeName(from: alias.annotations, of: alias.name),
                         parsedType: nil,
                         parsedUsage: usage
                     )
@@ -227,11 +211,11 @@ extension TypeRepository {
     }
 
     private func fillTypes(parsedData: ParsedData) throws {
-        var binders: [Key : (scopeKey: ScopeKey, usage: ParsedTypeUsage)] = [:]
-        var providers: [Key : (scopeKey: ScopeKey, method: ParsedMethod)] = [:]
+        var binders: [Key : (scopeKey: ScopeName, usage: ParsedTypeUsage)] = [:]
+        var providers: [Key : (scopeKey: ScopeName, method: ParsedMethod)] = [:]
         try parsedData.types.forEach {
             let parsedType = $0
-            let scopeKey: ScopeKey? = try makeScopeKey(
+            let scopeKey: ScopeName? = try scopeName(
                 from: parsedType.annotations,
                 of: description(of: parsedType)
             )
@@ -351,7 +335,7 @@ extension TypeRepository {
                     )
                 }
             }
-            let scopeKey = try makeScopeKey(for: parsedContainer.scopeName)
+            let scopeKey = parsedContainer.scopeName
             scopes[scopeKey]?.externals = members
         }
     }
@@ -371,15 +355,15 @@ extension TypeRepository {
             for (binderKey, key) in scope.binders {
                 dict[key] = .binder(binderKey)
             }
-            resolvers[scope.key] = dict
+            resolvers[scope.name] = dict
         }
         for (_, scope) in scopes {
             for depKey in scope.dependencies {
                 guard let scopedResolvers = resolvers[depKey] else {
-                    throw Throwable.message("Unknown '\(description(of: scope.key))' dependency: '\(description(of: depKey))' not found")
+                    throw Throwable.message("Unknown '\(scope.name)' dependency: '\(depKey)' not found")
                 }
                 for (key, resolver) in scopedResolvers {
-                    resolvers[scope.key]?[key] = Resolver.derived(from: depKey, resolver: resolver)
+                    resolvers[scope.name]?[key] = Resolver.derived(from: depKey, resolver: resolver)
                 }
             }
         }

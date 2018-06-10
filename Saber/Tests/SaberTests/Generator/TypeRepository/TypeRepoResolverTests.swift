@@ -27,11 +27,11 @@ class TypeRepoResolverTests: XCTestCase {
         }()
         let repo = try! TypeRepository(parsedData: parsedData)
         XCTAssertEqual(
-            repo.resolver(for: .name("Foo"), scopeKey: .name("Singleton")),
+            repo.resolver(for: .name("Foo"), scopeName: "Singleton"),
             .explicit
         )
         XCTAssertEqual(
-            repo.resolver(for: .name("Bar"), scopeKey: .name("Singleton")),
+            repo.resolver(for: .name("Bar"), scopeName: "Singleton"),
             nil
         )
     }
@@ -56,7 +56,7 @@ class TypeRepoResolverTests: XCTestCase {
         }()
         let repo = try! TypeRepository(parsedData: parsedData)
         XCTAssertEqual(
-            repo.resolver(for: .name("Foo"), scopeKey: .name("Singleton")),
+            repo.resolver(for: .name("Foo"), scopeName: "Singleton"),
             .external(
                 member: .property(
                     from: .name("AppExternal"),
@@ -65,7 +65,7 @@ class TypeRepoResolverTests: XCTestCase {
             )
         )
         XCTAssertEqual(
-            repo.resolver(for: .name("Bar"), scopeKey: .name("Singleton")),
+            repo.resolver(for: .name("Bar"), scopeName: "Singleton"),
             .external(
                 member: TypeRepository.ExternalMember.method(
                     from: .name("AppExternal"),
@@ -109,11 +109,11 @@ class TypeRepoResolverTests: XCTestCase {
         }()
         let repo = try! TypeRepository(parsedData: parsedData)
         XCTAssertEqual(
-            repo.resolver(for: .name("Foo"), scopeKey: .name("Singleton")),
+            repo.resolver(for: .name("Foo"), scopeName: "Singleton"),
             .provider(.name("FooProvider"))
         )
         XCTAssertEqual(
-            repo.resolver(for: .name("Bar"), scopeKey: .name("Singleton")),
+            repo.resolver(for: .name("Bar"), scopeName: "Singleton"),
             .provider(.name("BarProvider"))
         )
     }
@@ -144,11 +144,11 @@ class TypeRepoResolverTests: XCTestCase {
         }()
         let repo = try! TypeRepository(parsedData: parsedData)
         XCTAssertEqual(
-            repo.resolver(for: .name("Foo"), scopeKey: .name("Singleton")),
+            repo.resolver(for: .name("Foo"), scopeName: "Singleton"),
             .provider(.name("Foo"))
         )
         XCTAssertEqual(
-            repo.resolver(for: .name("Bar"), scopeKey: .name("Singleton")),
+            repo.resolver(for: .name("Bar"), scopeName: "Singleton"),
             .provider(.name("BarFactory"))
         )
     }
@@ -175,7 +175,7 @@ class TypeRepoResolverTests: XCTestCase {
         }()
         let repo = try! TypeRepository(parsedData: parsedData)
         XCTAssertEqual(
-            repo.resolver(for: .name("Foo"), scopeKey: .name("Singleton")),
+            repo.resolver(for: .name("Foo"), scopeName: "Singleton"),
             .provider(.name("FooProvider"))
         )
     }
@@ -204,11 +204,11 @@ class TypeRepoResolverTests: XCTestCase {
         }()
         let repo = try! TypeRepository(parsedData: parsedData)
         XCTAssertEqual(
-            repo.resolver(for: .name("FooProtocol"), scopeKey: .name("Singleton")),
+            repo.resolver(for: .name("FooProtocol"), scopeName: "Singleton"),
             .binder(.name("Foo"))
         )
         XCTAssertEqual(
-            repo.resolver(for: .name("BarProtocol"), scopeKey: .name("Singleton")),
+            repo.resolver(for: .name("BarProtocol"), scopeName: "Singleton"),
             .binder(.name("Bar"))
         )
     }
@@ -250,32 +250,32 @@ class TypeRepoResolverTests: XCTestCase {
         }()
         let repo = try! TypeRepository(parsedData: parsedData)
         XCTAssertEqual(
-            repo.resolver(for: .name("FooProtocol"), scopeKey: .name("Session")),
+            repo.resolver(for: .name("FooProtocol"), scopeName: "Session"),
             .derived(
-                from: .name("Singleton"),
+                from: "Singleton",
                 resolver: .binder(.name("Foo"))
             )
         )
         XCTAssertEqual(
-            repo.resolver(for: .name("Bar"), scopeKey: .name("Session")),
+            repo.resolver(for: .name("Bar"), scopeName: "Session"),
             .derived(
-                from: .name("Singleton"),
+                from: "Singleton",
                 resolver: .provider(.name("BarProvider"))
             )
         )
         XCTAssertEqual(
-            repo.resolver(for: .name("Baz"), scopeKey: .name("Session")),
+            repo.resolver(for: .name("Baz"), scopeName: "Session"),
             .derived(
-                from: .name("Singleton"),
+                from: "Singleton",
                 resolver: .external(
                     member: .property(from: .name("AppExternal"), name: "baz")
                 )
             )
         )
         XCTAssertEqual(
-            repo.resolver(for: .name("Quux"), scopeKey: .name("Session")),
+            repo.resolver(for: .name("Quux"), scopeName: "Session"),
             .derived(
-                from: .name("Singleton"),
+                from: "Singleton",
                 resolver: .explicit
             )
         )

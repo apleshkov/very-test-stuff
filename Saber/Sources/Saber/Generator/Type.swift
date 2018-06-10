@@ -56,14 +56,3 @@ struct Type {
         return result
     }
 }
-
-extension Type: Hashable {
-
-    static func ==(lhs: Type, rhs: Type) -> Bool {
-        return lhs.name == rhs.name
-    }
-
-    var hashValue: Int {
-        return name.hashValue
-    }
-}
