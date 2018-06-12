@@ -20,7 +20,17 @@ struct TypeUsage: SomeType {
     }
 
     var fullName: String {
-        return "\(name)\(isOptional ? "?" : "")"
+        var fullName = name
+        if generics.count > 0 {
+            let list = generics
+                .map { $0.fullName }
+                .joined(separator: ", ")
+            fullName += "<\(list)>"
+        }
+        if isOptional {
+            fullName += "?"
+        }
+        return fullName
     }
 
     func set(isOptional: Bool) -> TypeUsage {

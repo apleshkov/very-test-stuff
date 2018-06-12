@@ -29,3 +29,20 @@ struct ParsedTypeUsage: Equatable {
         return result
     }
 }
+
+extension ParsedTypeUsage {
+    
+    var fullName: String {
+        var fullName: String = name
+        if generics.count > 0 {
+            let list = generics
+                .map { $0.fullName }
+                .joined(separator: ", ")
+            fullName = "<\(list)>"
+        }
+        if isOptional {
+            fullName += "?"
+        }
+        return fullName
+    }
+}

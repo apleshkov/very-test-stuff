@@ -9,7 +9,7 @@ import Foundation
 
 class TypeRepository {
 
-    private var scopes: [ScopeName : Scope] = [:]
+    private(set) var scopes: [ScopeName : Scope] = [:]
     
     private var typeInfos: [Key : Info] = [:]
 
@@ -39,15 +39,21 @@ extension TypeRepository {
     
     struct Info: Equatable {
         var key: Key
-        var scopeKey: ScopeName?
-        var parsedType: ParsedType?
-        var parsedUsage: ParsedTypeUsage?
+        var scopeName: ScopeName?
+        var parsed: Parsed
+        
+        enum Parsed: Equatable {
+            case type(ParsedType)
+            case usage(ParsedTypeUsage)
+            case alias(to: ParsedTypeUsage)
+        }
     }
     
     typealias ScopeName = String
     
     struct Scope {
         var name: ScopeName
+        var container: ParsedContainer
         var keys: Set<Key>
         var dependencies: Set<ScopeName>
         var externals: [Key : ExternalMember]
@@ -79,7 +85,7 @@ extension TypeRepository {
             return try find(by: .modular(module: collisions[0], name: name))
         }
         guard let info = typeInfos[key] else {
-            throw Throwable.message("Unable to find '\(description(of: key))'")
+            throw Throwable.message("Unable to find '\(key.description)'")
         }
         return info
     }
@@ -103,7 +109,7 @@ extension TypeRepository {
             collisions.append(moduleName)
             shortenNameCollisions[key.name] = collisions
         }
-        if let scopeKey = info.scopeKey {
+        if let scopeKey = info.scopeName {
             scopes[scopeKey]?.keys.insert(key)
         }
     }
@@ -180,6 +186,7 @@ extension TypeRepository {
             }
             let scope = Scope(
                 name: scopeName,
+                container: parsedContainer,
                 keys: [],
                 dependencies: Set(deps),
                 externals: [:],
@@ -199,9 +206,8 @@ extension TypeRepository {
                 register(
                     Info(
                         key: key,
-                        scopeKey: try scopeName(from: alias.annotations, of: alias.name),
-                        parsedType: nil,
-                        parsedUsage: usage
+                        scopeName: try scopeName(from: alias.annotations, of: alias.name),
+                        parsed: .alias(to: usage)
                     )
                 )
             case .raw(_):
@@ -223,9 +229,8 @@ extension TypeRepository {
             register(
                 Info(
                     key: key,
-                    scopeKey: scopeKey,
-                    parsedType: parsedType,
-                    parsedUsage: nil
+                    scopeName: scopeKey,
+                    parsed: .type(parsedType)
                 )
             )
             if let scopeKey = scopeKey {
@@ -252,9 +257,8 @@ extension TypeRepository {
                 register(
                     Info(
                         key: mimicKey,
-                        scopeKey: try find(by: key).scopeKey,
-                        parsedType: nil,
-                        parsedUsage: usage
+                        scopeName: try find(by: key).scopeName,
+                        parsed: .usage(usage)
                     )
                 )
             }
@@ -263,7 +267,7 @@ extension TypeRepository {
         for (key, entry) in providers {
             let method = entry.method
             guard let usage = method.returnType else {
-                throw Throwable.message("Unable to get provided type: '\(description(of: key)).\(method.name)' returns nothing")
+                throw Throwable.message("Unable to get provided type: '\(key.description).\(method.name)' returns nothing")
             }
             let providedKey: Key
             if let providedInfo = find(by: usage.name) {
@@ -273,9 +277,8 @@ extension TypeRepository {
                 register(
                     Info(
                         key: providedKey,
-                        scopeKey: try find(by: key).scopeKey,
-                        parsedType: nil,
-                        parsedUsage: usage
+                        scopeName: try find(by: key).scopeName,
+                        parsed: .usage(usage)
                     )
                 )
             }
@@ -288,10 +291,10 @@ extension TypeRepository {
             var members: [Key : ExternalMember] = [:]
             try parsedContainer.externals.forEach { (usage) in
                 guard let externalInfo = find(by: usage.name) else {
-                    throw Throwable.message("Invalid '\(parsedContainer.name)' external: unable to find '\(description(of: usage))'")
+                    throw Throwable.message("Invalid '\(parsedContainer.name)' external: unable to find '\(usage.fullName)'")
                 }
-                guard let externalParsedType = externalInfo.parsedType else {
-                    throw Throwable.message("Invalid '\(parsedContainer.name)' external: unable to find '\(description(of: externalInfo.key))' parsed type")
+                guard case .type(let externalParsedType) = externalInfo.parsed else {
+                    throw Throwable.message("Invalid '\(parsedContainer.name)' external: unable to find '\(externalInfo.key.description)' parsed type")
                 }
                 externalParsedType.properties.forEach {
                     let info: Info
@@ -301,9 +304,8 @@ extension TypeRepository {
                         let key: Key = .name($0.type.name)
                         info = Info(
                             key: key,
-                            scopeKey: externalInfo.scopeKey,
-                            parsedType: nil,
-                            parsedUsage: $0.type
+                            scopeName: externalInfo.scopeName,
+                            parsed: .usage($0.type)
                         )
                         register(info)
                     }
@@ -323,9 +325,8 @@ extension TypeRepository {
                         let key: Key = .name(usage.name)
                         info = Info(
                             key: key,
-                            scopeKey: externalInfo.scopeKey,
-                            parsedType: nil,
-                            parsedUsage: usage
+                            scopeName: externalInfo.scopeName,
+                            parsed: .usage(usage)
                         )
                         register(info)
                     }
@@ -377,17 +378,12 @@ private func description(of type: ParsedType) -> String {
     return "\(moduleName).\(type.name)"
 }
 
-private func description(of usage: ParsedTypeUsage) -> String {
-    guard usage.generics.count > 0 else {
-        return usage.name
+extension TypeRepository.Key: CustomStringConvertible {
+    
+    var description: String {
+        guard let moduleName = self.moduleName else {
+            return name
+        }
+        return "\(moduleName).\(name)"
     }
-    let generics = usage.generics.map { description(of: $0) }.joined(separator: ", ")
-    return "\(usage.name)<\(generics)>"
-}
-
-private func description(of key: TypeRepository.Key) -> String {
-    guard let moduleName = key.moduleName else {
-        return key.name
-    }
-    return "\(moduleName).\(key.name)"
 }

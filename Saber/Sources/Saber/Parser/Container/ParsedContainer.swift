@@ -33,3 +33,13 @@ struct ParsedContainer: Equatable {
         self.externals = externals
     }
 }
+
+extension ParsedContainer {
+    
+    var fullName: String {
+        guard let moduleName = self.moduleName else {
+            return name
+        }
+        return "\(moduleName).\(name)"
+    }
+}

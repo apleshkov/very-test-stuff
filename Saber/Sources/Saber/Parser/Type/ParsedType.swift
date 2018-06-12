@@ -20,7 +20,7 @@ struct ParsedType: Equatable {
     var annotations: [TypeAnnotation] = []
 
     var isReference: Bool = false
-
+    
     var nested: [NestedParsedDecl] = []
 
     init(name: String, isReference: Bool = false, nested: [NestedParsedDecl] = []) {
