@@ -71,19 +71,19 @@ class ContainerDataFactory {
     }
 
     private func expand(data: inout ContainerData,
-                        provided type: TypeUsage,
+                        provided usage: TypeUsage,
                         by provider: TypeProvider,
                         isCached: Bool,
                         isThreadSafe: Bool,
                         accessLevel: String) {
-        let makerName = memberName(of: type, prefix: "make")
+        let makerName = memberName(of: usage, prefix: "make")
         switch provider {
         case .typed(let typedProvider):
-            expand(data: &data, some: type, isCached: false, isThreadSafe: false, accessLevel: accessLevel)
+            expand(data: &data, some: usage, isCached: false, isThreadSafe: false, accessLevel: accessLevel)
             let providerDecl = typedProvider.decl
             data.makers.append(
                 [
-                    "private func \(makerName)() -> \(type.fullName) {",
+                    "private func \(makerName)() -> \(usage.fullName) {",
                     "\(indent)let provider = \(accessor(of: .explicit(providerDecl), owner: "self"))",
                     "\(indent)return \(invoked("provider", isOptional: providerDecl.isOptional, with: typedProvider.methodName, args: typedProvider.args))",
                     "}"
@@ -91,10 +91,10 @@ class ContainerDataFactory {
             )
             expand(data: &data, typeResolver: .explicit(providerDecl), isCached: isCached, isThreadSafe: isThreadSafe, accessLevel: "private")
         case .staticMethod(let methodProvider):
-            expand(data: &data, some: type, isCached: methodProvider.isCached, isThreadSafe: isThreadSafe, accessLevel: accessLevel)
+            expand(data: &data, some: usage, isCached: methodProvider.isCached, isThreadSafe: isThreadSafe, accessLevel: accessLevel)
             data.makers.append(
                 [
-                    "private func \(makerName)() -> \(type.fullName) {",
+                    "private func \(makerName)() -> \(usage.fullName) {",
                     "\(indent)return \(invoked(methodProvider.receiverName, isOptional: false, with: methodProvider.methodName, args: methodProvider.args))",
                     "}"
                 ]
@@ -108,27 +108,27 @@ class ContainerDataFactory {
                         isThreadSafe: Bool,
                         accessLevel: String) {
         switch typeResolver {
-        case .explicit(let type):
+        case .explicit(let decl):
             let injectorAccessLevel: String
-            if let maker = maker(for: type) {
-                expand(data: &data, some: type, isCached: isCached, isThreadSafe: isThreadSafe, accessLevel: accessLevel)
+            if let maker = maker(for: decl) {
+                expand(data: &data, some: decl, isCached: isCached, isThreadSafe: isThreadSafe, accessLevel: accessLevel)
                 data.makers.append(maker)
                 injectorAccessLevel = "private"
             } else {
                 injectorAccessLevel = accessLevel
             }
-            if let injector = injector(for: type, accessLevel: injectorAccessLevel) {
+            if let injector = injector(for: decl, accessLevel: injectorAccessLevel) {
                 data.injectors.append(injector)
             }
-        case .provided(let type, let provider):
-            expand(data: &data, provided: type, by: provider, isCached: isCached, isThreadSafe: isThreadSafe, accessLevel: accessLevel)
-        case .bound(let mimicType, let type):
+        case .provided(let usage, let provider):
+            expand(data: &data, provided: usage, by: provider, isCached: isCached, isThreadSafe: isThreadSafe, accessLevel: accessLevel)
+        case .bound(let mimicType, let decl):
             data.getters.append([
                 "\(accessLevel) var \(memberName(of: mimicType)): \(mimicType.fullName) {",
-                "\(indent)return \(accessor(of: .explicit(type), owner: "self"))",
+                "\(indent)return \(accessor(of: .explicit(decl), owner: "self"))",
                 "}"
                 ])
-            expand(data: &data, typeResolver: .explicit(type), isCached: isCached, isThreadSafe: isThreadSafe, accessLevel: "private")
+            expand(data: &data, typeResolver: .explicit(decl), isCached: isCached, isThreadSafe: isThreadSafe, accessLevel: "private")
         case .derived(_, _):
             break
         case .external(_):
@@ -136,16 +136,16 @@ class ContainerDataFactory {
         }
     }
 
-    func memberName(of type: SomeType, prefix: String? = nil) -> String {
+    func memberName(of some: SomeType, prefix: String? = nil) -> String {
         var result: String
-        let name = type.name.split(separator: ".").joined()
+        let name = some.name.split(separator: ".").joined()
         if let prefix = prefix {
             result = prefix + name
         } else {
             let first = String(name.first!).lowercased()
             result = first + name.dropFirst()
         }
-        if let usage = type as? TypeUsage, usage.generics.count > 0 {
+        if let usage = some as? TypeUsage, usage.generics.count > 0 {
             result += "With"
             result += usage.generics
                 .map { memberName(of: $0, prefix: "") }
@@ -236,20 +236,20 @@ class ContainerDataFactory {
 
     func accessor<T>(of typeResolver: TypeResolver<T>, owner: String) -> String where T: SomeType {
         switch typeResolver {
-        case .explicit(let type):
-            return "\(owner).\(memberName(of: type))"
-        case .provided(let type, _):
-            return "\(owner).\(memberName(of: type))"
-        case .bound(let type, _):
-            return "\(owner).\(memberName(of: type))"
-        case .derived(let containerType, let typeResolver):
-            return "\(owner).\(accessor(of: typeResolver, owner: memberName(of: containerType)))"
-        case .external(let externalType, let kind):
+        case .explicit(let some):
+            return "\(owner).\(memberName(of: some))"
+        case .provided(let usage, _):
+            return "\(owner).\(memberName(of: usage))"
+        case .bound(let usage, _):
+            return "\(owner).\(memberName(of: usage))"
+        case .derived(let someContainer, let typeResolver):
+            return "\(owner).\(accessor(of: typeResolver, owner: memberName(of: someContainer)))"
+        case .external(let someExternal, let kind):
             switch kind {
             case .property(let name):
-                return "\(owner).\(memberName(of: externalType)).\(name)"
+                return "\(owner).\(memberName(of: someExternal)).\(name)"
             case .method(let name, let args):
-                let receiver = "\(owner).\(memberName(of: externalType))"
+                let receiver = "\(owner).\(memberName(of: someExternal))"
                 return invoked(receiver, isOptional: false, with: name, args: args)
             }
         }
