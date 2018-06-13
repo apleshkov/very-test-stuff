@@ -43,8 +43,8 @@ class TypeParserTests: XCTestCase {
             [
                 ParsedType(name: "Foo"),
                 ParsedType(name: "Bar")
-                    .add(annotation: .bound(to: ParsedTypeUsage(name: "Baz")))
                     .add(annotation: .cached)
+                    .add(annotation: .bound(to: ParsedTypeUsage(name: "Baz")))
             ]
         )
     }

@@ -152,7 +152,7 @@ class MethodParserTests: XCTestCase {
                     name: "provide",
                     returnType: ParsedTypeUsage(name: "Foo"),
                     isStatic: true,
-                    annotations: [.cached, .provider]
+                    annotations: [.provider, .cached]
                 )
             ]
         )

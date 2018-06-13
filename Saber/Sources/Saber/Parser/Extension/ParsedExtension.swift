@@ -20,9 +20,19 @@ struct ParsedExtension: Equatable {
     var methods: [ParsedMethod] = []
     
     var nested: [NestedParsedDecl] = []
-
+    
     init(typeName: String, inheritedFrom: [ParsedTypeUsage] = []) {
         self.typeName = typeName
         self.inheritedFrom = inheritedFrom
+    }
+}
+
+extension ParsedExtension {
+    
+    var fullName: String {
+        guard let moduleName = self.moduleName else {
+            return typeName
+        }
+        return "\(moduleName).\(typeName)"
     }
 }

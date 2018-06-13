@@ -44,7 +44,7 @@ class RawData {
             }
             break
         }
-        return result
+        return result.reversed()
     }
 }
 

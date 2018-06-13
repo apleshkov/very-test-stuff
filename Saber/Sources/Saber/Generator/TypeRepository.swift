@@ -227,29 +227,25 @@ extension TypeRepository {
     private func fillTypes(parsedData: ParsedData) throws {
         var binders: [Key : (scopeKey: ScopeName, usage: ParsedTypeUsage)] = [:]
         var providers: [Key : (scopeKey: ScopeName, method: ParsedMethod)] = [:]
-        try parsedData.types.forEach {
-            let parsedType = $0
-            let scopeKey: ScopeName? = try scopeName(
-                from: parsedType.annotations,
-                of: description(of: parsedType)
-            )
+        try parsedData.types.forEach { (parsedType) in
+            let scopeName: ScopeName? = try self.scopeName(from: parsedType.annotations, of: parsedType.fullName)
             let key = makeKey(for: parsedType)
             register(
                 Info(
                     key: key,
-                    scopeName: scopeKey,
+                    scopeName: scopeName,
                     parsed: .type(parsedType)
                 )
             )
-            if let scopeKey = scopeKey {
+            if let scopeName = scopeName {
                 parsedType.annotations.forEach {
                     if case .bound(let to) = $0 {
-                        binders[key] = (scopeKey, to)
+                        binders[key] = (scopeName, to)
                     }
                 }
                 for method in parsedType.methods {
                     if method.annotations.contains(.provider) {
-                        providers[key] = (scopeKey, method)
+                        providers[key] = (scopeName, method)
                         break
                     }
                 }
@@ -377,13 +373,6 @@ extension TypeRepository {
             }
         }
     }
-}
-
-private func description(of type: ParsedType) -> String {
-    guard let moduleName = type.moduleName else {
-        return type.name
-    }
-    return "\(moduleName).\(type.name)"
 }
 
 extension TypeRepository.Key: CustomStringConvertible {
