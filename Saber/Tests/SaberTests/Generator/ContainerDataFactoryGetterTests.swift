@@ -201,4 +201,38 @@ class ContainerDataFactoryGetterTests: XCTestCase {
             ]
         )
     }
+    
+    func testCachedOptionalTypeUsage() {
+        let usage = TypeUsage(name: "Foo").set(isOptional: true)
+        let getter = ContainerDataFactory().getter(of: usage, accessLevel: "open", cached: ("cachedFoo", false))
+        XCTAssertEqual(
+            getter,
+            [
+                "open var foo: Foo? {",
+                "    if let cached = self.cachedFoo { return cached }",
+                "    let foo = self.makeFoo()",
+                "    self.cachedFoo = foo",
+                "    return foo",
+                "}"
+            ]
+        )
+    }
+    
+    func testThreadSafeCachedTypeUsage() {
+        let usage = TypeUsage(name: "Foo")
+        let getter = ContainerDataFactory().getter(of: usage, accessLevel: "open", cached: ("cachedFoo", true))
+        XCTAssertEqual(
+            getter,
+            [
+                "open var foo: Foo {",
+                "    self.lock.lock()",
+                "    defer { self.lock.unlock() }",
+                "    if let cached = self.cachedFoo { return cached }",
+                "    let foo = self.makeFoo()",
+                "    self.cachedFoo = foo",
+                "    return foo",
+                "}"
+            ]
+        )
+    }
 }

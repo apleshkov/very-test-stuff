@@ -10,4 +10,8 @@ import Foundation
 protocol SomeType {
     
     var name: String { get }
+    
+    var fullName: String { get }
+    
+    var isOptional: Bool { set get }
 }

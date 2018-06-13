@@ -47,4 +47,16 @@ class BasicContainerTests: XCTestCase {
         let data = ContainerDataFactory().make(from: container)
         XCTAssertEqual(data.inheritedFrom, ["TestContaining"])
     }
+    
+    func testThreadSafe() {
+        let container = Container(name: "Test", isThreadSafe: true)
+        let data = ContainerDataFactory().make(from: container)
+        XCTAssertEqual(data.storedProperties, [["private let lock = NSRecursiveLock()"]])
+    }
+    
+    func testImports() {
+        let container = Container(name: "Test", imports: ["UIKit"])
+        let data = ContainerDataFactory().make(from: container)
+        XCTAssertEqual(data.imports, ["Foundation", "UIKit"])
+    }
 }

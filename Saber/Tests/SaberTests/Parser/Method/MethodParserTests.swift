@@ -134,6 +134,7 @@ class MethodParserTests: XCTestCase {
                 // @saber.inject
                 func set(bar: Bar, baz: Baz) {}
                 // @saber.provider
+                // @saber.cached
                 static func provide() -> Foo {}
                 }
                 """
@@ -151,7 +152,7 @@ class MethodParserTests: XCTestCase {
                     name: "provide",
                     returnType: ParsedTypeUsage(name: "Foo"),
                     isStatic: true,
-                    annotations: [.provider]
+                    annotations: [.cached, .provider]
                 )
             ]
         )
@@ -191,7 +192,8 @@ class MethodParserTests: XCTestCase {
                     name: "init",
                     args: [
                         ParsedArgument(name: "x", type: ParsedTypeUsage(name: "Int"))
-                    ]
+                    ],
+                    isFailableInitializer: true
                 )
             ]
         )

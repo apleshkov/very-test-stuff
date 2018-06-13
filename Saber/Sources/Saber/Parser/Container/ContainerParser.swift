@@ -24,6 +24,8 @@ class ContainerParser {
         var foundScopeName: String? = nil
         var foundDependencies: [ParsedTypeUsage] = []
         var foundExternals: [ParsedTypeUsage] = []
+        var foundImports: [String] = []
+        var isThreadSafe = false
         annotations.forEach {
             switch $0 {
             case .name(let name):
@@ -34,6 +36,10 @@ class ContainerParser {
                 foundDependencies.append(contentsOf: dependencies)
             case .externals(let externals):
                 foundExternals.append(contentsOf: externals)
+            case .imports(let imports):
+                foundImports.append(contentsOf: imports)
+            case .threadSafe:
+                isThreadSafe = true
             }
         }
         guard let name = foundName, let scopeName = foundScopeName else {
@@ -42,6 +48,8 @@ class ContainerParser {
         var container = ParsedContainer(name: name, scopeName: scopeName, protocolName: protocolName)
         container.dependencies = foundDependencies
         container.externals = foundExternals
+        container.isThreadSafe = isThreadSafe
+        container.imports = foundImports
         return container
     }
 }

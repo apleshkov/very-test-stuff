@@ -73,9 +73,9 @@ class ContainerParserTests: XCTestCase {
                 // @saber.container(FooContainer)
                 // @saber.scope(FooScope)
                 // @saber.dependsOn(BarContainer, BazContainer)
-                // @saber.dependsOn(QuuxContainer)
-                // @saber.externals(FooExternals2, FooExternals3)
-                // @saber.externals(FooExternals1)
+                // @saber.externals(FooExternals1, FooExternals2)
+                // @saber.imports(UIKit)
+                // @saber.threadSafe
                 protocol FooContaining {}
                 """
             ),
@@ -85,15 +85,15 @@ class ContainerParserTests: XCTestCase {
                     scopeName: "FooScope",
                     protocolName: "FooContaining",
                     dependencies: [
-                        ParsedTypeUsage(name: "QuuxContainer"),
                         ParsedTypeUsage(name: "BarContainer"),
                         ParsedTypeUsage(name: "BazContainer")
                     ],
                     externals: [
                         ParsedTypeUsage(name: "FooExternals1"),
-                        ParsedTypeUsage(name: "FooExternals2"),
-                        ParsedTypeUsage(name: "FooExternals3")
-                    ]
+                        ParsedTypeUsage(name: "FooExternals2")
+                    ],
+                    isThreadSafe: true,
+                    imports: ["UIKit"]
                 )
             ]
         )

@@ -26,11 +26,11 @@ extension ContainerFactory {
         var result: [Container] = []
         for (_, scope) in repo.scopes {
             var container = Container(name: scope.container.name, protocolName: scope.container.protocolName)
-            container.dependencies = [] // TODO
+            container.dependencies = try makeDependencies(for: scope)
             container.externals = try makeContainerExternals(for: scope)
             container.services = try makeServices(for: scope)
-            // TODO: parse isThreadSafe, parse imports
             container.isThreadSafe = scope.container.isThreadSafe
+            container.imports = scope.container.imports
             result.append(container)
         }
         return result
@@ -96,6 +96,15 @@ extension ContainerFactory {
         }
         return result
     }
+    
+    private func makeDependencies(for scope: TypeRepository.Scope) throws -> [TypeUsage] {
+        return try scope.dependencies.map {
+            guard let dependency = repo.scopes[$0] else {
+                throw Throwable.message("Unknown scope: \($0)")
+            }
+            return TypeUsage(name: dependency.container.fullName)
+        }
+    }
 }
 
 extension ContainerFactory {
@@ -110,7 +119,8 @@ extension ContainerFactory {
             let provider = StaticMethodProvider(
                 receiverName: providerInfo.key.description,
                 methodName: method.name,
-                args: try makeArguments(for: method, in: scope)
+                args: try makeArguments(for: method, in: scope),
+                isCached: method.annotations.contains(.cached)
             )
             return .staticMethod(provider)
         }

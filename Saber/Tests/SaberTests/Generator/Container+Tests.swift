@@ -10,7 +10,7 @@ import Foundation
 
 extension Container {
 
-    init(name: String, dependencies: [TypeUsage] = []) {
-        self.init(name: name, protocolName: "\(name)Protocol", dependencies: dependencies)
+    init(name: String, dependencies: [TypeUsage] = [], isThreadSafe: Bool = false, imports: [String] = []) {
+        self.init(name: name, protocolName: "\(name)Protocol", dependencies: dependencies, isThreadSafe: isThreadSafe, imports: imports)
     }
 }

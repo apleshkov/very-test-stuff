@@ -152,11 +152,13 @@ class ProvidedTypeResolverTests: XCTestCase {
             )
         )
         let service = Service(typeResolver: resolver, storage: .none)
-        let container = Container(name: "Test").add(service: service)
+        let container = Container(name: "Test", isThreadSafe: true).add(service: service)
         let data = ContainerDataFactory().make(from: container)
         XCTAssertEqual(
             data.storedProperties,
-            []
+            [
+                ["private let lock = NSRecursiveLock()"]
+            ]
         )
         XCTAssertEqual(
             data.getters,
@@ -164,6 +166,63 @@ class ProvidedTypeResolverTests: XCTestCase {
                 [
                     "open var fooBar: FooBar {",
                     "    let fooBar = self.makeFooBar()",
+                    "    return fooBar",
+                    "}"
+                ]
+            ]
+        )
+        XCTAssertEqual(
+            data.makers,
+            [
+                [
+                    "private func makeFooBar() -> FooBar {",
+                    "    return FooBar.provide(quux: self.quux)",
+                    "}"
+                ]
+            ]
+        )
+        XCTAssertEqual(
+            data.injectors,
+            []
+        )
+    }
+    
+    func testCachedStaticMethodProvider() {
+        var decl = TypeDeclaration(name: "FooBar")
+        decl.memberInjections = [MemberInjection(name: "baz", typeResolver: .explicit(TypeUsage(name: "Baz")))]
+        let resolver = TypeResolver<TypeDeclaration>.provided(
+            TypeUsage(name: decl.name),
+            by: .staticMethod(
+                StaticMethodProvider(
+                    receiverName: "FooBar",
+                    methodName: "provide",
+                    args: [
+                        FunctionInvocationArgument(name: "quux", typeResolver: .explicit(TypeUsage(name: "Quux")))
+                    ],
+                    isCached: true
+                )
+            )
+        )
+        let service = Service(typeResolver: resolver, storage: .none)
+        let container = Container(name: "Test", isThreadSafe: true).add(service: service)
+        let data = ContainerDataFactory().make(from: container)
+        XCTAssertEqual(
+            data.storedProperties,
+            [
+                ["private let lock = NSRecursiveLock()"],
+                ["private var cached_fooBar: FooBar?"]
+            ]
+        )
+        XCTAssertEqual(
+            data.getters,
+            [
+                [
+                    "open var fooBar: FooBar {",
+                    "    self.lock.lock()",
+                    "    defer { self.lock.unlock() }",
+                    "    if let cached = self.cached_fooBar { return cached }",
+                    "    let fooBar = self.makeFooBar()",
+                    "    self.cached_fooBar = fooBar",
                     "    return fooBar",
                     "}"
                 ]

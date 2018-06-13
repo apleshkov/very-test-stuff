@@ -113,4 +113,34 @@ class ContainerAnnTests: XCTestCase {
                 ])
         )
     }
+    
+    func testImports() {
+        XCTAssertEqual(
+            ContainerAnnotationParser.parse("imports()"),
+            ContainerAnnotation.imports([])
+        )
+        XCTAssertEqual(
+            ContainerAnnotationParser.parse("imports(Foo)"),
+            ContainerAnnotation.imports(["Foo"])
+        )
+        XCTAssertEqual(
+            ContainerAnnotationParser.parse("imports(Foo, Bar)"),
+            ContainerAnnotation.imports(["Foo", "Bar"])
+        )
+        XCTAssertEqual(
+            ContainerAnnotationParser.parse("imports(,Foo,)"),
+            ContainerAnnotation.imports(["Foo"])
+        )
+    }
+    
+    func testThreadSafe() {
+        XCTAssertEqual(
+            ContainerAnnotationParser.parse("threadSafe()"),
+            nil
+        )
+        XCTAssertEqual(
+            ContainerAnnotationParser.parse("threadSafe"),
+            ContainerAnnotation.threadSafe
+        )
+    }
 }

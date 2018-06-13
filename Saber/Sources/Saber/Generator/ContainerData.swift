@@ -24,6 +24,8 @@ struct ContainerData {
 
     var injectors: [[String]] = []
     
+    var imports: [String] = []
+    
     init(name: String, initializer: Initializer) {
         self.name = name
         self.initializer = initializer

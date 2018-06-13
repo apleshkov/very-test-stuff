@@ -33,4 +33,13 @@ struct StaticMethodProvider {
     var methodName: String
 
     var args: [FunctionInvocationArgument]
+    
+    var isCached: Bool
+    
+    init(receiverName: String, methodName: String, args: [FunctionInvocationArgument] = [], isCached: Bool = false) {
+        self.receiverName = receiverName
+        self.methodName = methodName
+        self.args = args
+        self.isCached = isCached
+    }
 }

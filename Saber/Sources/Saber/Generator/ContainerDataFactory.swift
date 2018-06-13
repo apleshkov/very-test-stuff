@@ -14,7 +14,11 @@ class ContainerDataFactory {
     
     func make(from container: Container) -> ContainerData {
         var data = ContainerData(name: container.name, initializer: ContainerData.Initializer())
+        data.imports = ["Foundation"] + container.imports
         data.inheritedFrom = [container.protocolName]
+        if container.isThreadSafe {
+            data.storedProperties.append(["private let lock = NSRecursiveLock()"])
+        }
         container.dependencies.forEach {
             let name = memberName(of: $0)
             let typeName = $0.fullName
@@ -43,20 +47,25 @@ class ContainerDataFactory {
     }
 
     private func expand(data: inout ContainerData,
-                        decl: TypeDeclaration,
+                        some: SomeType,
                         isCached: Bool,
                         isThreadSafe: Bool,
                         accessLevel: String) {
         if isCached {
-            let name = memberName(of: decl)
+            let name = memberName(of: some)
             let cachedName = "cached_\(name)"
-            data.storedProperties.append(["private var \(cachedName): \(decl.set(isOptional: true).fullName)"])
+            let fullName: String = {
+                var some = some
+                some.isOptional = true
+                return some.fullName
+            }()
+            data.storedProperties.append(["private var \(cachedName): \(fullName)"])
             data.getters.append(
-                getter(of: decl, accessLevel: accessLevel, cached: (memberName: cachedName, isThreadSafe: isThreadSafe))
+                getter(of: some, accessLevel: accessLevel, cached: (memberName: cachedName, isThreadSafe: isThreadSafe))
             )
         } else {
             data.getters.append(
-                getter(of: decl, accessLevel: accessLevel)
+                getter(of: some, accessLevel: accessLevel)
             )
         }
     }
@@ -68,31 +77,28 @@ class ContainerDataFactory {
                         isThreadSafe: Bool,
                         accessLevel: String) {
         let makerName = memberName(of: type, prefix: "make")
-        let name = memberName(of: type)
-        data.getters.append(
-            {
-                var body: [String] = []
-                body.append("let \(name) = self.\(makerName)()")
-                body.append("return \(name)")
-                return ["\(accessLevel) var \(name): \(type.fullName) {"] + body.map { "\(indent)\($0)" } + ["}"]
-            }()
-        )
         switch provider {
         case .typed(let typedProvider):
+            expand(data: &data, some: type, isCached: false, isThreadSafe: false, accessLevel: accessLevel)
             let providerDecl = typedProvider.decl
-            data.makers.append([
-                "private func \(makerName)() -> \(type.fullName) {",
-                "\(indent)let provider = \(accessor(of: .explicit(providerDecl), owner: "self"))",
-                "\(indent)return \(invoked("provider", isOptional: providerDecl.isOptional, with: typedProvider.methodName, args: typedProvider.args))",
-                "}"
-                ])
+            data.makers.append(
+                [
+                    "private func \(makerName)() -> \(type.fullName) {",
+                    "\(indent)let provider = \(accessor(of: .explicit(providerDecl), owner: "self"))",
+                    "\(indent)return \(invoked("provider", isOptional: providerDecl.isOptional, with: typedProvider.methodName, args: typedProvider.args))",
+                    "}"
+                ]
+            )
             expand(data: &data, typeResolver: .explicit(providerDecl), isCached: isCached, isThreadSafe: isThreadSafe, accessLevel: "private")
         case .staticMethod(let methodProvider):
-            data.makers.append([
-                "private func \(makerName)() -> \(type.fullName) {",
-                "\(indent)return \(invoked(methodProvider.receiverName, isOptional: false, with: methodProvider.methodName, args: methodProvider.args))",
-                "}"
-                ])
+            expand(data: &data, some: type, isCached: methodProvider.isCached, isThreadSafe: isThreadSafe, accessLevel: accessLevel)
+            data.makers.append(
+                [
+                    "private func \(makerName)() -> \(type.fullName) {",
+                    "\(indent)return \(invoked(methodProvider.receiverName, isOptional: false, with: methodProvider.methodName, args: methodProvider.args))",
+                    "}"
+                ]
+            )
         }
     }
     
@@ -105,7 +111,7 @@ class ContainerDataFactory {
         case .explicit(let type):
             let injectorAccessLevel: String
             if let maker = maker(for: type) {
-                expand(data: &data, decl: type, isCached: isCached, isThreadSafe: isThreadSafe, accessLevel: accessLevel)
+                expand(data: &data, some: type, isCached: isCached, isThreadSafe: isThreadSafe, accessLevel: accessLevel)
                 data.makers.append(maker)
                 injectorAccessLevel = "private"
             } else {
@@ -148,7 +154,7 @@ class ContainerDataFactory {
         return result
     }
     
-    func getter(of decl: TypeDeclaration, accessLevel: String, cached: (memberName: String, isThreadSafe: Bool)? = nil) -> [String] {
+    func getter(of some: SomeType, accessLevel: String, cached: (memberName: String, isThreadSafe: Bool)? = nil) -> [String] {
         var body: [String] = []
         if let cached = cached {
             if cached.isThreadSafe {
@@ -157,9 +163,9 @@ class ContainerDataFactory {
             }
             body.append("if let cached = self.\(cached.memberName) { return cached }")
         }
-        let maker = "self.\(memberName(of: decl, prefix: "make"))()"
-        let name = memberName(of: decl)
-        if decl.memberInjections.count > 0 {
+        let maker = "self.\(memberName(of: some, prefix: "make"))()"
+        let name = memberName(of: some)
+        if let decl = some as? TypeDeclaration, decl.memberInjections.count > 0 {
             let strDecl = decl.isReference ? "let" : "var"
             body.append("\(strDecl) \(name) = \(maker)")
             let providedValue = decl.isReference ? name : "&\(name)"
@@ -175,7 +181,7 @@ class ContainerDataFactory {
             body.append("self.\(cached.memberName) = \(name)")
         }
         body.append("return \(name)")
-        return ["\(accessLevel) var \(name): \(decl.fullName) {"] + body.map { "\(indent)\($0)" } + ["}"]
+        return ["\(accessLevel) var \(name): \(some.fullName) {"] + body.map { "\(indent)\($0)" } + ["}"]
     }
     
     func maker(for decl: TypeDeclaration) -> [String]? {

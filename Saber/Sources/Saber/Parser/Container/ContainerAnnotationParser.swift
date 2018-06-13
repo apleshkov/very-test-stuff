@@ -12,6 +12,7 @@ private enum Prefix {
     static let scope = "scope"
     static let dependsOn = "dependsOn"
     static let externals = "externals"
+    static let imports = "imports"
 }
 
 class ContainerAnnotationParser {
@@ -38,6 +39,13 @@ class ContainerAnnotationParser {
             let args = AnnotationParserHelper.arguments(from: rawString, prefix: Prefix.externals) {
             let types = args.compactMap { TypeUsageParser.parse($0) }
             return ContainerAnnotation.externals(types)
+        }
+        if rawString.hasPrefix(Prefix.imports),
+            let args = AnnotationParserHelper.arguments(from: rawString, prefix: Prefix.imports) {
+            return ContainerAnnotation.imports(args)
+        }
+        if rawString == "threadSafe" {
+            return ContainerAnnotation.threadSafe
         }
         return nil
     }

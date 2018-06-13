@@ -26,6 +26,14 @@ class MethodParser {
             let args = parseArgs(structure)
             let returnType = parseType(structure)
             let isStatic = (kind == .functionMethodStatic || kind == .functionMethodClass)
+            var isFailableInitializer = false
+            if name == "init" {
+                let flag = StringExtractor
+                    .key
+                    .extract(from: structure, contents: rawData.contents)?
+                    .starts(with: "init?")
+                isFailableInitializer = (flag == true)
+            }
             return ParsedMethod(
                 name: name,
                 args: args,
@@ -33,7 +41,8 @@ class MethodParser {
                 isStatic: isStatic,
                 annotations: rawData
                     .annotations(for: structure)
-                    .compactMap { MethodAnnotationParser.parse($0) }
+                    .compactMap { MethodAnnotationParser.parse($0) },
+                isFailableInitializer: isFailableInitializer
             )
         default:
             return nil

@@ -13,18 +13,22 @@ struct Container {
 
     var protocolName: String
 
-    var dependencies: [TypeUsage] = []
+    var dependencies: [TypeUsage]
 
     var externals: [ContainerExternal] = []
     
     var services: [Service] = []
 
-    var isThreadSafe: Bool = false
+    var isThreadSafe: Bool
+    
+    var imports: [String]
 
-    init(name: String, protocolName: String, dependencies: [TypeUsage] = []) {
+    init(name: String, protocolName: String, dependencies: [TypeUsage] = [], isThreadSafe: Bool = false, imports: [String] = []) {
         self.name = name
         self.dependencies = dependencies
         self.protocolName = protocolName
+        self.isThreadSafe = isThreadSafe
+        self.imports = imports
     }
     
     func add(dependency: TypeUsage) -> Container {
