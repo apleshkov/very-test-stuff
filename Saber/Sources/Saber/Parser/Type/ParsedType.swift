@@ -29,3 +29,13 @@ struct ParsedType: Equatable {
         self.nested = nested
     }
 }
+
+extension ParsedType {
+
+    var fullName: String {
+        guard let moduleName = self.moduleName else {
+            return name
+        }
+        return "\(moduleName).\(name)"
+    }
+}

@@ -14,8 +14,8 @@ class ProvidedTypeResolverTests: XCTestCase {
     func testTypedProvider() {
         var decl = TypeDeclaration(name: "FooBar")
         decl.memberInjections = [MemberInjection(name: "baz", typeResolver: .explicit(TypeUsage(name: "Baz")))]
-        let resolver = TypeResolver.provided(
-            decl,
+        let resolver = TypeResolver<TypeDeclaration>.provided(
+            TypeUsage(name: decl.name),
             by: .typed(
                 TypedProvider(
                     decl: TypeDeclaration(name: "CoolProvider"),
@@ -35,8 +35,7 @@ class ProvidedTypeResolverTests: XCTestCase {
             [
                 [
                     "open var fooBar: FooBar {",
-                    "    var fooBar = self.makeFooBar()",
-                    "    self.injectTo(fooBar: &fooBar)",
+                    "    let fooBar = self.makeFooBar()",
                     "    return fooBar",
                     "}"
                 ],
@@ -66,20 +65,14 @@ class ProvidedTypeResolverTests: XCTestCase {
         )
         XCTAssertEqual(
             data.injectors,
-            [
-                [
-                    "private func injectTo(fooBar: inout FooBar) {",
-                    "    fooBar.baz = self.baz",
-                    "}"
-                ]
-            ]
+            []
         )
     }
     
     func testCachedTypedProvider() {
         let decl = TypeDeclaration(name: "FooBar")
-        let resolver = TypeResolver.provided(
-            decl,
+        let resolver = TypeResolver<TypeDeclaration>.provided(
+            TypeUsage(name: decl.name),
             by: .typed(
                 TypedProvider(
                     decl: TypeDeclaration(name: "CoolProvider")
@@ -99,7 +92,7 @@ class ProvidedTypeResolverTests: XCTestCase {
         XCTAssertEqual(
             data.storedProperties,
             [
-                ["private var cached_fooBar: FooBar?"]
+                ["private var cached_coolProvider: CoolProvider?"]
             ]
         )
         XCTAssertEqual(
@@ -107,15 +100,15 @@ class ProvidedTypeResolverTests: XCTestCase {
             [
                 [
                     "open var fooBar: FooBar {",
-                    "    if let cached = self.cached_fooBar { return cached }",
                     "    let fooBar = self.makeFooBar()",
-                    "    self.cached_fooBar = fooBar",
                     "    return fooBar",
                     "}"
                 ],
                 [
                     "private var coolProvider: CoolProvider {",
+                    "    if let cached = self.cached_coolProvider { return cached }",
                     "    let coolProvider = self.makeCoolProvider()",
+                    "    self.cached_coolProvider = coolProvider",
                     "    return coolProvider",
                     "}"
                 ]
@@ -146,8 +139,8 @@ class ProvidedTypeResolverTests: XCTestCase {
     func testStaticMethodProvider() {
         var decl = TypeDeclaration(name: "FooBar")
         decl.memberInjections = [MemberInjection(name: "baz", typeResolver: .explicit(TypeUsage(name: "Baz")))]
-        let resolver = TypeResolver.provided(
-            decl,
+        let resolver = TypeResolver<TypeDeclaration>.provided(
+            TypeUsage(name: decl.name),
             by: .staticMethod(
                 StaticMethodProvider(
                     receiverName: "FooBar",
@@ -170,8 +163,7 @@ class ProvidedTypeResolverTests: XCTestCase {
             [
                 [
                     "open var fooBar: FooBar {",
-                    "    var fooBar = self.makeFooBar()",
-                    "    self.injectTo(fooBar: &fooBar)",
+                    "    let fooBar = self.makeFooBar()",
                     "    return fooBar",
                     "}"
                 ]
@@ -189,13 +181,7 @@ class ProvidedTypeResolverTests: XCTestCase {
         )
         XCTAssertEqual(
             data.injectors,
-            [
-                [
-                    "private func injectTo(fooBar: inout FooBar) {",
-                    "    fooBar.baz = self.baz",
-                    "}"
-                ]
-            ]
+            []
         )
     }
 }

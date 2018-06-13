@@ -64,6 +64,14 @@ extension TypeRepository {
     enum ExternalMember: Equatable {
         case property(from: Key, name: String)
         case method(from: Key, parsed: ParsedMethod)
+
+        var fromKey: Key {
+            switch self {
+            case .property(let fromKey, _),
+                 .method(let fromKey, _):
+                return fromKey
+            }
+        }
     }
     
     indirect enum Resolver: Equatable {

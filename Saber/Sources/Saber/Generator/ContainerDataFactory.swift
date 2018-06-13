@@ -60,6 +60,41 @@ class ContainerDataFactory {
             )
         }
     }
+
+    private func expand(data: inout ContainerData,
+                        provided type: TypeUsage,
+                        by provider: TypeProvider,
+                        isCached: Bool,
+                        isThreadSafe: Bool,
+                        accessLevel: String) {
+        let makerName = memberName(of: type, prefix: "make")
+        let name = memberName(of: type)
+        data.getters.append(
+            {
+                var body: [String] = []
+                body.append("let \(name) = self.\(makerName)()")
+                body.append("return \(name)")
+                return ["\(accessLevel) var \(name): \(type.fullName) {"] + body.map { "\(indent)\($0)" } + ["}"]
+            }()
+        )
+        switch provider {
+        case .typed(let typedProvider):
+            let providerDecl = typedProvider.decl
+            data.makers.append([
+                "private func \(makerName)() -> \(type.fullName) {",
+                "\(indent)let provider = \(accessor(of: .explicit(providerDecl), owner: "self"))",
+                "\(indent)return \(invoked("provider", isOptional: providerDecl.isOptional, with: typedProvider.methodName, args: typedProvider.args))",
+                "}"
+                ])
+            expand(data: &data, typeResolver: .explicit(providerDecl), isCached: isCached, isThreadSafe: isThreadSafe, accessLevel: "private")
+        case .staticMethod(let methodProvider):
+            data.makers.append([
+                "private func \(makerName)() -> \(type.fullName) {",
+                "\(indent)return \(invoked(methodProvider.receiverName, isOptional: false, with: methodProvider.methodName, args: methodProvider.args))",
+                "}"
+                ])
+        }
+    }
     
     private func expand(data: inout ContainerData,
                         typeResolver: TypeResolver<TypeDeclaration>,
@@ -80,31 +115,7 @@ class ContainerDataFactory {
                 data.injectors.append(injector)
             }
         case .provided(let type, let provider):
-            switch provider {
-            case .typed(let typedProvider):
-                expand(data: &data, decl: type, isCached: isCached, isThreadSafe: isThreadSafe, accessLevel: accessLevel)
-                if let injector = injector(for: type, accessLevel: "private") {
-                    data.injectors.append(injector)
-                }
-                let providerDecl = typedProvider.decl
-                data.makers.append([
-                    "private func \(memberName(of: type, prefix: "make"))() -> \(type.fullName) {",
-                    "\(indent)let provider = \(accessor(of: .explicit(providerDecl), owner: "self"))",
-                    "\(indent)return \(invoked("provider", isOptional: providerDecl.isOptional, with: typedProvider.methodName, args: typedProvider.args))",
-                    "}"
-                    ])
-                expand(data: &data, typeResolver: .explicit(providerDecl), isCached: false, isThreadSafe: false, accessLevel: "private")
-            case .staticMethod(let methodProvider):
-                expand(data: &data, decl: type, isCached: isCached, isThreadSafe: isThreadSafe, accessLevel: accessLevel)
-                if let injector = injector(for: type, accessLevel: "private") {
-                    data.injectors.append(injector)
-                }
-                data.makers.append([
-                    "private func \(memberName(of: type, prefix: "make"))() -> \(type.fullName) {",
-                    "\(indent)return \(invoked(methodProvider.receiverName, isOptional: false, with: methodProvider.methodName, args: methodProvider.args))",
-                    "}"
-                    ])
-            }
+            expand(data: &data, provided: type, by: provider, isCached: isCached, isThreadSafe: isThreadSafe, accessLevel: accessLevel)
         case .bound(let mimicType, let type):
             data.getters.append([
                 "\(accessLevel) var \(memberName(of: mimicType)): \(mimicType.fullName) {",

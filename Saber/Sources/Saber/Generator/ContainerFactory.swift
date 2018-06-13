@@ -8,22 +8,120 @@
 import Foundation
 
 class ContainerFactory {
-    
+
     private let repo: TypeRepository
+
+    private var processingDeclarations: Set<DeclKey> = []
+
+    private var declarationValues: [DeclKey : DeclValue] = [:]
     
     init(repo: TypeRepository) {
         self.repo = repo
     }
-    
-    func make() -> [Container] {
-        return []
+}
+
+extension ContainerFactory {
+
+    func make() throws -> [Container] {
+        var result: [Container] = []
+        for (_, scope) in repo.scopes {
+            var container = Container(name: scope.container.name, protocolName: scope.container.protocolName)
+            container.dependencies = [] // TODO
+            container.externals = try makeContainerExternals(for: scope)
+            container.services = try makeServices(for: scope)
+            // TODO: parse isThreadSafe, parse imports
+            container.isThreadSafe = scope.container.isThreadSafe
+            result.append(container)
+        }
+        return result
+    }
+
+    private func makeContainerExternals(for scope: TypeRepository.Scope) throws -> [ContainerExternal] {
+        var dict: [TypeRepository.Key : ContainerExternal] = [:]
+        for (_, member) in scope.externals {
+            let fromKey = member.fromKey
+            var external: ContainerExternal = try {
+                if let external = dict[fromKey] {
+                    return external
+                }
+                let usage = try makeTypeUsage(from: fromKey, in: scope)
+                return ContainerExternal(type: usage, kinds: [])
+            }()
+            switch member {
+            case .method(_, let parsedMethod):
+                let args = try makeArguments(for: parsedMethod, in: scope)
+                external.kinds.append(.method(name: parsedMethod.name, args: args))
+            case .property(_, let name):
+                external.kinds.append(.property(name: name))
+            }
+            dict[fromKey] = external
+        }
+        return dict.map { $0.value }
+    }
+
+    private func makeServices(for scope: TypeRepository.Scope) throws -> [Service] {
+        var result: [Service] = []
+        for key in scope.keys {
+            let info = try repo.find(by: key)
+            let value = try ensure(info: info, in: scope)
+            let typeResolver = TypeResolver<TypeDeclaration>.explicit(value.declaration)
+            let service = Service(
+                typeResolver: typeResolver,
+                storage: value.isCached ? .cached : .none
+            )
+            result.append(service)
+        }
+        for (providerKey, data) in scope.providers {
+            let typeUsage = try makeTypeUsage(from: data.of, in: scope)
+            let typeProvider = try makeTypeProvider(key: providerKey, in: scope)
+            let typeResolver = TypeResolver<TypeDeclaration>.provided(typeUsage, by: typeProvider)
+            let providerInfo = try repo.find(by: providerKey)
+            let providerValue = try ensure(info: providerInfo, in: scope)
+            let service = Service(
+                typeResolver: typeResolver,
+                storage: providerValue.isCached ? .cached : .none
+            )
+            result.append(service)
+        }
+        for (binderKey, mimicKey) in scope.binders {
+            let typeUsage = try makeTypeUsage(from: mimicKey, in: scope)
+            let binderInfo = try repo.find(by: binderKey)
+            let binderValue = try ensure(info: binderInfo, in: scope)
+            let typeResolver = TypeResolver<TypeDeclaration>.bound(typeUsage, to: binderValue.declaration)
+            let service = Service(
+                typeResolver: typeResolver,
+                storage: binderValue.isCached ? .cached : .none
+            )
+            result.append(service)
+        }
+        return result
     }
 }
 
 extension ContainerFactory {
-    
-    
-    
+
+    private func makeTypeProvider(key providerKey: TypeRepository.Key, in scope: TypeRepository.Scope) throws -> TypeProvider {
+        guard let data = scope.providers[providerKey] else {
+            throw Throwable.message("Unknown provider: '\(providerKey.description)' not found")
+        }
+        let method = data.method
+        let providerInfo = try repo.find(by: providerKey)
+        if method.isStatic {
+            let provider = StaticMethodProvider(
+                receiverName: providerInfo.key.description,
+                methodName: method.name,
+                args: try makeArguments(for: method, in: scope)
+            )
+            return .staticMethod(provider)
+        }
+        let provider = TypedProvider(
+            decl: try ensure(info: providerInfo, in: scope).declaration,
+            methodName: method.name,
+            args: try makeArguments(for: method, in: scope)
+        )
+        return .typed(provider)
+    }
+
     private func makeResolver(for typeUsage: TypeUsage,
                               with repoResolver: TypeRepository.Resolver,
                               in scope: TypeRepository.Scope) throws -> TypeResolver<TypeUsage> {
@@ -31,28 +129,27 @@ extension ContainerFactory {
         case .explicit:
             return .explicit(typeUsage)
         case .provider(let providerKey):
-            guard let data = scope.providers[providerKey] else {
-                throw Throwable.message("Unknown '\(typeUsage.fullName)' provider: '\(providerKey.description)' not found")
-            }
-            let method = data.method
-            let providerInfo = try repo.find(by: providerKey)
-            if data.method.isStatic {
-                return .provided(
-                    typeUsage,
-                    by: .staticMethod(
-                        StaticMethodProvider(
-                            receiverName: providerInfo.key.description,
-                            methodName: method.name,
-                            args: try makeArguments(for: method, in: scope)
-                        )
-                    )
+            let provider = try makeTypeProvider(key: providerKey, in: scope)
+            return .provided(typeUsage, by: provider)
+        case .binder(let binderKey):
+            let binderInfo = try repo.find(by: binderKey)
+            return .bound(typeUsage, to: try makeTypeUsage(from: binderInfo, in: scope))
+        case .external(let member):
+            switch member {
+            case .method(let fromKey, let parsedMethod):
+                let fromUsage = try makeTypeUsage(from: fromKey, in: scope)
+                let args = try makeArguments(for: parsedMethod, in: scope)
+                return .external(
+                    from: fromUsage,
+                    kind: .method(name: parsedMethod.name, args: args)
+                )
+            case .property(let fromKey, let name):
+                let fromUsage = try makeTypeUsage(from: fromKey, in: scope)
+                return .external(
+                    from: fromUsage,
+                    kind: .property(name: name)
                 )
             }
-            throw Throwable.message("")
-        case .binder(let binderKey):
-            throw Throwable.message("")
-        case .external(let member):
-            throw Throwable.message("")
         case .derived(let fromName, let fromResolver):
             guard let fromScope = repo.scopes[fromName] else {
                 throw Throwable.message("Unknown scope: '\(fromName)'")
@@ -64,43 +161,148 @@ extension ContainerFactory {
             )
         }
     }
+
+    private func makeResolver(for parsedUsage: ParsedTypeUsage, in scope: TypeRepository.Scope) throws -> TypeResolver<TypeUsage> {
+        guard let info = repo.find(by: parsedUsage.name) else {
+            throw Throwable.message("Unknown type: '\(parsedUsage.fullName)'")
+        }
+        guard let repoResolver = repo.resolver(for: info.key, scopeName: scope.name) else {
+            throw Throwable.message("Unknown resolver for: '\(parsedUsage.fullName)'")
+        }
+        let typeUsage = try makeTypeUsage(from: info, in: scope)
+        return try makeResolver(for: typeUsage, with: repoResolver, in: scope)
+    }
+}
+
+extension ContainerFactory {
     
     private func makeArguments(for method: ParsedMethod, in scope: TypeRepository.Scope) throws -> [FunctionInvocationArgument] {
         return try method.args.map {
-            guard let info = repo.find(by: $0.type.name) else {
-                throw Throwable.message("Unknown type: '\($0.type.fullName)'")
-            }
-            guard let repoResolver = repo.resolver(for: info.key, scopeName: scope.name) else {
-                throw Throwable.message("Unknown resolver for: '\($0.type.fullName)'")
-            }
-            let typeUsage = make(from: info)
-            let typeResolver = try makeResolver(for: typeUsage, with: repoResolver, in: scope)
+            let typeResolver = try makeResolver(for: $0.type, in: scope)
             return FunctionInvocationArgument(name: $0.name, typeResolver: typeResolver)
         }
     }
 
-    private func make(from info: TypeRepository.Info) -> TypeUsage {
+    private func makeTypeUsage(from key: TypeRepository.Key, in scope: TypeRepository.Scope) throws -> TypeUsage {
+        let info = try repo.find(by: key)
+        return try makeTypeUsage(from: info, in: scope)
+    }
+
+    private func makeTypeUsage(from info: TypeRepository.Info, in scope: TypeRepository.Scope) throws -> TypeUsage {
         switch info.parsed {
-        case .type(let parsedType):
-            return make(from: parsedType)
+        case .type(_):
+            let decl = try ensure(info: info, in: scope)
+            var usage = TypeUsage(name: decl.declaration.name)
+            usage.isOptional = decl.declaration.isOptional
+            return usage
         case .usage(let parsedUsage),
              .alias(let parsedUsage):
-            return make(from: parsedUsage)
+            return makeTypeUsage(from: parsedUsage)
         }
     }
     
-    private func make(from parsedUsage: ParsedTypeUsage) -> TypeUsage {
+    private func makeTypeUsage(from parsedUsage: ParsedTypeUsage) -> TypeUsage {
         var usage = TypeUsage(name: parsedUsage.name)
         usage.isOptional = parsedUsage.isOptional
         usage.generics = parsedUsage.generics.map {
-            return make(from: $0)
+            return makeTypeUsage(from: $0)
         }
         return usage
     }
+}
 
-    private func make(from parsedType: ParsedType) -> TypeUsage {
-        var usage = TypeUsage(name: parsedType.name)
-        usage.isOptional = false // TODO: parse initializers
-        return usage
+extension ContainerFactory {
+
+    private func ensure(info: TypeRepository.Info, in scope: TypeRepository.Scope) throws -> DeclValue {
+        let key = DeclKey(scopeName: scope.name, key: info.key)
+        guard processingDeclarations.contains(key) == false else {
+            throw Throwable.message("Cyclic dependency found: '\(info.key.description)' is still processing")
+        }
+        if let value = declarationValues[key] {
+            return value
+        }
+        guard case .type(let parsedType) = info.parsed else {
+            throw Throwable.message("Unable to make '\(info.key.description)' declaration: no parsed type")
+        }
+        processingDeclarations.insert(key)
+        defer {
+            processingDeclarations.remove(key)
+        }
+        let isInjectOnly = parsedType.annotations.contains(.injectOnly)
+        var decl = TypeDeclaration(name: info.key.description)
+        decl.isReference = parsedType.isReference
+        for property in parsedType.properties {
+            guard property.annotations.contains(.inject) else {
+                continue
+            }
+            let injection = MemberInjection(name: property.name, typeResolver: try makeResolver(for: property.type, in: scope))
+            decl.memberInjections.append(injection)
+        }
+        var didInjectHandlerName: String? = nil
+        var parsedInitializers: [ParsedMethod] = []
+        for method in parsedType.methods {
+            if method.isInitializer {
+                if !isInjectOnly {
+                    parsedInitializers.append(method)
+                }
+                continue
+            }
+            if didInjectHandlerName == nil && method.annotations.contains(.didInject) {
+                didInjectHandlerName = method.name
+                continue
+            }
+            if method.annotations.contains(.inject) {
+                let injection = InstanceMethodInjection(methodName: method.name, args: try makeArguments(for: method, in: scope))
+                decl.methodInjections.append(injection)
+            }
+        }
+        decl.initializer = try {
+            if isInjectOnly {
+                return .none
+            }
+            guard let initializer = try findInitializer(from: parsedInitializers, for: parsedType) else {
+                return .some(args: [])
+            }
+            decl.isOptional = initializer.isFailableInitializer
+            let args: [ConstructorInjection] = try initializer.args.map {
+                let resolver = try makeResolver(for: $0.type, in: scope)
+                return ConstructorInjection(
+                    name: $0.name,
+                    typeResolver: resolver
+                )
+            }
+            return .some(args: args)
+        }()
+        let isCached = parsedType.annotations.contains(.cached)
+        let value: DeclValue = (decl, isCached)
+        declarationValues[key] = value
+        return value
+    }
+
+    private func findInitializer(from methods: [ParsedMethod], for parsedType: ParsedType) throws -> ParsedMethod? {
+        guard methods.count > 0 else {
+            return nil
+        }
+        if methods.count == 1 {
+            return methods[0]
+        }
+        let injected = methods.filter { $0.annotations.contains(.inject) }
+        if injected.count > 1 {
+            throw Throwable.message("Unable to find initializer for '\(parsedType.fullName)': multiple injected-initializers found")
+        }
+        guard let initializer = injected.first else {
+            throw Throwable.message("Unable to find initializer for '\(parsedType.fullName)': \(methods.count) initializers found, but none of them marked as injected")
+        }
+        return initializer
     }
 }
+
+
+private struct DeclKey: Hashable {
+
+    var scopeName: TypeRepository.ScopeName
+
+    var key: TypeRepository.Key
+}
+
+private typealias DeclValue = (declaration: TypeDeclaration, isCached: Bool)

@@ -9,7 +9,7 @@ import Foundation
 
 indirect enum TypeResolver<T> {
     case explicit(T)
-    case provided(T, by: TypeProvider)
+    case provided(TypeUsage, by: TypeProvider)
     case bound(TypeUsage, to: T)
     case derived(from: T, typeResolver: TypeResolver)
     case external(from: T, kind: ContainerExternal.Kind)
