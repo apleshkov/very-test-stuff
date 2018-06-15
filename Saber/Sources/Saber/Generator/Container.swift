@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct Container {
+struct Container: Equatable {
 
     var name: String
 
@@ -15,17 +15,25 @@ struct Container {
 
     var dependencies: [TypeUsage]
 
-    var externals: [ContainerExternal] = []
+    var externals: [ContainerExternal]
     
-    var services: [Service] = []
+    var services: [Service]
 
     var isThreadSafe: Bool
     
     var imports: [String]
 
-    init(name: String, protocolName: String, dependencies: [TypeUsage] = [], isThreadSafe: Bool = false, imports: [String] = []) {
+    init(name: String,
+         protocolName: String,
+         dependencies: [TypeUsage] = [],
+         externals: [ContainerExternal] = [],
+         services: [Service] = [],
+         isThreadSafe: Bool = false,
+         imports: [String] = []) {
         self.name = name
         self.dependencies = dependencies
+        self.externals = externals
+        self.services = services
         self.protocolName = protocolName
         self.isThreadSafe = isThreadSafe
         self.imports = imports
@@ -44,9 +52,9 @@ struct Container {
     }
 }
 
-struct ContainerExternal {
+struct ContainerExternal: Equatable {
     
-    enum Kind {
+    enum Kind: Equatable {
         case property(name: String)
         case method(name: String, args: [FunctionInvocationArgument])
     }

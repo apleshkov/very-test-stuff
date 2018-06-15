@@ -7,29 +7,41 @@
 
 import Foundation
 
-struct TypeDeclaration: SomeType {
+struct TypeDeclaration: SomeType, Equatable {
     
-    enum Initializer {
+    enum Initializer: Equatable {
         case none
         case some(args: [ConstructorInjection])
     }
     
     var name: String
     
-    var isOptional: Bool = false
+    var isOptional: Bool
     
-    var isReference: Bool = false
+    var isReference: Bool
     
-    var initializer: Initializer = .some(args: [])
+    var initializer: Initializer
     
-    var memberInjections: [MemberInjection] = []
+    var memberInjections: [MemberInjection]
     
-    var methodInjections: [InstanceMethodInjection] = []
+    var methodInjections: [InstanceMethodInjection]
     
-    var didInjectHandlerName: String? = nil
+    var didInjectHandlerName: String?
     
-    init(name: String) {
+    init(name: String,
+         isOptional: Bool = false,
+         isReference: Bool = false,
+         initializer: Initializer = .some(args: []),
+         memberInjections: [MemberInjection] = [],
+         methodInjections: [InstanceMethodInjection] = [],
+         didInjectHandlerName: String? = nil) {
         self.name = name
+        self.isOptional = isOptional
+        self.isReference = isReference
+        self.initializer = initializer
+        self.memberInjections = memberInjections
+        self.methodInjections = methodInjections
+        self.didInjectHandlerName = didInjectHandlerName
     }
     
     var fullName: String {

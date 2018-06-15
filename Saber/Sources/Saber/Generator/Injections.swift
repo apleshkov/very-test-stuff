@@ -7,21 +7,21 @@
 
 import Foundation
 
-struct ConstructorInjection {
+struct ConstructorInjection: Equatable {
 
     var name: String?
 
     var typeResolver: TypeResolver<TypeUsage>
 }
 
-struct MemberInjection {
+struct MemberInjection: Equatable {
 
     var name: String
 
     var typeResolver: TypeResolver<TypeUsage>
 }
 
-struct InstanceMethodInjection {
+struct InstanceMethodInjection: Equatable {
 
     var methodName: String
 

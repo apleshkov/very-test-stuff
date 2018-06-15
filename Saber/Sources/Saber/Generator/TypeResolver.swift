@@ -7,7 +7,7 @@
 
 import Foundation
 
-indirect enum TypeResolver<T> {
+indirect enum TypeResolver<T>: Equatable where T: Equatable {
     case explicit(T)
     case provided(TypeUsage, by: TypeProvider)
     case bound(TypeUsage, to: T)

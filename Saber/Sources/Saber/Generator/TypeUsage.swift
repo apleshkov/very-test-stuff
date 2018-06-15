@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct TypeUsage: SomeType {
+struct TypeUsage: SomeType, Equatable {
 
     var name: String
 

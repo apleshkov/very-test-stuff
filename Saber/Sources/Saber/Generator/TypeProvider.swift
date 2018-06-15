@@ -7,12 +7,12 @@
 
 import Foundation
 
-enum TypeProvider {
+enum TypeProvider: Equatable {
     case typed(TypedProvider)
     case staticMethod(StaticMethodProvider)
 }
 
-struct TypedProvider {
+struct TypedProvider: Equatable {
 
     var decl: TypeDeclaration
 
@@ -26,7 +26,7 @@ struct TypedProvider {
     }
 }
 
-struct StaticMethodProvider {
+struct StaticMethodProvider: Equatable {
 
     var receiverName: String
 

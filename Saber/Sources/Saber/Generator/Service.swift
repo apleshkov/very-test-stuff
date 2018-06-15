@@ -7,12 +7,12 @@
 
 import Foundation
 
-enum ServiceStorage {
+enum ServiceStorage: Equatable {
     case cached
     case none
 }
 
-struct Service {
+struct Service: Equatable {
 
     var typeResolver: TypeResolver<TypeDeclaration>
 

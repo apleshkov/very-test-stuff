@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct FunctionInvocationArgument {
+struct FunctionInvocationArgument: Equatable {
 
     var name: String?
 
