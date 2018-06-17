@@ -19,9 +19,6 @@ class MethodAnnotationParser {
         if rawString == "didInject" {
             return MethodAnnotation.didInject
         }
-        if rawString == "cached" {
-            return MethodAnnotation.cached
-        }
         return nil
     }
 }

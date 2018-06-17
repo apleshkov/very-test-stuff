@@ -111,7 +111,6 @@ class FactoryExternalTests: XCTestCase {
             )
             return listAPI
         }()
-        
         XCTAssertEqual(
             containers,
             [

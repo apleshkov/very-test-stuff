@@ -37,6 +37,7 @@ class TypeParserTests: XCTestCase {
                 // текст на русском
                 // @saber.cached
                 // @saber.bindTo(Baz)
+                // comment
                 struct Bar {}
                 """
             ),

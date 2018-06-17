@@ -49,21 +49,14 @@ class ContainerDataFactoryInvokedTests: XCTestCase {
                 name: "baz",
                 typeResolver: .provided(
                     TypeUsage(name: "Baz"),
-                    by: .typed(TypedProvider(decl: TypeDeclaration(name: "BazProvider"), methodName: "provide"))
-                )
-            ),
-            FunctionInvocationArgument(
-                name: "quux",
-                typeResolver: .provided(
-                    TypeUsage(name: "Quux"),
-                    by: .staticMethod(StaticMethodProvider(receiverName: "QuuxProvider", methodName: "provide", args: []))
+                    by: TypeProvider(decl: TypeDeclaration(name: "BazProvider"), methodName: "provide")
                 )
             )
         ]
         let invoked = ContainerDataFactory().invoked("foo", isOptional: false, with: "bar", args: args)
         XCTAssertEqual(
             invoked,
-            "foo.bar(baz: self.baz, quux: self.quux)"
+            "foo.bar(baz: self.baz)"
         )
     }
     

@@ -7,12 +7,7 @@
 
 import Foundation
 
-enum TypeProvider: Equatable {
-    case typed(TypedProvider)
-    case staticMethod(StaticMethodProvider)
-}
-
-struct TypedProvider: Equatable {
+struct TypeProvider: Equatable {
 
     var decl: TypeDeclaration
 
@@ -23,23 +18,5 @@ struct TypedProvider: Equatable {
     init(decl: TypeDeclaration, methodName: String, args: [FunctionInvocationArgument] = []) {
         self.decl = decl
         self.methodName = methodName
-    }
-}
-
-struct StaticMethodProvider: Equatable {
-
-    var receiverName: String
-
-    var methodName: String
-
-    var args: [FunctionInvocationArgument]
-    
-    var isCached: Bool
-    
-    init(receiverName: String, methodName: String, args: [FunctionInvocationArgument] = [], isCached: Bool = false) {
-        self.receiverName = receiverName
-        self.methodName = methodName
-        self.args = args
-        self.isCached = isCached
     }
 }

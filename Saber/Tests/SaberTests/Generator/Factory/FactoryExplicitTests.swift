@@ -190,4 +190,47 @@ class FactoryExplicitTests: XCTestCase {
             ]
         )
     }
+    
+    func testNested() {
+        let parsedFactory = ParsedDataFactory()
+        try! FileParser(contents:
+            """
+            class Clazz {
+                // @saber.scope(Singleton)
+                struct Foo {}
+            }
+
+            extension Clazz {
+                // @saber.scope(Singleton)
+                // @saber.cached
+                class Bar {}
+            }
+
+            // @saber.container(App)
+            // @saber.scope(Singleton)
+            protocol AppConfig {}
+            """
+            ).parse(to: parsedFactory)
+        let repo = try! TypeRepository(parsedData: parsedFactory.make())
+        let containers = try! ContainerFactory(repo: repo).make()
+        XCTAssertEqual(
+            containers,
+            [
+                Container(
+                    name: "App",
+                    protocolName: "AppConfig",
+                    services: [
+                        Service(
+                            typeResolver: .explicit(TypeDeclaration(name: "Clazz.Bar", isReference: true)),
+                            storage: .cached
+                        ),
+                        Service(
+                            typeResolver: .explicit(TypeDeclaration(name: "Clazz.Foo")),
+                            storage: .none
+                        )
+                    ]
+                )
+            ]
+        )
+    }
 }

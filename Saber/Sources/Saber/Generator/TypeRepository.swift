@@ -17,7 +17,7 @@ class TypeRepository {
     private var modularNames: [String : Key] = [:]
 
     /// "Foo" -> ["A", "B"] if "Foo" is declared in both "A" and "B"
-    private var shortenNameCollisions: [String : [String]] = [:]
+    private var shortenNameCollisions: [String : Set<String>] = [:]
 
     private var resolvers: [ScopeName : [Key : Resolver]] = [:]
 
@@ -86,11 +86,13 @@ extension TypeRepository {
 extension TypeRepository {
 
     func find(by key: Key) throws -> Info {
-        if case .name(let name) = key, let collisions = shortenNameCollisions[name], collisions.count > 0 {
+        if case .name(let name) = key,
+            let collisions = shortenNameCollisions[name],
+            let first = collisions.first {
             guard collisions.count == 1 else {
                 throw Throwable.declCollision(name: name, modules: collisions)
             }
-            return try find(by: .modular(module: collisions[0], name: name))
+            return try find(by: .modular(module: first, name: name))
         }
         guard let info = typeInfos[key] else {
             throw Throwable.message("Unable to find '\(key.description)'")
@@ -114,7 +116,7 @@ extension TypeRepository {
         if let moduleName = key.moduleName {
             modularNames["\(moduleName).\(key.name)"] = key
             var collisions = shortenNameCollisions[key.name] ?? []
-            collisions.append(moduleName)
+            collisions.insert(moduleName)
             shortenNameCollisions[key.name] = collisions
         }
         if let scopeKey = info.scopeName {

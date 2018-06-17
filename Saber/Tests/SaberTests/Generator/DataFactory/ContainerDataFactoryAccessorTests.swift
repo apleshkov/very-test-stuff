@@ -28,17 +28,8 @@ class ContainerDataFactoryAccessorTests: XCTestCase {
     }
 
     func testProvidedByType() {
-        let provider = TypedProvider(decl: TypeDeclaration(name: "FooProvider"), methodName: "provide")
-        let resolver = TypeResolver<TypeUsage>.provided(TypeUsage(name: "Foo"), by: .typed(provider))
-        XCTAssertEqual(
-            ContainerDataFactory().accessor(of: resolver, owner: "self"),
-            "self.foo"
-        )
-    }
-
-    func testProvidedByStaticMethod() {
-        let provider = StaticMethodProvider(receiverName: "Foo", methodName: "provide", args: [])
-        let resolver = TypeResolver<TypeUsage>.provided(TypeUsage(name: "Foo"), by: .staticMethod(provider))
+        let provider = TypeProvider(decl: TypeDeclaration(name: "FooProvider"), methodName: "provide")
+        let resolver = TypeResolver<TypeUsage>.provided(TypeUsage(name: "Foo"), by: provider)
         XCTAssertEqual(
             ContainerDataFactory().accessor(of: resolver, owner: "self"),
             "self.foo"

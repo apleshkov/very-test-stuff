@@ -77,29 +77,17 @@ class ContainerDataFactory {
                         isThreadSafe: Bool,
                         accessLevel: String) {
         let makerName = memberName(of: usage, prefix: "make")
-        switch provider {
-        case .typed(let typedProvider):
-            expand(data: &data, some: usage, isCached: false, isThreadSafe: false, accessLevel: accessLevel)
-            let providerDecl = typedProvider.decl
-            data.makers.append(
-                [
-                    "private func \(makerName)() -> \(usage.fullName) {",
-                    "\(indent)let provider = \(accessor(of: .explicit(providerDecl), owner: "self"))",
-                    "\(indent)return \(invoked("provider", isOptional: providerDecl.isOptional, with: typedProvider.methodName, args: typedProvider.args))",
-                    "}"
-                ]
-            )
-            expand(data: &data, typeResolver: .explicit(providerDecl), isCached: isCached, isThreadSafe: isThreadSafe, accessLevel: "private")
-        case .staticMethod(let methodProvider):
-            expand(data: &data, some: usage, isCached: methodProvider.isCached, isThreadSafe: isThreadSafe, accessLevel: accessLevel)
-            data.makers.append(
-                [
-                    "private func \(makerName)() -> \(usage.fullName) {",
-                    "\(indent)return \(invoked(methodProvider.receiverName, isOptional: false, with: methodProvider.methodName, args: methodProvider.args))",
-                    "}"
-                ]
-            )
-        }
+        expand(data: &data, some: usage, isCached: false, isThreadSafe: false, accessLevel: accessLevel)
+        let providerDecl = provider.decl
+        data.makers.append(
+            [
+                "private func \(makerName)() -> \(usage.fullName) {",
+                "\(indent)let provider = \(accessor(of: .explicit(providerDecl), owner: "self"))",
+                "\(indent)return \(invoked("provider", isOptional: providerDecl.isOptional, with: provider.methodName, args: provider.args))",
+                "}"
+            ]
+        )
+        expand(data: &data, typeResolver: .explicit(providerDecl), isCached: isCached, isThreadSafe: isThreadSafe, accessLevel: "private")
     }
     
     private func expand(data: inout ContainerData,

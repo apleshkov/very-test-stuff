@@ -16,11 +16,9 @@ class ProvidedTypeResolverTests: XCTestCase {
         decl.memberInjections = [MemberInjection(name: "baz", typeResolver: .explicit(TypeUsage(name: "Baz")))]
         let resolver = TypeResolver<TypeDeclaration>.provided(
             TypeUsage(name: decl.name),
-            by: .typed(
-                TypedProvider(
-                    decl: TypeDeclaration(name: "CoolProvider"),
-                    methodName: "provide"
-                )
+            by: TypeProvider(
+                decl: TypeDeclaration(name: "CoolProvider"),
+                methodName: "provide"
             )
         )
         let service = Service(typeResolver: resolver, storage: .none)
@@ -73,17 +71,15 @@ class ProvidedTypeResolverTests: XCTestCase {
         let decl = TypeDeclaration(name: "FooBar")
         let resolver = TypeResolver<TypeDeclaration>.provided(
             TypeUsage(name: decl.name),
-            by: .typed(
-                TypedProvider(
-                    decl: TypeDeclaration(name: "CoolProvider")
-                        .set(initializer: .some(args: [
-                            ConstructorInjection(
-                                name: "quux",
-                                typeResolver: .explicit(TypeUsage(name: "Quux"))
-                            )
-                            ])),
-                    methodName: "provide"
-                )
+            by: TypeProvider(
+                decl: TypeDeclaration(name: "CoolProvider")
+                    .set(initializer: .some(args: [
+                        ConstructorInjection(
+                            name: "quux",
+                            typeResolver: .explicit(TypeUsage(name: "Quux"))
+                        )
+                        ])),
+                methodName: "provide"
             )
         )
         let service = Service(typeResolver: resolver, storage: .cached)
@@ -126,114 +122,6 @@ class ProvidedTypeResolverTests: XCTestCase {
                 [
                     "private func makeCoolProvider() -> CoolProvider {",
                     "    return CoolProvider(quux: self.quux)",
-                    "}"
-                ]
-            ]
-        )
-        XCTAssertEqual(
-            data.injectors,
-            []
-        )
-    }
-    
-    func testStaticMethodProvider() {
-        var decl = TypeDeclaration(name: "FooBar")
-        decl.memberInjections = [MemberInjection(name: "baz", typeResolver: .explicit(TypeUsage(name: "Baz")))]
-        let resolver = TypeResolver<TypeDeclaration>.provided(
-            TypeUsage(name: decl.name),
-            by: .staticMethod(
-                StaticMethodProvider(
-                    receiverName: "FooBar",
-                    methodName: "provide",
-                    args: [
-                        FunctionInvocationArgument(name: "quux", typeResolver: .explicit(TypeUsage(name: "Quux")))
-                    ]
-                )
-            )
-        )
-        let service = Service(typeResolver: resolver, storage: .none)
-        let container = Container(name: "Test", isThreadSafe: true).add(service: service)
-        let data = ContainerDataFactory().make(from: container)
-        XCTAssertEqual(
-            data.storedProperties,
-            [
-                ["private let lock = NSRecursiveLock()"]
-            ]
-        )
-        XCTAssertEqual(
-            data.getters,
-            [
-                [
-                    "open var fooBar: FooBar {",
-                    "    let fooBar = self.makeFooBar()",
-                    "    return fooBar",
-                    "}"
-                ]
-            ]
-        )
-        XCTAssertEqual(
-            data.makers,
-            [
-                [
-                    "private func makeFooBar() -> FooBar {",
-                    "    return FooBar.provide(quux: self.quux)",
-                    "}"
-                ]
-            ]
-        )
-        XCTAssertEqual(
-            data.injectors,
-            []
-        )
-    }
-    
-    func testCachedStaticMethodProvider() {
-        var decl = TypeDeclaration(name: "FooBar")
-        decl.memberInjections = [MemberInjection(name: "baz", typeResolver: .explicit(TypeUsage(name: "Baz")))]
-        let resolver = TypeResolver<TypeDeclaration>.provided(
-            TypeUsage(name: decl.name),
-            by: .staticMethod(
-                StaticMethodProvider(
-                    receiverName: "FooBar",
-                    methodName: "provide",
-                    args: [
-                        FunctionInvocationArgument(name: "quux", typeResolver: .explicit(TypeUsage(name: "Quux")))
-                    ],
-                    isCached: true
-                )
-            )
-        )
-        let service = Service(typeResolver: resolver, storage: .none)
-        let container = Container(name: "Test", isThreadSafe: true).add(service: service)
-        let data = ContainerDataFactory().make(from: container)
-        XCTAssertEqual(
-            data.storedProperties,
-            [
-                ["private let lock = NSRecursiveLock()"],
-                ["private var cached_fooBar: FooBar?"]
-            ]
-        )
-        XCTAssertEqual(
-            data.getters,
-            [
-                [
-                    "open var fooBar: FooBar {",
-                    "    self.lock.lock()",
-                    "    defer { self.lock.unlock() }",
-                    "    if let cached = self.cached_fooBar { return cached }",
-                    "    let fooBar = self.makeFooBar()",
-                    "    self.cached_fooBar = fooBar",
-                    "    return fooBar",
-                    "}"
-                ]
-            ]
-        )
-        XCTAssertEqual(
-            data.makers,
-            [
-                [
-                    "private func makeFooBar() -> FooBar {",
-                    "    return FooBar.provide(quux: self.quux)",
                     "}"
                 ]
             ]

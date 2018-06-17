@@ -63,7 +63,12 @@ extension ContainerFactory {
         var result: [Service] = []
         for key in scope.keys {
             let info = try repo.find(by: key)
-            let value = try ensure(info: info, in: scope)
+            let value: DeclValue
+            do {
+                value = try ensure(info: info, in: scope)
+            } catch (error: Throwable.noParsedType(_)) {
+                continue
+            }
             let typeResolver = TypeResolver<TypeDeclaration>.explicit(value.declaration)
             let service = Service(
                 typeResolver: typeResolver,
@@ -75,11 +80,9 @@ extension ContainerFactory {
             let typeUsage = try makeTypeUsage(from: data.of, in: scope)
             let typeProvider = try makeTypeProvider(key: providerKey, in: scope)
             let typeResolver = TypeResolver<TypeDeclaration>.provided(typeUsage, by: typeProvider)
-            let providerInfo = try repo.find(by: providerKey)
-            let providerValue = try ensure(info: providerInfo, in: scope)
             let service = Service(
                 typeResolver: typeResolver,
-                storage: providerValue.isCached ? .cached : .none
+                storage: .none
             )
             result.append(service)
         }
@@ -90,7 +93,7 @@ extension ContainerFactory {
             let typeResolver = TypeResolver<TypeDeclaration>.bound(typeUsage, to: binderValue.declaration)
             let service = Service(
                 typeResolver: typeResolver,
-                storage: binderValue.isCached ? .cached : .none
+                storage: .none
             )
             result.append(service)
         }
@@ -115,21 +118,11 @@ extension ContainerFactory {
         }
         let method = data.method
         let providerInfo = try repo.find(by: providerKey)
-        if method.isStatic {
-            let provider = StaticMethodProvider(
-                receiverName: providerInfo.key.description,
-                methodName: method.name,
-                args: try makeArguments(for: method, in: scope),
-                isCached: method.annotations.contains(.cached)
-            )
-            return .staticMethod(provider)
-        }
-        let provider = TypedProvider(
+        return TypeProvider(
             decl: try ensure(info: providerInfo, in: scope).declaration,
             methodName: method.name,
             args: try makeArguments(for: method, in: scope)
         )
-        return .typed(provider)
     }
 
     private func makeResolver(for typeUsage: TypeUsage,
@@ -232,7 +225,7 @@ extension ContainerFactory {
             return value
         }
         guard case .type(let parsedType) = info.parsed else {
-            throw Throwable.message("Unable to make '\(info.key.description)' declaration: no parsed type")
+            throw Throwable.noParsedType(for: info)
         }
         processingDeclarations.insert(key)
         defer {

@@ -159,8 +159,8 @@ class ExtensionParserTests: XCTestCase {
             ),
             [
                 ParsedExtension(typeName: "Foo")
-                    .add(method: ParsedMethod(name: "foo", annotations: [.inject]))
                     .add(property: ParsedProperty(name: "bar", type: ParsedTypeUsage(name: "Int"), annotations: [.inject]))
+                    .add(method: ParsedMethod(name: "foo", annotations: [.inject]))
             ]
         )
     }

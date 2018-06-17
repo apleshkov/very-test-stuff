@@ -108,7 +108,7 @@ class TypeRepoModuleTests: XCTestCase {
                 // @saber.externals(SomeExternal)
                 protocol AppConfig {}
 
-                // @saber.container
+                // @saber.container(User)
                 // @saber.scope(UserScope)
                 // @saber.externals(A.SomeExternal)
                 protocol UserConfig {}

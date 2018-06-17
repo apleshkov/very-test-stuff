@@ -11,6 +11,7 @@ import SourceKittenFramework
 private struct ParsedLine: Equatable {
     enum Kind: Equatable {
         case annotation(text: String)
+        case comment
         case other
     }
     
@@ -38,11 +39,12 @@ class RawData {
         }
         var result: [String] = []
         for line in lines[0..<(cursor.line - 1)].reversed() {
+            if case .other = line.kind {
+                break
+            }
             if case .annotation(let text) = line.kind {
                 result.append(text)
-                continue
             }
-            break
         }
         return result.reversed()
     }
@@ -52,8 +54,13 @@ private func parse(contents: String, prefix: String) -> [ParsedLine] {
     return contents.lines().map {
         let rawText = $0.content.trimmingCharacters(in: .whitespaces)
         let kind: ParsedLine.Kind
-        if let extractedText = extract(from: rawText, prefix: prefix) {
-            kind = .annotation(text: extractedText)
+        let isComment = rawText.hasPrefix("//")
+        if isComment {
+            if let extractedText = extract(from: rawText, prefix: prefix) {
+                kind = .annotation(text: extractedText)
+            } else {
+                kind = .comment
+            }
         } else {
             kind = .other
         }
@@ -62,9 +69,6 @@ private func parse(contents: String, prefix: String) -> [ParsedLine] {
 }
 
 private func extract(from rawText: String, prefix: String) -> String? {
-    guard rawText.hasPrefix("//") else {
-        return nil
-    }
     guard let prefixRange = rawText.range(of: prefix) else {
         return nil
     }

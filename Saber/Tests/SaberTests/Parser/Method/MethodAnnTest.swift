@@ -31,17 +31,6 @@ class MethodAnnTest: XCTestCase {
             MethodAnnotation.provider
         )
     }
-    
-    func testCached() {
-        XCTAssertEqual(
-            MethodAnnotationParser.parse("cached()"),
-            nil
-        )
-        XCTAssertEqual(
-            MethodAnnotationParser.parse("cached"),
-            MethodAnnotation.cached
-        )
-    }
 
     func testDidInject() {
         XCTAssertEqual(

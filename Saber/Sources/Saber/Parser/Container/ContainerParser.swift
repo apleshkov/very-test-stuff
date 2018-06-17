@@ -10,7 +10,7 @@ import SourceKittenFramework
 
 class ContainerParser {
 
-    static func parse(_ structure: [String : SourceKitRepresentable], rawData: RawData) -> ParsedContainer? {
+    static func parse(_ structure: [String : SourceKitRepresentable], rawData: RawData) throws -> ParsedContainer? {
         let annotations = rawData
             .annotations(for: structure)
             .compactMap { return ContainerAnnotationParser.parse($0) }
@@ -42,8 +42,11 @@ class ContainerParser {
                 isThreadSafe = true
             }
         }
-        guard let name = foundName, let scopeName = foundScopeName else {
-            return nil
+        guard let name = foundName else {
+            throw Throwable.message("Invalid '\(protocolName)' container annotations: 'name' not found")
+        }
+        guard let scopeName = foundScopeName else {
+            throw Throwable.message("Invalid '\(protocolName)' container annotations: 'scopeName' not found")
         }
         var container = ParsedContainer(name: name, scopeName: scopeName, protocolName: protocolName)
         container.dependencies = foundDependencies

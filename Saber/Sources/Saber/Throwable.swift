@@ -9,7 +9,8 @@ import Foundation
 
 enum Throwable: Error, Equatable {
     case message(String)
-    case declCollision(name: String, modules: [String])
+    case declCollision(name: String, modules: Set<String>)
+    case noParsedType(for: TypeRepository.Info)
 }
 
 extension Throwable {
@@ -21,6 +22,8 @@ extension Throwable {
         case .declCollision(let name, let modules):
             let moduleList = modules.map { "\($0)" }.joined(separator: ", ")
             return "Declaration collision: '\(name)' is declared in different modules: \(moduleList)"
+        case .noParsedType(let info):
+            return "Unable to make '\(info.key.description)' declaration: no parsed type"
         }
     }
 }

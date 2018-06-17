@@ -27,7 +27,7 @@ class FileParser {
     }
     
     private func parse(_ structure: [String : SourceKitRepresentable], to data: ParsedDataFactory) throws {
-        if var container = ContainerParser.parse(structure, rawData: rawData) {
+        if var container = try ContainerParser.parse(structure, rawData: rawData) {
             container.moduleName = moduleName
             try data.register(container)
         } else if let type = TypeParser.parse(structure, rawData: rawData) {

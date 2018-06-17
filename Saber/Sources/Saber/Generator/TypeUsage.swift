@@ -11,12 +11,13 @@ struct TypeUsage: SomeType, Equatable {
 
     var name: String
 
-    var isOptional: Bool = false
+    var isOptional: Bool
 
     var generics: [TypeUsage] = []
 
-    init(name: String) {
+    init(name: String, isOptional: Bool = false) {
         self.name = name
+        self.isOptional = isOptional
     }
 
     var fullName: String {

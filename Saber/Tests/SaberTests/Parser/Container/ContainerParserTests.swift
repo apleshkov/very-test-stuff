@@ -13,7 +13,7 @@ class ContainerParserTests: XCTestCase {
 
     func testSimple() {
         XCTAssertEqual(
-            parse(contents:
+            try parse(contents:
                 """
                 // @saber.container(FooContainer)
                 // @saber.scope(FooScope)
@@ -31,34 +31,33 @@ class ContainerParserTests: XCTestCase {
     }
 
     func testNoName() {
-        XCTAssertEqual(
-            parse(contents:
+        XCTAssertThrowsError(
+            try parse(contents:
                 """
                 // @saber.scope(FooScope)
                 protocol FooContaining {}
                 """
-            ),
-            []
+            )
         )
     }
 
     func testNoScope() {
-        XCTAssertEqual(
-            parse(contents:
+        XCTAssertThrowsError(
+            try parse(contents:
                 """
                 // @saber.container(FooContainer)
                 protocol FooContaining {}
                 """
-            ),
-            []
+            )
         )
     }
 
     func testNonProtocol() {
         XCTAssertEqual(
-            parse(contents:
+            try parse(contents:
                 """
                 // @saber.container(FooContainer)
+                // non-protocol
                 struct FooContaining {}
                 """
             ),
@@ -68,7 +67,7 @@ class ContainerParserTests: XCTestCase {
 
     func test() {
         XCTAssertEqual(
-            parse(contents:
+            try parse(contents:
                 """
                 // @saber.container(FooContainer)
                 // @saber.scope(FooScope)
@@ -100,10 +99,10 @@ class ContainerParserTests: XCTestCase {
     }
 }
 
-private func parse(contents: String) -> [ParsedContainer] {
+private func parse(contents: String) throws -> [ParsedContainer] {
     let structure = try! Structure(file: File(contents: contents))
     let rawData = RawData(contents: contents)
-    return structure.dictionary.swiftSubstructures!.compactMap {
-        return ContainerParser.parse($0, rawData: rawData)
+    return try structure.dictionary.swiftSubstructures!.compactMap {
+        return try ContainerParser.parse($0, rawData: rawData)
     }
 }
