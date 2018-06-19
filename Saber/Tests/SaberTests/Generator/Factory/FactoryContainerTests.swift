@@ -1,5 +1,5 @@
 //
-//  FactoryBasicTests.swift
+//  FactoryContainerTests.swift
 //  SaberTests
 //
 //  Created by Andrew Pleshkov on 15/06/2018.
@@ -8,7 +8,7 @@
 import XCTest
 @testable import Saber
 
-class FactoryBasicTests: XCTestCase {
+class FactoryContainerTests: XCTestCase {
     
     func testSimple() {
         let parsedFactory = ParsedDataFactory()

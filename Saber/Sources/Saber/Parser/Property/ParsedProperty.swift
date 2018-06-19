@@ -15,9 +15,12 @@ struct ParsedProperty: Equatable {
 
     var annotations: [PropertyAnnotation] = []
 
-    init(name: String, type: ParsedTypeUsage, annotations: [PropertyAnnotation] = []) {
+    var isLambda: Bool
+
+    init(name: String, type: ParsedTypeUsage, annotations: [PropertyAnnotation] = [], isLambda: Bool = false) {
         self.name = name
         self.type = type
         self.annotations = annotations
+        self.isLambda = isLambda
     }
 }
