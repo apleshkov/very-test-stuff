@@ -9,13 +9,12 @@ import Foundation
 
 class LambdaParser {
 
-    static func parse(_ rawString: String) -> ParsedLambda<ParsedTypeUsage>? {
+    static func parse(_ rawString: String) -> ParsedLambda? {
         guard let arrowRange = rawString.range(of: "->") else {
             return nil
         }
         let rawReturnType = String(rawString[arrowRange.upperBound...].dropFirst())
         return ParsedLambda(
-            source: rawString.trimmingCharacters(in: .whitespaces),
             returnType: TypeUsageParser.parse(rawReturnType)
         )
     }

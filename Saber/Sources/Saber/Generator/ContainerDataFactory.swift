@@ -207,10 +207,7 @@ class ContainerDataFactory {
         var lines = ["\(accessLevel) func injectTo(\(varName): \(typeString)) {"]
         memberInjections.forEach {
             let lvalue = "\(varName).\($0.name)"
-            var rvalue = self.accessor(of: $0.typeResolver, owner: "self")
-            if $0.isLazy {
-                rvalue = "{ [unowned self] in return \(rvalue) }"
-            }
+            let rvalue = self.accessor(of: $0.typeResolver, owner: "self", isLazy: $0.isLazy)
             lines.append("\(indent)\(lvalue) = \(rvalue)")
         }
         methodInjections.forEach {
@@ -225,6 +222,14 @@ class ContainerDataFactory {
         return lines
     }
 
+    func accessor<T>(of typeResolver: TypeResolver<T>, owner: String, isLazy: Bool) -> String where T: SomeType {
+        let expr = accessor(of: typeResolver, owner: owner)
+        if isLazy {
+            return "{ [unowned \(owner)] in return \(expr) }"
+        }
+        return expr
+    }
+    
     func accessor<T>(of typeResolver: TypeResolver<T>, owner: String) -> String where T: SomeType {
         switch typeResolver {
         case .explicit(let some):

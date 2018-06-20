@@ -19,18 +19,30 @@ class PropertyParser {
         }
         switch kind {
         case .varInstance:
-            guard let type = TypeUsageParser.parse(typeName) else {
+            guard let parsed = parseType(typeName) else {
                 return nil
             }
+            let annotations = rawData
+                .annotations(for: structure)
+                .compactMap { PropertyAnnotationParser.parse($0) }
             return ParsedProperty(
                 name: name,
-                type: type,
-                annotations: rawData
-                    .annotations(for: structure)
-                    .compactMap { PropertyAnnotationParser.parse($0) }
+                type: parsed.type,
+                annotations: annotations,
+                isLazy: parsed.isLazy
             )
         default:
             return nil
         }
+    }
+    
+    private static func parseType(_ rawString: String) -> (type: ParsedTypeUsage, isLazy: Bool)? {
+        if let type = TypeUsageParser.parse(rawString) {
+            return (type, false)
+        }
+        if let lambda = LambdaParser.parse(rawString), let returnType = lambda.returnType {
+            return (returnType, true)
+        }
+        return nil
     }
 }

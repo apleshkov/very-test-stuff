@@ -116,4 +116,18 @@ class ContainerDataFactoryAccessorTests: XCTestCase {
             "self.someExternal.foo(bar: self.bar, baz: self.someExternal.baz, quux: self.containerB.containerA.quux)"
         )
     }
+    
+    func testLazy() {
+        let resolver = TypeResolver<TypeUsage>.derived(
+            from: TypeUsage(name: "Parent"),
+            typeResolver: .external(
+                from: TypeUsage(name: "ParentExternal"),
+                kind: .property(name: "bar")
+            )
+        )
+        XCTAssertEqual(
+            ContainerDataFactory().accessor(of: resolver, owner: "this", isLazy: true),
+            "{ [unowned this] in return this.parent.parentExternal.bar }"
+        )
+    }
 }

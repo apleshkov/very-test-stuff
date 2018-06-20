@@ -7,9 +7,7 @@
 
 import Foundation
 
-struct ParsedLambda<T>: Equatable where T: Equatable {
+struct ParsedLambda: Equatable {
 
-    var source: String
-
-    var returnType: T?
+    var returnType: ParsedTypeUsage?
 }
