@@ -84,6 +84,22 @@ class ContainerDataFactoryInjectorTests: XCTestCase {
             ]
         )
     }
+
+    func testLazyInjections() {
+        var decl = TypeDeclaration(name: "Foo")
+        decl.memberInjections = [
+            MemberInjection(name: "bar", typeResolver: .explicit(TypeUsage(name: "Bar")), isLazy: true)
+        ]
+        let injector = ContainerDataFactory().injector(for: decl, accessLevel: "open")
+        XCTAssertEqual(
+            injector,
+            [
+                "open func injectTo(foo: inout Foo) {",
+                "    foo.bar = { [unowned self] in return self.bar }",
+                "}"
+            ]
+        )
+    }
     
     func testMethodInjections() {
         var decl = TypeDeclaration(name: "Foo")

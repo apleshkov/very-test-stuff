@@ -207,7 +207,10 @@ class ContainerDataFactory {
         var lines = ["\(accessLevel) func injectTo(\(varName): \(typeString)) {"]
         memberInjections.forEach {
             let lvalue = "\(varName).\($0.name)"
-            let rvalue = self.accessor(of: $0.typeResolver, owner: "self")
+            var rvalue = self.accessor(of: $0.typeResolver, owner: "self")
+            if $0.isLazy {
+                rvalue = "{ [unowned self] in return \(rvalue) }"
+            }
             lines.append("\(indent)\(lvalue) = \(rvalue)")
         }
         methodInjections.forEach {
