@@ -197,6 +197,37 @@ class MethodParserTests: XCTestCase {
             ]
         )
     }
+
+    func testLazy() {
+        XCTAssertEqual(
+            parse(contents:
+                """
+                class Foo {
+                    init(_ x: () -> X) {}
+                    // @saber.inject
+                    func set(bar: @escaping () -> Bar, baz: (() -> Baz)!) {}
+                }
+                """
+            ),
+            [
+                ParsedMethod(
+                    name: "init",
+                    args: [
+                        ParsedArgument(name: nil, type: ParsedTypeUsage(name: "X"), isLazy: true)
+                    ],
+                    annotations: []
+                ),
+                ParsedMethod(
+                    name: "set",
+                    args: [
+                        ParsedArgument(name: "bar", type: ParsedTypeUsage(name: "Bar"), isLazy: true),
+                        ParsedArgument(name: "baz", type: ParsedTypeUsage(name: "Baz"), isLazy: true)
+                    ],
+                    annotations: [.inject]
+                )
+            ]
+        )
+    }
 }
 
 private func parse(contents: String) -> [ParsedMethod] {

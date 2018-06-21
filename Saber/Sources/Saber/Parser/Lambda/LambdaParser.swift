@@ -13,6 +13,10 @@ class LambdaParser {
         guard let arrowRange = rawString.range(of: "->") else {
             return nil
         }
+        if rawString.hasSuffix(")?") || rawString.hasSuffix(")!") {
+            let unpacked = rawString.dropFirst().dropLast(2)
+            return parse(String(unpacked))
+        }
         let rawReturnType = String(rawString[arrowRange.upperBound...].dropFirst())
         return ParsedLambda(
             returnType: TypeUsageParser.parse(rawReturnType)

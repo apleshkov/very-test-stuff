@@ -257,7 +257,7 @@ class ContainerDataFactory {
             src += "?"
         }
         let invocationArgs: [String] = args.map {
-            let valueName = self.accessor(of: $0.typeResolver, owner: "self")
+            let valueName = self.accessor(of: $0.typeResolver, owner: "self", isLazy: $0.isLazy)
             guard let name = $0.name else {
                 return valueName
             }

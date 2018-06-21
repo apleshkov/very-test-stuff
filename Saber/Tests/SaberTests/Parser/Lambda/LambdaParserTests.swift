@@ -31,5 +31,13 @@ class LambdaParserTests: XCTestCase {
             LambdaParser.parse("@autoclosure () -> Foo"),
             ParsedLambda(returnType: ParsedTypeUsage(name: "Foo"))
         )
+        XCTAssertEqual(
+            LambdaParser.parse("(() -> Foo)!"),
+            ParsedLambda(returnType: ParsedTypeUsage(name: "Foo"))
+        )
+        XCTAssertEqual(
+            LambdaParser.parse("(() -> Foo)?"),
+            ParsedLambda(returnType: ParsedTypeUsage(name: "Foo"))
+        )
     }
 }

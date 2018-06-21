@@ -7,13 +7,6 @@
 
 import Foundation
 
-struct ConstructorInjection: Equatable {
-
-    var name: String?
-
-    var typeResolver: TypeResolver<TypeUsage>
-}
-
 struct MemberInjection: Equatable {
 
     var name: String

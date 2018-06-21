@@ -33,8 +33,8 @@ class ContainerDataFactoryMakerTests: XCTestCase {
     func testAllNamedArgs() {
         var decl = TypeDeclaration(name: "Foo")
         decl.initializer = .some(args: [
-            ConstructorInjection(name: "bar", typeResolver: .explicit(TypeUsage(name: "Bar"))),
-            ConstructorInjection(name: "baz", typeResolver: .explicit(TypeUsage(name: "Baz")))
+            FunctionInvocationArgument(name: "bar", typeResolver: .explicit(TypeUsage(name: "Bar"))),
+            FunctionInvocationArgument(name: "baz", typeResolver: .explicit(TypeUsage(name: "Baz")))
             ])
         let maker = ContainerDataFactory().maker(for: decl)
         XCTAssertEqual(
@@ -50,8 +50,8 @@ class ContainerDataFactoryMakerTests: XCTestCase {
     func testNotAllNamedArgs() {
         var decl = TypeDeclaration(name: "Foo")
         decl.initializer = .some(args: [
-            ConstructorInjection(name: nil, typeResolver: .explicit(TypeUsage(name: "Bar"))),
-            ConstructorInjection(name: "baz", typeResolver: .explicit(TypeUsage(name: "Baz")))
+            FunctionInvocationArgument(name: nil, typeResolver: .explicit(TypeUsage(name: "Bar"))),
+            FunctionInvocationArgument(name: "baz", typeResolver: .explicit(TypeUsage(name: "Baz")))
             ])
         let maker = ContainerDataFactory().maker(for: decl)
         XCTAssertEqual(

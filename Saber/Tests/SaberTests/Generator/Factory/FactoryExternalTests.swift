@@ -92,7 +92,7 @@ class FactoryExternalTests: XCTestCase {
             listAPI.isReference = true
             listAPI.initializer = .some(
                 args: [
-                    ConstructorInjection(
+                    FunctionInvocationArgument(
                         name: "networkManager",
                         typeResolver: .external(
                             from: TypeUsage(name: "AppExternals"),

@@ -43,7 +43,7 @@ class FactoryDerivedTests: XCTestCase {
                             name: "Bar",
                             initializer: .some(
                                 args: [
-                                    ConstructorInjection(
+                                    FunctionInvocationArgument(
                                         name: "foo",
                                         typeResolver: .derived(
                                             from: TypeUsage(name: "App"),
@@ -96,7 +96,7 @@ class FactoryDerivedTests: XCTestCase {
                             name: "Bar",
                             initializer: .some(
                                 args: [
-                                    ConstructorInjection(
+                                    FunctionInvocationArgument(
                                         name: "foo",
                                         typeResolver: .derived(
                                             from: TypeUsage(name: "App"),
@@ -153,7 +153,7 @@ class FactoryDerivedTests: XCTestCase {
                             name: "Bar",
                             initializer: .some(
                                 args: [
-                                    ConstructorInjection(
+                                    FunctionInvocationArgument(
                                         name: "foo",
                                         typeResolver: .derived(
                                             from: TypeUsage(name: "App"),
@@ -208,7 +208,7 @@ class FactoryDerivedTests: XCTestCase {
                             name: "Bar",
                             initializer: .some(
                                 args: [
-                                    ConstructorInjection(
+                                    FunctionInvocationArgument(
                                         name: "foo",
                                         typeResolver: .derived(
                                             from: TypeUsage(name: "App"),

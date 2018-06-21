@@ -148,7 +148,7 @@ class FactoryExplicitTests: XCTestCase {
         let foo: TypeDeclaration = {
             var foo = TypeDeclaration(name: "Foo")
             foo.initializer = .some(
-                args: [ConstructorInjection(name: "baz", typeResolver: .explicit(TypeUsage(name: "Baz")))]
+                args: [FunctionInvocationArgument(name: "baz", typeResolver: .explicit(TypeUsage(name: "Baz")))]
             )
             foo.memberInjections = [MemberInjection(name: "bar", typeResolver: .explicit(TypeUsage(name: "Bar")))]
             foo.methodInjections = [

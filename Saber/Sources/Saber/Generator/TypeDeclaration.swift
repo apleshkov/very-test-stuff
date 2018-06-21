@@ -11,7 +11,7 @@ struct TypeDeclaration: SomeType, Equatable {
     
     enum Initializer: Equatable {
         case none
-        case some(args: [ConstructorInjection])
+        case some(args: [FunctionInvocationArgument])
     }
     
     var name: String

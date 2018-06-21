@@ -70,6 +70,27 @@ class PropertyParserTests: XCTestCase {
             ]
         )
     }
+
+    func testLazy() {
+        XCTAssertEqual(
+            parse(contents:
+                """
+                struct Foo {
+                // @saber.inject
+                var makeBar: (() -> Bar)!
+                }
+                """
+            ),
+            [
+                ParsedProperty(
+                    name: "makeBar",
+                    type: ParsedTypeUsage(name: "Bar"),
+                    annotations: [.inject],
+                    isLazy: true
+                )
+            ]
+        )
+    }
 }
 
 private func parse(contents: String) -> [ParsedProperty] {

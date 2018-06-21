@@ -24,7 +24,7 @@ class ParentContainerTests: XCTestCase {
             {
                 var decl = TypeDeclaration(name: "Bar")
                 decl.initializer = .some(args: [
-                    ConstructorInjection(
+                    FunctionInvocationArgument(
                         name: "foo",
                         typeResolver: .derived(from: parentType, typeResolver: .explicit(TypeUsage(name: "Foo")))
                     )

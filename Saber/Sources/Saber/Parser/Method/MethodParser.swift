@@ -24,7 +24,7 @@ class MethodParser {
                 name = rawName
             }
             let args = parseArgs(structure)
-            let returnType = parseType(structure)
+            let returnType = parseType(structure)?.type
             let isStatic = (kind == .functionMethodStatic || kind == .functionMethodClass)
             var isFailableInitializer = false
             if name == "init" {
@@ -62,20 +62,26 @@ class MethodParser {
                 } else {
                     name = nil
                 }
-                guard let type = parseType(structure) else {
+                guard let parsed = parseType(structure) else {
                     return nil
                 }
-                return ParsedArgument(name: name, type: type)
+                return ParsedArgument(name: name, type: parsed.type, isLazy: parsed.isLazy)
             default:
                 return nil
             }
         }
     }
     
-    static func parseType(_ structure: [String : SourceKitRepresentable]) -> ParsedTypeUsage? {
+    static func parseType(_ structure: [String : SourceKitRepresentable]) -> (type: ParsedTypeUsage, isLazy: Bool)? {
         guard let rawType = structure.swiftTypeName else {
             return nil
         }
-        return TypeUsageParser.parse(rawType)
+        if let type = TypeUsageParser.parse(rawType) {
+            return (type, false)
+        }
+        if let lambda = LambdaParser.parse(rawType), let returnType = lambda.returnType {
+            return (returnType, true)
+        }
+        return nil
     }
 }

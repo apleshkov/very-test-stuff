@@ -182,7 +182,7 @@ extension ContainerFactory {
     private func makeArguments(for method: ParsedMethod, in scope: TypeRepository.Scope) throws -> [FunctionInvocationArgument] {
         return try method.args.map {
             let typeResolver = try makeResolver(for: $0.type, in: scope)
-            return FunctionInvocationArgument(name: $0.name, typeResolver: typeResolver)
+            return FunctionInvocationArgument(name: $0.name, typeResolver: typeResolver, isLazy: $0.isLazy)
         }
     }
 
@@ -238,7 +238,11 @@ extension ContainerFactory {
             guard property.annotations.contains(.inject) else {
                 continue
             }
-            let injection = MemberInjection(name: property.name, typeResolver: try makeResolver(for: property.type, in: scope))
+            let injection = MemberInjection(
+                name: property.name,
+                typeResolver: try makeResolver(for: property.type, in: scope),
+                isLazy: property.isLazy
+            )
             decl.memberInjections.append(injection)
         }
         var didInjectHandlerName: String? = nil
@@ -267,14 +271,7 @@ extension ContainerFactory {
                 return .some(args: [])
             }
             decl.isOptional = initializer.isFailableInitializer
-            let args: [ConstructorInjection] = try initializer.args.map {
-                let resolver = try makeResolver(for: $0.type, in: scope)
-                return ConstructorInjection(
-                    name: $0.name,
-                    typeResolver: resolver
-                )
-            }
-            return .some(args: args)
+            return .some(args: try makeArguments(for: initializer, in: scope))
         }()
         let isCached = parsedType.annotations.contains(.cached)
         let value: DeclValue = (decl, isCached)

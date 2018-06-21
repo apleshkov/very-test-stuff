@@ -74,7 +74,7 @@ class ProvidedTypeResolverTests: XCTestCase {
             by: TypeProvider(
                 decl: TypeDeclaration(name: "CoolProvider")
                     .set(initializer: .some(args: [
-                        ConstructorInjection(
+                        FunctionInvocationArgument(
                             name: "quux",
                             typeResolver: .explicit(TypeUsage(name: "Quux"))
                         )

@@ -85,22 +85,6 @@ class ContainerDataFactoryInjectorTests: XCTestCase {
         )
     }
 
-    func testLazyInjections() {
-        var decl = TypeDeclaration(name: "Foo")
-        decl.memberInjections = [
-            MemberInjection(name: "bar", typeResolver: .explicit(TypeUsage(name: "Bar")), isLazy: true)
-        ]
-        let injector = ContainerDataFactory().injector(for: decl, accessLevel: "open")
-        XCTAssertEqual(
-            injector,
-            [
-                "open func injectTo(foo: inout Foo) {",
-                "    foo.bar = { [unowned self] in return self.bar }",
-                "}"
-            ]
-        )
-    }
-    
     func testMethodInjections() {
         var decl = TypeDeclaration(name: "Foo")
         decl.methodInjections = [
@@ -166,6 +150,40 @@ class ContainerDataFactoryInjectorTests: XCTestCase {
                 "    foo.bar = self.bar",
                 "    foo.set(self.baz, quux: self.quux)",
                 "    foo.postInit()",
+                "}"
+            ]
+        )
+    }
+
+    func testLazyInjections() {
+        var decl = TypeDeclaration(name: "Foo")
+        decl.memberInjections = [
+            MemberInjection(name: "bar", typeResolver: .explicit(TypeUsage(name: "Bar")), isLazy: true)
+        ]
+        let injector = ContainerDataFactory().injector(for: decl, accessLevel: "open")
+        XCTAssertEqual(
+            injector,
+            [
+                "open func injectTo(foo: inout Foo) {",
+                "    foo.bar = { [unowned self] in return self.bar }",
+                "}"
+            ]
+        )
+    }
+
+    func testLazyMethodInjections() {
+        var decl = TypeDeclaration(name: "Foo")
+        decl.methodInjections = [
+            InstanceMethodInjection(methodName: "set", args: [
+                FunctionInvocationArgument(name: "bar", typeResolver: .explicit(TypeUsage(name: "Bar")), isLazy: true)
+                ])
+        ]
+        let injector = ContainerDataFactory().injector(for: decl, accessLevel: "open")
+        XCTAssertEqual(
+            injector,
+            [
+                "open func injectTo(foo: inout Foo) {",
+                "    foo.set(bar: { [unowned self] in return self.bar })",
                 "}"
             ]
         )
