@@ -49,6 +49,7 @@ class TypeRepoResolverTests: XCTestCase {
                 struct AppExternal {
                     var foo: Foo
                     func bar() -> Bar {}
+                    let quux: Quux<Int>?
                 }
                 """
                 ).parse(to: factory)
@@ -76,6 +77,15 @@ class TypeRepoResolverTests: XCTestCase {
                         isStatic: false,
                         annotations: []
                     )
+                )
+            )
+        )
+        XCTAssertEqual(
+            repo.resolver(for: .name("Quux<Int>"), scopeName: "Singleton"),
+            .external(
+                member: .property(
+                    from: .name("AppExternal"),
+                    name: "quux"
                 )
             )
         )
@@ -180,6 +190,31 @@ class TypeRepoResolverTests: XCTestCase {
         )
     }
     
+    func testProvided4() {
+        let parsedData: ParsedData = {
+            let factory = ParsedDataFactory()
+            try! FileParser(contents:
+                """
+                // @saber.container(App)
+                // @saber.scope(Singleton)
+                protocol AppConfig {}
+
+                // @saber.scope(Singleton)
+                class FooProvider {
+                    // @saber.provider
+                    func provide() -> Foo<String> {}
+                }
+                """
+                ).parse(to: factory)
+            return factory.make()
+        }()
+        let repo = try! TypeRepository(parsedData: parsedData)
+        XCTAssertEqual(
+            repo.resolver(for: .name("Foo<String>"), scopeName: "Singleton"),
+            .provider(.name("FooProvider"))
+        )
+    }
+    
     func testBound() {
         let parsedData: ParsedData = {
             let factory = ParsedDataFactory()
@@ -277,6 +312,36 @@ class TypeRepoResolverTests: XCTestCase {
             .derived(
                 from: "Singleton",
                 resolver: .explicit
+            )
+        )
+    }
+    
+    func testAlias() {
+        let parsedData: ParsedData = {
+            let factory = ParsedDataFactory()
+            try! FileParser(contents:
+                """
+                // @saber.container(App)
+                // @saber.scope(Singleton)
+                protocol AppConfig {}
+
+                // @saber.scope(Singleton)
+                typealias Foo = Bar?
+                """
+                ).parse(to: factory)
+            return factory.make()
+        }()
+        let repo = try! TypeRepository(parsedData: parsedData)
+        XCTAssertEqual(
+            repo.find(by: "Foo")?.parsed,
+            .alias(
+                ParsedTypealias(
+                    name: "Foo",
+                    target: .type(
+                        ParsedTypeUsage(name: "Bar", isOptional: true)
+                    ),
+                    annotations: [.scope("Singleton")]
+                )
             )
         )
     }

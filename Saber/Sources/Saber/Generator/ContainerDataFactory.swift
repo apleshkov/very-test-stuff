@@ -134,10 +134,13 @@ class ContainerDataFactory {
             result = first + name.dropFirst()
         }
         if let usage = some as? TypeUsage, usage.generics.count > 0 {
-            result += "With"
+            result += "_"
             result += usage.generics
-                .map { memberName(of: $0, prefix: "") }
-                .joined(separator: "And")
+                .map {
+                    let prefix = $0.isOptional ? "Optional" : ""
+                    return memberName(of: $0, prefix: prefix)
+                }
+                .joined(separator: "_")
         }
         return result
     }

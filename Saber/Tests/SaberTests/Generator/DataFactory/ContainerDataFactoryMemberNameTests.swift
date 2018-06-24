@@ -37,7 +37,7 @@ class ContainerDataFactoryMemberNameTests: XCTestCase {
         type.generics.append(TypeUsage(name: "Int"))
         XCTAssertEqual(
             ContainerDataFactory().memberName(of: type),
-            "arrayWithInt"
+            "array_Int"
         )
     }
     
@@ -46,7 +46,7 @@ class ContainerDataFactoryMemberNameTests: XCTestCase {
         type.generics.append(TypeUsage(name: "Int").set(isOptional: true))
         XCTAssertEqual(
             ContainerDataFactory().memberName(of: type),
-            "arrayWithInt"
+            "array_OptionalInt"
         )
     }
     
@@ -56,7 +56,7 @@ class ContainerDataFactoryMemberNameTests: XCTestCase {
         type.generics.append(TypeUsage(name: "Foo.Bar").set(isOptional: true))
         XCTAssertEqual(
             ContainerDataFactory().memberName(of: type),
-            "dictionaryWithStringAndFooBar"
+            "dictionary_String_OptionalFooBar"
         )
     }
 }

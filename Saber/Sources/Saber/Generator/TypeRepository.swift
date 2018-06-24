@@ -45,7 +45,7 @@ extension TypeRepository {
         enum Parsed: Equatable {
             case type(ParsedType)
             case usage(ParsedTypeUsage)
-            case alias(to: ParsedTypeUsage)
+            case alias(ParsedTypealias)
         }
     }
     
@@ -167,6 +167,10 @@ extension TypeRepository {
     private func makeKey(for alias: ParsedTypealias) -> Key {
         return Key(name: alias.name, moduleName: alias.moduleName)
     }
+    
+    private func makeKey(for usage: ParsedTypeUsage) -> Key {
+        return Key(name: usage.genericName, moduleName: nil)
+    }
 
     private func scopeName(from annotations: [TypeAnnotation], of typeName: String) throws -> ScopeName? {
         let foundNames: [String] = annotations.compactMap {
@@ -211,13 +215,13 @@ extension TypeRepository {
         try parsedData.aliases.forEach {
             let alias = $0
             switch alias.target {
-            case .type(let usage):
+            case .type(_):
                 let key = makeKey(for: alias)
                 register(
                     Info(
                         key: key,
                         scopeName: try scopeName(from: alias.annotations, of: alias.name),
-                        parsed: .alias(to: usage)
+                        parsed: .alias(alias)
                     )
                 )
             case .raw(_):
@@ -256,10 +260,10 @@ extension TypeRepository {
         for (key, entry) in binders {
             let mimicKey: Key
             let usage = entry.usage
-            if let mimicInfo = find(by: usage.name) {
+            if let mimicInfo = find(by: usage.genericName) {
                 mimicKey = mimicInfo.key
             } else {
-                mimicKey = .name(usage.name)
+                mimicKey = makeKey(for: usage)
                 register(
                     Info(
                         key: mimicKey,
@@ -276,10 +280,10 @@ extension TypeRepository {
                 throw Throwable.message("Unable to get provided type: '\(key.description).\(method.name)' returns nothing")
             }
             let providedKey: Key
-            if let providedInfo = find(by: usage.name) {
+            if let providedInfo = find(by: usage.genericName) {
                 providedKey = providedInfo.key
             } else {
-                providedKey = .name(usage.name)
+                providedKey = makeKey(for: usage)
                 register(
                     Info(
                         key: providedKey,
@@ -296,7 +300,7 @@ extension TypeRepository {
         for (_, parsedContainer) in parsedData.containers {
             var members: [Key : ExternalMember] = [:]
             try parsedContainer.externals.forEach { (usage) in
-                guard let externalInfo = find(by: usage.name) else {
+                guard let externalInfo = find(by: usage.genericName) else {
                     throw Throwable.message("Invalid '\(parsedContainer.name)' external: unable to find '\(usage.fullName)'")
                 }
                 guard case .type(let externalParsedType) = externalInfo.parsed else {
@@ -304,10 +308,10 @@ extension TypeRepository {
                 }
                 externalParsedType.properties.forEach {
                     let info: Info
-                    if let foundInfo = find(by: $0.type.name) {
+                    if let foundInfo = find(by: $0.type.genericName) {
                         info = foundInfo
                     } else {
-                        let key: Key = .name($0.type.name)
+                        let key: Key = makeKey(for: $0.type)
                         info = Info(
                             key: key,
                             scopeName: externalInfo.scopeName,
@@ -325,10 +329,10 @@ extension TypeRepository {
                         return
                     }
                     let info: Info
-                    if let foundInfo = find(by: usage.name) {
+                    if let foundInfo = find(by: usage.genericName) {
                         info = foundInfo
                     } else {
-                        let key: Key = .name(usage.name)
+                        let key: Key = makeKey(for: usage)
                         info = Info(
                             key: key,
                             scopeName: externalInfo.scopeName,

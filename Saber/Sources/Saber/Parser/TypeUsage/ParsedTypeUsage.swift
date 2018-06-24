@@ -32,16 +32,22 @@ struct ParsedTypeUsage: Equatable {
 
 extension ParsedTypeUsage {
     
-    var fullName: String {
-        var fullName: String = name
+    var genericName: String {
         if generics.count > 0 {
             let list = generics
                 .map { $0.fullName }
                 .joined(separator: ", ")
-            fullName = "<\(list)>"
+            return "\(name)<\(list)>"
         }
+        return name
+    }
+    
+    var fullName: String {
+        var fullName = genericName
         if isOptional {
             fullName += "?"
+        } else if isUnwrapped {
+            fullName += "!"
         }
         return fullName
     }

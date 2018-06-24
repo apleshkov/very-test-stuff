@@ -198,9 +198,10 @@ extension ContainerFactory {
             var usage = TypeUsage(name: decl.declaration.name)
             usage.isOptional = decl.declaration.isOptional
             return usage
-        case .usage(let parsedUsage),
-             .alias(let parsedUsage):
+        case .usage(let parsedUsage):
             return makeTypeUsage(from: parsedUsage)
+        case .alias(let alias):
+            return try makeTypeUsage(from: alias)
         }
     }
     
@@ -211,6 +212,15 @@ extension ContainerFactory {
             return makeTypeUsage(from: $0)
         }
         return usage
+    }
+    
+    private func makeTypeUsage(from parsedAlias: ParsedTypealias) throws -> TypeUsage {
+        switch parsedAlias.target {
+        case .type(let parsedUsage):
+            return TypeUsage(name: parsedAlias.name, isOptional: parsedUsage.isOptional)
+        case .raw(let str):
+            throw Throwable.message("Unable to create 'TypeUsage' from '\(str)'")
+        }
     }
 }
 
