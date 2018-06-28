@@ -68,4 +68,58 @@ class RendererTests: XCTestCase {
             """
         )
     }
+
+    func testStoredProperties() {
+        var data = ContainerData(name: "Foo", initializer: ContainerData.Initializer())
+        data.storedProperties = [
+            ["private let bar: Bar"],
+            ["private let baz: Baz"]
+        ]
+        let out = Renderer(data: data).render()
+        XCTAssertEqual(
+            out,
+            """
+            class Foo {
+
+                private let bar: Bar
+
+                private let baz: Baz
+
+                open init() {
+                }
+            }
+            """
+        )
+    }
+
+    func testGettersMakersInjectors() {
+        var data = ContainerData(name: "Foo", initializer: ContainerData.Initializer())
+        data.getters = [
+            [
+                "var bar: Bar? {",
+                "    return nil",
+                "}"
+            ],
+            [
+                "var baz: Baz {",
+                "    return Baz()",
+                "}"
+            ]
+        ]
+        let out = Renderer(data: data).render()
+        XCTAssertEqual(
+            out,
+            """
+            class Foo {
+
+                private let bar: Bar
+
+                private let baz: Baz
+
+                open init() {
+                }
+            }
+            """
+        )
+    }
 }

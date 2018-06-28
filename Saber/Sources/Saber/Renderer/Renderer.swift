@@ -35,8 +35,9 @@ class Renderer {
         if data.storedProperties.count > 0 {
             out.append("")
             render(nested: data.storedProperties, to: &out)
+        } else {
+            out.append("")
         }
-        out.append("")
         render(initializer: data.initializer, to: &out)
         for nested in [data.getters, data.makers, data.injectors] {
             guard nested.count > 0 else {
