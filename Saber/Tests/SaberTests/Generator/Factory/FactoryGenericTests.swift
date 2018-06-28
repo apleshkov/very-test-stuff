@@ -76,38 +76,7 @@ class FactoryGenericTests: XCTestCase {
             """
             ).parse(to: parsedFactory)
         let repo = try! TypeRepository(parsedData: parsedFactory.make())
-        let containers = try! ContainerFactory(repo: repo).make()
-        XCTAssertEqual(
-            containers,
-            [
-                Container(
-                    name: "App",
-                    protocolName: "AppConfig",
-                    services: [
-                        Service(
-                            typeResolver: .explicit(
-                                TypeDeclaration(name: "Foo")
-                            ),
-                            storage: .none
-                        ),
-                        Service(
-                            typeResolver: .explicit(
-                                TypeDeclaration(
-                                    name: "Bar",
-                                    memberInjections: [
-                                        MemberInjection(
-                                            name: "foo",
-                                            typeResolver: .explicit(TypeUsage(name: "Foo")) // no generics
-                                        )
-                                    ]
-                                )
-                            ),
-                            storage: .none
-                        )
-                    ]
-                )
-            ]
-        )
+        XCTAssertThrowsError(try ContainerFactory(repo: repo).make())
     }
     
     func testGenericArgs() {
@@ -183,6 +152,62 @@ class FactoryGenericTests: XCTestCase {
                             storage: .none
                         )
                     ]
+                )
+            ]
+        )
+    }
+
+    func testGenericExternals() {
+        let parsedFactory = ParsedDataFactory()
+        try! FileParser(contents:
+            """
+            // @saber.container(App)
+            // @saber.scope(Singleton)
+            // @saber.externals(AppExternals)
+            protocol AppConfig {}
+
+            class AppExternals {
+                var foo1: Foo<Int>
+                var foo2: Foo<Float>
+            }
+
+            // @saber.scope(Singleton)
+            class Bar {
+                // @saber.inject
+                var foo1: Foo<Int>
+                // @saber.inject
+                var foo2: Foo<Float>
+            }
+            """
+            ).parse(to: parsedFactory)
+        let repo = try! TypeRepository(parsedData: parsedFactory.make())
+        let containers = try! ContainerFactory(repo: repo).make()
+        let barDecl = TypeDeclaration(
+            name: "Bar",
+            isReference: true,
+            memberInjections: [
+                MemberInjection(
+                    name: "foo1",
+                    typeResolver: .external(
+                        from: TypeUsage(name: "AppExternals"),
+                        kind: .property(name: "foo1")
+                    )
+                ),
+                MemberInjection(
+                    name: "foo2",
+                    typeResolver: .external(
+                        from: TypeUsage(name: "AppExternals"),
+                        kind: .property(name: "foo2")
+                    )
+                )
+            ]
+        )
+        XCTAssertEqual(
+            containers.first?.services,
+            [
+                Service(
+                    typeResolver: .explicit(barDecl),
+                    storage: .none
                 )
             ]
         )

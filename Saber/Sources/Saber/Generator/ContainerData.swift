@@ -38,7 +38,6 @@ extension ContainerData {
         
         var args: [(name: String, typeName: String)] = []
         var creations: [String] = []
-        var propertyInjections: [String] = []
         var storedProperties: [String] = []
         
         init() {}
