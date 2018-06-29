@@ -273,6 +273,7 @@ extension ContainerFactory {
                 decl.methodInjections.append(injection)
             }
         }
+        decl.didInjectHandlerName = didInjectHandlerName
         decl.initializer = try {
             if isInjectOnly {
                 return .none

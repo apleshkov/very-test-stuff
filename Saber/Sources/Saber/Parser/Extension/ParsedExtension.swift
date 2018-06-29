@@ -13,17 +13,14 @@ struct ParsedExtension: Equatable {
 
     var moduleName: String? = nil
 
-    var inheritedFrom: [ParsedTypeUsage] = []
-
     var properties: [ParsedProperty] = []
     
     var methods: [ParsedMethod] = []
     
     var nested: [NestedParsedDecl] = []
     
-    init(typeName: String, inheritedFrom: [ParsedTypeUsage] = []) {
+    init(typeName: String) {
         self.typeName = typeName
-        self.inheritedFrom = inheritedFrom
     }
 }
 

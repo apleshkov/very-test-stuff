@@ -1,5 +1,5 @@
 //
-//  ContainerDataFactoryCreationTests.swift
+//  DataFactoryCreationTests.swift
 //  SaberTests
 //
 //  Created by andrey.pleshkov on 17/05/2018.
@@ -9,7 +9,7 @@
 import XCTest
 @testable import Saber
 
-class ContainerDataFactoryInjectorTests: XCTestCase {
+class DataFactoryInjectorTests: XCTestCase {
     
     func testNoInjections() {
         let decl = TypeDeclaration(name: "Foo")

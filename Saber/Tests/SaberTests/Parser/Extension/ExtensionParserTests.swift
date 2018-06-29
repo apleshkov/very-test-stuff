@@ -30,11 +30,7 @@ class ExtensionParserTests: XCTestCase {
             ),
             [
                 ParsedExtension(
-                    typeName: "Foo",
-                    inheritedFrom: [
-                        ParsedTypeUsage(name: "Bar"),
-                        ParsedTypeUsage(name: "Baz")
-                    ]
+                    typeName: "Foo"
                 )
             ]
         )
@@ -60,16 +56,10 @@ class ExtensionParserTests: XCTestCase {
             ),
             [
                 ParsedExtension(
-                    typeName: "Foo",
-                    inheritedFrom: [
-                        ParsedTypeUsage(name: "Bar")
-                    ]
+                    typeName: "Foo"
                 ),
                 ParsedExtension(
-                    typeName: "Foo",
-                    inheritedFrom: [
-                        ParsedTypeUsage(name: "Baz")
-                    ]
+                    typeName: "Foo"
                 )
             ]
         )
@@ -94,11 +84,7 @@ class ExtensionParserTests: XCTestCase {
             ),
             [
                 ParsedExtension(
-                    typeName: "Foo",
-                    inheritedFrom: [
-                        ParsedTypeUsage(name: "Bar"),
-                        ParsedTypeUsage(name: "Baz")
-                    ]
+                    typeName: "Foo"
                 )
             ]
         )

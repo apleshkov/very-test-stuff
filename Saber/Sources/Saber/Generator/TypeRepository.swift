@@ -25,6 +25,7 @@ class TypeRepository {
         try prepareScopes(parsedData: parsedData)
         try fillAliases(parsedData: parsedData)
         try fillTypes(parsedData: parsedData)
+        try fillTypeExtensions(parsedData: parsedData)
         try fillExternals(parsedData: parsedData)
         try fillResolvers()
     }
@@ -172,6 +173,10 @@ extension TypeRepository {
         return Key(name: usage.genericName, moduleName: nil)
     }
 
+    private func makeKey(for ext: ParsedExtension) -> Key {
+        return Key(name: ext.typeName, moduleName: ext.moduleName)
+    }
+
     private func scopeName(from annotations: [TypeAnnotation], of typeName: String) throws -> ScopeName? {
         let foundNames: [String] = annotations.compactMap {
             if case .scope(let name) = $0 {
@@ -293,6 +298,21 @@ extension TypeRepository {
                 )
             }
             scopes[entry.scopeKey]?.providers[key] = (of: providedKey, method: method)
+        }
+    }
+
+    private func fillTypeExtensions(parsedData: ParsedData) throws {
+        parsedData.extensions.forEach { (parsedExt) in
+            let key = makeKey(for: parsedExt)
+            guard let info = try? self.find(by: key) else {
+                return
+            }
+            guard case .type(var parsedType) = info.parsed else {
+                return
+            }
+            parsedType.properties += parsedExt.properties
+            parsedType.methods += parsedExt.methods
+            typeInfos[key]?.parsed = .type(parsedType)
         }
     }
     

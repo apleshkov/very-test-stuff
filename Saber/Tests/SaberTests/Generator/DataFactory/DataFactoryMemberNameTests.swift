@@ -1,5 +1,5 @@
 //
-//  ContainerDataFactoryMemberNameTests.swift
+//  DataFactoryMemberNameTests.swift
 //  SaberTests
 //
 //  Created by Andrew Pleshkov on 19/05/2018.
@@ -9,7 +9,7 @@
 import XCTest
 @testable import Saber
 
-class ContainerDataFactoryMemberNameTests: XCTestCase {
+class DataFactoryMemberNameTests: XCTestCase {
     
     func testSimple() {
         XCTAssertEqual(

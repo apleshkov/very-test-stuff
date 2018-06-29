@@ -1,5 +1,5 @@
 //
-//  ContainerDataFactoryAccessorTests.swift
+//  DataFactoryAccessorTests.swift
 //  SaberTests
 //
 //  Created by andrey.pleshkov on 17/05/2018.
@@ -9,7 +9,7 @@
 import XCTest
 @testable import Saber
 
-class ContainerDataFactoryAccessorTests: XCTestCase {
+class DataFactoryAccessorTests: XCTestCase {
     
     func testType() {
         let resolver = TypeResolver.explicit(TypeUsage(name: "FooBarQuux"))

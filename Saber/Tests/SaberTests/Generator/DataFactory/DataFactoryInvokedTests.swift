@@ -1,5 +1,5 @@
 //
-//  ContainerDataFactoryInvokedTests.swift
+//  DataFactoryInvokedTests.swift
 //  SaberTests
 //
 //  Created by andrey.pleshkov on 18/05/2018.
@@ -9,7 +9,7 @@
 import XCTest
 @testable import Saber
 
-class ContainerDataFactoryInvokedTests: XCTestCase {
+class DataFactoryInvokedTests: XCTestCase {
     
     func testWithoutArgs() {
         let invoked = ContainerDataFactory().invoked("foo", isOptional: false, with: "bar", args: [])

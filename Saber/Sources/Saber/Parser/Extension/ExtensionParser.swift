@@ -17,14 +17,7 @@ class ExtensionParser {
         }
         switch kind {
         case .extension:
-            var inherited: [ParsedTypeUsage] = []
-            structure.swiftInherited?.forEach {
-                guard let name = $0.swiftName else {
-                    return
-                }
-                inherited.append(ParsedTypeUsage(name: name))
-            }
-            var ext = ParsedExtension(typeName: name, inheritedFrom: inherited)
+            var ext = ParsedExtension(typeName: name)
             structure.swiftSubstructures?.forEach {
                 if let nestedType = TypeParser.parse($0, rawData: rawData) {
                     ext.nested.append(.type(nestedType))

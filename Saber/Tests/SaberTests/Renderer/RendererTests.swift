@@ -23,6 +23,7 @@ class RendererTests: XCTestCase {
 
                 open init() {
                 }
+
             }
             """
         )
@@ -44,6 +45,7 @@ class RendererTests: XCTestCase {
                     let quux = Quux()
                     self.quux = quux
                 }
+
             }
             """
         )
@@ -64,6 +66,7 @@ class RendererTests: XCTestCase {
 
                 open init() {
                 }
+
             }
             """
         )
@@ -87,6 +90,7 @@ class RendererTests: XCTestCase {
 
                 open init() {
                 }
+
             }
             """
         )
@@ -97,12 +101,36 @@ class RendererTests: XCTestCase {
         data.getters = [
             [
                 "var bar: Bar? {",
-                "    return nil",
+                "    return self.makeBar()",
                 "}"
             ],
             [
                 "var baz: Baz {",
+                "    return self.makeBaz()",
+                "}"
+            ]
+        ]
+        data.makers = [
+            [
+                "func makeBar() -> Bar? {",
+                "    return Bar()",
+                "}"
+            ],
+            [
+                "func makeBaz() -> Baz {",
                 "    return Baz()",
+                "}"
+            ]
+        ]
+        data.injectors = [
+            [
+                "func injectTo(bar: Bar?) {",
+                "    bar?.baz = self.baz",
+                "}"
+            ],
+            [
+                "func injectTo(baz: Baz) {",
+                "    baz.set(bar: self.bar)",
                 "}"
             ]
         ]
@@ -112,12 +140,33 @@ class RendererTests: XCTestCase {
             """
             class Foo {
 
-                private let bar: Bar
-
-                private let baz: Baz
-
                 open init() {
                 }
+
+                var bar: Bar? {
+                    return self.makeBar()
+                }
+
+                var baz: Baz {
+                    return self.makeBaz()
+                }
+
+                func makeBar() -> Bar? {
+                    return Bar()
+                }
+
+                func makeBaz() -> Baz {
+                    return Baz()
+                }
+
+                func injectTo(bar: Bar?) {
+                    bar?.baz = self.baz
+                }
+
+                func injectTo(baz: Baz) {
+                    baz.set(bar: self.bar)
+                }
+
             }
             """
         )

@@ -1,5 +1,5 @@
 //
-//  ContainerDataFactoryMakerTests.swift
+//  DataFactoryMakerTests.swift
 //  SaberTests
 //
 //  Created by andrey.pleshkov on 18/05/2018.
@@ -9,7 +9,7 @@
 import XCTest
 @testable import Saber
 
-class ContainerDataFactoryMakerTests: XCTestCase {
+class DataFactoryMakerTests: XCTestCase {
 
     func testNoInitializer() {
         let decl = TypeDeclaration(name: "Foo").set(initializer: .none)

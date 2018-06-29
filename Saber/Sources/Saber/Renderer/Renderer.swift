@@ -39,11 +39,11 @@ class Renderer {
             out.append("")
         }
         render(initializer: data.initializer, to: &out)
+        out.append("")
         for nested in [data.getters, data.makers, data.injectors] {
             guard nested.count > 0 else {
                 continue
             }
-            out.append("")
             render(nested: nested, to: &out)
         }
         out.append("}")

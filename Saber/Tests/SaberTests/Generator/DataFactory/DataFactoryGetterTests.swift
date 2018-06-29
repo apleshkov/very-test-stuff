@@ -1,5 +1,5 @@
 //
-//  ContainerDataFactoryGetterTests.swift
+//  DataFactoryGetterTests.swift
 //  SaberTests
 //
 //  Created by andrey.pleshkov on 18/05/2018.
@@ -9,7 +9,7 @@
 import XCTest
 @testable import Saber
 
-class ContainerDataFactoryGetterTests: XCTestCase {
+class DataFactoryGetterTests: XCTestCase {
     
     func testValueWithoutMemberInjections() {
         let decl = TypeDeclaration(name: "Foo")
