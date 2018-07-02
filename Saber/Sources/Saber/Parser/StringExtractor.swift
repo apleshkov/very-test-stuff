@@ -36,8 +36,13 @@ enum StringExtractor {
         guard let intRange = range(for: structure) else {
             return nil
         }
-        let startIndex = contents.index(contents.startIndex, offsetBy: intRange.lowerBound)
-        let endIndex = contents.index(contents.startIndex, offsetBy: intRange.upperBound)
-        return String(contents[startIndex..<endIndex])
+        guard let subdata = contents.data(using: .utf8)?.subdata(in: intRange) else {
+            return nil
+        }
+        return String(data: subdata, encoding: .utf8)
+        
+//        let startIndex = contents.index(contents.startIndex, offsetBy: intRange.lowerBound)
+//        let endIndex = contents.index(contents.startIndex, offsetBy: intRange.upperBound)
+//        return String(contents[startIndex..<endIndex])
     }
 }
