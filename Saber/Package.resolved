@@ -2,12 +2,12 @@
   "object": {
     "pins": [
       {
-        "package": "Clang_C",
-        "repositoryURL": "https://github.com/norio-nomura/Clang_C.git",
+        "package": "AEXML",
+        "repositoryURL": "https://github.com/tadija/AEXML.git",
         "state": {
           "branch": null,
-          "revision": "7b7d3eed8080d14ba39c50e29fa8c7b051bcf969",
-          "version": "1.0.3"
+          "revision": "6eea665515d079c338690147082a8084a36484b0",
+          "version": "4.3.0"
         }
       },
       {
@@ -15,8 +15,8 @@
         "repositoryURL": "https://github.com/Carthage/Commandant.git",
         "state": {
           "branch": null,
-          "revision": "7f29606ec3a2054a601f0e72f562a104dbc1a11a",
-          "version": "0.13.0"
+          "revision": "066bf9a79c37cf24fe4746ab7a1793b0359d1fe5",
+          "version": "0.14.0"
         }
       },
       {
@@ -24,8 +24,8 @@
         "repositoryURL": "https://github.com/Quick/Nimble.git",
         "state": {
           "branch": null,
-          "revision": "21f4fed2052cea480f5f1d2044d45aa25fdfb988",
-          "version": "7.1.1"
+          "revision": "8023e3980d91b470ad073d6da843b73f2eeb1844",
+          "version": "7.1.2"
         }
       },
       {
@@ -47,21 +47,21 @@
         }
       },
       {
-        "package": "SourceKit",
-        "repositoryURL": "https://github.com/norio-nomura/SourceKit.git",
-        "state": {
-          "branch": null,
-          "revision": "18eaa67ca44443bbe39646916792b9f0c98dbaa1",
-          "version": "1.0.1"
-        }
-      },
-      {
         "package": "SourceKitten",
         "repositoryURL": "https://github.com/jpsim/SourceKitten.git",
         "state": {
           "branch": null,
-          "revision": "7c09176766d4bbc5da377ad857953fb49510a6aa",
-          "version": "0.21.0"
+          "revision": "e6efd3d8702fe6668ac43aa882d56f82430c6caf",
+          "version": "0.21.1"
+        }
+      },
+      {
+        "package": "SwiftPM",
+        "repositoryURL": "https://github.com/apple/swift-package-manager",
+        "state": {
+          "branch": null,
+          "revision": "6983434787dec4e543e9d398a0a9acf63ccd4da1",
+          "version": "0.2.1"
         }
       },
       {
@@ -74,12 +74,21 @@
         }
       },
       {
+        "package": "xcodeproj",
+        "repositoryURL": "https://github.com/xcode-project-manager/xcodeproj.git",
+        "state": {
+          "branch": null,
+          "revision": "5451a896ee83f440d7c0997f64e313cada8d71f3",
+          "version": "5.0.0-rc1"
+        }
+      },
+      {
         "package": "Yams",
         "repositoryURL": "https://github.com/jpsim/Yams.git",
         "state": {
           "branch": null,
-          "revision": "6652aa7b793d3c8a075db0614acb575fcaecf457",
-          "version": "0.7.0"
+          "revision": "618582e09699b577fa183bab7d88e3ee7d9a1d19",
+          "version": "1.0.0"
         }
       }
     ]
