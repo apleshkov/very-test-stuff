@@ -21,6 +21,13 @@ class FileParser {
         self.rawData = RawData(contents: file.contents)
         self.moduleName = moduleName
     }
+    
+    convenience init(path: String, moduleName: String? = nil) throws {
+        guard let file = File(path: path) else {
+            throw Throwable.message("Invalid file at '\(path)'")
+        }
+        try self.init(file: file, moduleName: moduleName)
+    }
 
     func parse(to data: ParsedDataFactory) throws {
         try parse(structure, to: data)

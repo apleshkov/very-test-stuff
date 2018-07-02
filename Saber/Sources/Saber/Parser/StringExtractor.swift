@@ -11,6 +11,7 @@ import SourceKittenFramework
 enum StringExtractor {
 
     case key
+    case name
     
     private func extract(from structure: [String : SourceKitRepresentable], offsetKey: SwiftDocKey, lengthKey: SwiftDocKey) -> Range<Int>? {
         guard let offset = structure[offsetKey] as? Int64 else {
@@ -26,6 +27,8 @@ enum StringExtractor {
         switch self {
         case .key:
             return extract(from: structure, offsetKey: .offset, lengthKey: .length)
+        case .name:
+            return extract(from: structure, offsetKey: .nameOffset, lengthKey: .nameLength)
         }
     }
     

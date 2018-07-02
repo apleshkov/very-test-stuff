@@ -29,7 +29,7 @@ class MethodParser {
             var isFailableInitializer = false
             if name == "init" {
                 let flag = StringExtractor
-                    .key
+                    .name
                     .extract(from: structure, contents: rawData.contents)?
                     .starts(with: "init?")
                 isFailableInitializer = (flag == true)
