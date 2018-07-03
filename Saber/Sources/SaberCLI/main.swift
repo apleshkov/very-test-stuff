@@ -7,6 +7,7 @@
 
 import Foundation
 import Commandant
+import Saber
 
 let commands = CommandRegistry<Throwable>()
 commands.register(GenerateXcodeProjectCommand())
@@ -28,6 +29,6 @@ switch result {
 case .success(_):
     break
 case .failure(let error):
-    print(error.localizedDescription)
+    print(error)
     exit(1)
 }

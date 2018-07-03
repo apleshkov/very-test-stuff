@@ -4,6 +4,12 @@ import PackageDescription
 
 let package = Package(
     name: "Saber",
+    products: [
+        .library(
+            name: "Saber",
+            targets: ["Saber"]
+        )
+    ],
     dependencies: [
         .package(url: "https://github.com/jpsim/SourceKitten.git", from: "0.21.0"),
         .package(url: "https://github.com/Carthage/Commandant.git", from: "0.14.0"),
@@ -12,7 +18,11 @@ let package = Package(
     targets: [
         .target(
             name: "Saber",
-            dependencies: ["SourceKittenFramework", "Commandant", "xcodeproj"]
+            dependencies: ["SourceKittenFramework"]
+        ),
+        .target(
+            name: "SaberCLI",
+            dependencies: ["Saber", "Commandant", "xcodeproj"]
         ),
         .testTarget(
             name: "SaberTests",

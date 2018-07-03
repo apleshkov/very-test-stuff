@@ -7,15 +7,15 @@
 
 import Foundation
 
-enum Throwable: Error, Equatable {
+public enum Throwable: Error, Equatable {
     case message(String)
     case declCollision(name: String, modules: Set<String>)
     case noParsedType(for: TypeRepository.Info)
 }
 
-extension Throwable {
+extension Throwable: CustomStringConvertible {
 
-    var localizedDescription: String {
+    public var description: String {
         switch self {
         case .message(let text):
             return text
@@ -25,5 +25,19 @@ extension Throwable {
         case .noParsedType(let info):
             return "Unable to make '\(info.key.description)' declaration: no parsed type"
         }
+    }
+}
+
+extension Throwable: CustomDebugStringConvertible {
+
+    public var debugDescription: String {
+        return description
+    }
+}
+
+extension Throwable {
+
+    var localizedDescription: String {
+        return description
     }
 }

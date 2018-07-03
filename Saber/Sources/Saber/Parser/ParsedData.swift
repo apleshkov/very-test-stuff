@@ -20,7 +20,7 @@ struct ParsedData: Equatable {
 
 // MARK: Factory
 
-class ParsedDataFactory {
+public class ParsedDataFactory {
 
     private var containers: [String : ParsedContainer] = [:]
     
@@ -30,7 +30,7 @@ class ParsedDataFactory {
 
     private var extensions: [ParsedExtension] = []
     
-    init() {}
+    public init() {}
 
     func register(_ container: ParsedContainer) throws {
         let key = container.name

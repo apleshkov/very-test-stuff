@@ -7,7 +7,7 @@
 
 import Foundation
 
-class TypeRepository {
+public class TypeRepository {
 
     private(set) var scopes: [ScopeName : Scope] = [:]
     
@@ -38,7 +38,7 @@ extension TypeRepository {
         case modular(module: String, name: String)
     }
     
-    struct Info: Equatable {
+    public struct Info: Equatable {
         var key: Key
         var scopeName: ScopeName?
         var parsed: Parsed

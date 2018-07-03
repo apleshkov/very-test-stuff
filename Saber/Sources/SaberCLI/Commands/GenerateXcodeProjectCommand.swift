@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Saber
 import Commandant
 import Result
 
@@ -50,7 +51,7 @@ struct GenerateXcodeProjectCommand: CommandProtocol {
                     try parser.parse(to: factory)
                 }
             }
-            let containers = try ContainerFactory(repo: TypeRepository(parsedData: factory.make())).make()
+            let containers = try ContainerFactory.make(from: factory)
             print(containers)
             return .success(())
         } catch {

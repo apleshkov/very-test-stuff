@@ -6,8 +6,9 @@
 //
 
 import Foundation
+import Basic
 
-class Renderer {
+public class Renderer {
 
     private let data: ContainerData
 
@@ -15,11 +16,19 @@ class Renderer {
 
     private let header: String?
 
-    init(data: ContainerData, indent: String = "    ", header: String? = nil) {
+    init(data: ContainerData, config: SaberConfiguration = SaberConfiguration.default) {
         self.data = data
-        self.indent = indent
-        self.header = header
+        self.indent = config.indent
+        self.header = config.header
     }
+}
+
+extension Renderer {
+
+
+}
+
+extension Renderer {
 
     func render() -> String {
         var out: [String] = []
@@ -49,9 +58,6 @@ class Renderer {
         out.append("}")
         return out.joined(separator: "\n")
     }
-}
-
-extension Renderer {
 
     private func render(imports: [String], to out: inout [String]) {
         imports.forEach {

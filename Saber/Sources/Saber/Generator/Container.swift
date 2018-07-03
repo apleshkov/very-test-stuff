@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct Container: Equatable {
+public struct Container: Equatable {
 
     var name: String
 

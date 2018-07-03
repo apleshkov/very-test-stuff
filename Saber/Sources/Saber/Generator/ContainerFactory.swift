@@ -7,7 +7,7 @@
 
 import Foundation
 
-class ContainerFactory {
+public class ContainerFactory {
 
     private let repo: TypeRepository
 
@@ -21,6 +21,13 @@ class ContainerFactory {
 }
 
 extension ContainerFactory {
+
+    public static func make(from dataFactory: ParsedDataFactory) throws -> [Container] {
+        let data = dataFactory.make()
+        let repo = try TypeRepository(parsedData: data)
+        let factory = ContainerFactory(repo: repo)
+        return try factory.make()
+    }
 
     func make() throws -> [Container] {
         var result: [Container] = []
