@@ -15,9 +15,13 @@ class FileRenderer {
 
     let config: SaberConfiguration
 
-    init(pathString: String, config: SaberConfiguration) {
-        self.path = AbsolutePath(pathString)
+    init(path: AbsolutePath, config: SaberConfiguration) {
+        self.path = path
         self.config = config
+    }
+
+    convenience init(pathString: String, config: SaberConfiguration) {
+        self.init(path: AbsolutePath(pathString), config: config)
     }
 
     func render(containers: [Container]) throws {

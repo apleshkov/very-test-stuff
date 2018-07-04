@@ -1,5 +1,5 @@
 //
-//  GenerateXcodeProjectCommand.swift
+//  XcodeProjectCommand.swift
 //  Saber
 //
 //  Created by andrey.pleshkov on 02/07/2018.
@@ -10,10 +10,16 @@ import Saber
 import Commandant
 import Result
 
-struct GenerateXcodeProjectCommand: CommandProtocol {
+struct XcodeProjectCommand: CommandProtocol {
 
     let verb = "xcodeproj"
     let function = "Generate containers from Xcode project"
+
+    private let config: SaberConfiguration
+
+    init(config: SaberConfiguration) {
+        self.config = config
+    }
 
     struct Options: OptionsProtocol {
 
@@ -21,13 +27,17 @@ struct GenerateXcodeProjectCommand: CommandProtocol {
         
         let targetNames: Set<String>
 
-        static func create(path: String) -> (_ rawTargets: String) -> Options {
+        let outPath: String
+
+        static func create(path: String) -> (_ rawTargets: String) -> (_ outPath: String) -> Options {
             return { (rawTargets) in
                 let array = rawTargets
                     .split(separator: ",")
                     .map { $0.trimmingCharacters(in: .whitespaces) }
                 let targetNames = Set(array)
-                return self.init(path: path, targetNames: targetNames)
+                return { (outPath) in
+                    return self.init(path: path, targetNames: targetNames, outPath: outPath)
+                }
             }
         }
 
@@ -35,13 +45,14 @@ struct GenerateXcodeProjectCommand: CommandProtocol {
             return create
                 <*> m <| Option(key: "path", defaultValue: "", usage: "Path to *.xcodeproj")
                 <*> m <| Option(key: "targets", defaultValue: "", usage: "Comma-separated list of target names")
+                <*> m <| Option(key: "out", defaultValue: "", usage: "Output directory")
         }
     }
 
     func run(_ options: Options) -> Result<(), Throwable> {
         do {
             guard options.targetNames.count > 0 else {
-                return .failure(.message("No target found"))
+                throw Throwable.message("No targets found")
             }
             let project = try SaberXProject(path: options.path, targetNames: options.targetNames)
             let factory = ParsedDataFactory()
@@ -52,7 +63,11 @@ struct GenerateXcodeProjectCommand: CommandProtocol {
                 }
             }
             let containers = try ContainerFactory.make(from: factory)
-            print(containers)
+            guard containers.count > 0 else {
+                throw Throwable.message("No containers found")
+            }
+            try FileRenderer(pathString: options.outPath, config: config).render(containers: containers)
+            print("Generated")
             return .success(())
         } catch {
             return .failure(.wrapped(error))

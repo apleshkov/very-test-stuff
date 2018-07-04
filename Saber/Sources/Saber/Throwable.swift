@@ -7,11 +7,15 @@
 
 import Foundation
 
-public enum Throwable: Error {
+public enum Throwable: LocalizedError {
     case message(String)
     case declCollision(name: String, modules: Set<String>)
     case noParsedType(for: TypeRepository.Info)
     case wrapped(Error)
+
+    public var errorDescription: String? {
+        return description
+    }
 }
 
 extension Throwable: CustomStringConvertible {
@@ -28,19 +32,5 @@ extension Throwable: CustomStringConvertible {
         case .wrapped(let error):
             return error.localizedDescription
         }
-    }
-}
-
-extension Throwable: CustomDebugStringConvertible {
-
-    public var debugDescription: String {
-        return description
-    }
-}
-
-extension Throwable {
-
-    var localizedDescription: String {
-        return description
     }
 }

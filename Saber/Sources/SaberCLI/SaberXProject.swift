@@ -36,7 +36,6 @@ class SaberXProject {
                     .compactMap { $0 }
                     .filter { $0.extension == "swift" }
                     .compactMap { $0.asString }
-                paths.forEach { print($0) }
                 targets.append(
                     Target(name: nativeTarget.name, filePaths: paths)
                 )

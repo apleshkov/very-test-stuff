@@ -9,26 +9,13 @@ import Foundation
 import Commandant
 import Saber
 
-let commands = CommandRegistry<Throwable>()
-commands.register(GenerateXcodeProjectCommand())
+let config = SaberConfiguration.default
 
-var args = CommandLine.arguments.dropFirst()
+let registry = CommandRegistry<Throwable>()
+registry.register(XcodeProjectCommand(config: config))
+registry.register(SourcesCommand(config: config))
+registry.register(HelpCommand(registry: registry))
 
-guard let action = args.first else {
-    print("No action given")
-    exit(0)
-}
-
-args = args.dropFirst()
-guard let result = commands.run(command: action, arguments: Array(args)) else {
-    print("Unrecognized action: '\(action)'")
-    exit(1)
-}
-
-switch result {
-case .success(_):
-    break
-case .failure(let error):
-    print(error)
-    exit(1)
+registry.main(defaultVerb: "help") { (error) in
+    fputs("\(error.description)\n", stderr)
 }

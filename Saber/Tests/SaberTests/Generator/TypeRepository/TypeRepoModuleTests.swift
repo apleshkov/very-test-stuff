@@ -75,8 +75,8 @@ class TypeRepoModuleTests: XCTestCase {
         let repo = try! TypeRepository(parsedData: parsedData)
         XCTAssertThrowsError(try repo.find(by: .name("Foo")).key, ".name()", {
             XCTAssertEqual(
-                $0 as? Throwable,
-                Throwable.declCollision(name: "Foo", modules: ["A", "B"])
+                $0.localizedDescription,
+                Throwable.declCollision(name: "Foo", modules: ["A", "B"]).localizedDescription
             )
         })
         XCTAssertEqual(
