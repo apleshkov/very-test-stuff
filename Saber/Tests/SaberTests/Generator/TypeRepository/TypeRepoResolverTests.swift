@@ -10,6 +10,38 @@ import XCTest
 
 class TypeRepoResolverTests: XCTestCase {
     
+    func testContainer() {
+        let parsedData: ParsedData = {
+            let factory = ParsedDataFactory()
+            try! FileParser(contents:
+                """
+                // @saber.container(App)
+                // @saber.scope(Singleton)
+                protocol AppConfig {}
+
+                // @saber.container(Session)
+                // @saber.scope(Session)
+                // @saber.dependsOn(App)
+                protocol SessionConfig {}
+                """
+                ).parse(to: factory)
+            return factory.make()
+        }()
+        let repo = try! TypeRepository(parsedData: parsedData)
+        XCTAssertEqual(
+            repo.resolver(for: .name("App"), scopeName: "Singleton"),
+            .container
+        )
+        XCTAssertEqual(
+            repo.resolver(for: .name("App"), scopeName: "Session"),
+            .derived(from: "Singleton", resolver: .container)
+        )
+        XCTAssertEqual(
+            repo.resolver(for: .name("Session"), scopeName: "App"),
+            nil
+        )
+    }
+    
     func testExplicit() {
         let parsedData: ParsedData = {
             let factory = ParsedDataFactory()

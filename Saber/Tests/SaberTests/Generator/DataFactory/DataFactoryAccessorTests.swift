@@ -18,6 +18,28 @@ class DataFactoryAccessorTests: XCTestCase {
             "self.fooBarQuux"
         )
     }
+    
+    func testContainer() {
+        let resolver = TypeResolver<TypeUsage>.container
+        XCTAssertEqual(
+            ContainerDataFactory().accessor(of: resolver, owner: "self"),
+            "self"
+        )
+    }
+    
+    func testDerivedContainer() {
+        let resolver = TypeResolver.derived(
+            from: TypeUsage(name: "containerA"),
+            typeResolver: .derived(
+                from: TypeUsage(name: "containerB"),
+                typeResolver: .container
+            )
+        )
+        XCTAssertEqual(
+            ContainerDataFactory().accessor(of: resolver, owner: "self"),
+            "self.containerA.containerB"
+        )
+    }
 
     func testExplicit() {
         let resolver = TypeResolver.explicit(TypeUsage(name: "FooBarQuux"))

@@ -9,7 +9,8 @@
 import Foundation
 import UIKit
 
-class UserVC: UIViewController, UserScope {
+// @saber.scope(User)
+class UserVC: UIViewController {
 
     private let userId: String
 

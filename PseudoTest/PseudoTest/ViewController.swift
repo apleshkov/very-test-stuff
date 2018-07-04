@@ -8,10 +8,12 @@
 
 import UIKit
 
-class ViewController: UIViewController, ExplicitInjectee {
+// @saber.scope(Singleton)
+// @saber.injectOnly
+class ViewController: UIViewController {
 
     // @saber.inject
-    var userManager: UserManager!
+    weak var userManager: UserManager!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -26,7 +28,7 @@ class ViewController: UIViewController, ExplicitInjectee {
     override func awakeFromNib() {
         super.awakeFromNib()
         
-        (UIApplication.shared.delegate as! AppDelegate).appContainer.inject(to: self)
+        (UIApplication.shared.delegate as! AppDelegate).appContainer.injectTo(viewController: self)
     }
 }
 

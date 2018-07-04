@@ -76,6 +76,7 @@ extension TypeRepository {
     }
     
     indirect enum Resolver: Equatable {
+        case container
         case explicit
         case provider(Key)
         case binder(Key)
@@ -175,6 +176,10 @@ extension TypeRepository {
 
     private func makeKey(for ext: ParsedExtension) -> Key {
         return Key(name: ext.typeName, moduleName: ext.moduleName)
+    }
+    
+    private func makeKey(for container: ParsedContainer) -> Key {
+        return Key(name: container.name, moduleName: container.moduleName)
     }
 
     private func scopeName(from annotations: [TypeAnnotation], of typeName: String) throws -> ScopeName? {
@@ -374,6 +379,7 @@ extension TypeRepository {
     private func fillResolvers() throws {
         for (_, scope) in scopes {
             var dict: [Key : Resolver] = [:]
+            dict[makeKey(for: scope.container)] = .container
             for key in scope.keys {
                 dict[key] = .explicit
             }

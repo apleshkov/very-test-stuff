@@ -125,6 +125,8 @@ public class ContainerDataFactory {
             break
         case .external(_):
             break
+        case .container:
+            break
         }
     }
 
@@ -239,6 +241,8 @@ public class ContainerDataFactory {
     
     func accessor<T>(of typeResolver: TypeResolver<T>, owner: String) -> String where T: SomeType {
         switch typeResolver {
+        case .container:
+            return owner
         case .explicit(let some):
             return "\(owner).\(memberName(of: some))"
         case .provided(let usage, _):

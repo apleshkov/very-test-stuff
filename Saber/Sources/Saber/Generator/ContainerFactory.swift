@@ -136,6 +136,8 @@ extension ContainerFactory {
                               with repoResolver: TypeRepository.Resolver,
                               in scope: TypeRepository.Scope) throws -> TypeResolver<TypeUsage> {
         switch repoResolver {
+        case .container:
+            return .container
         case .explicit:
             return .explicit(typeUsage)
         case .provider(let providerKey):
@@ -174,6 +176,11 @@ extension ContainerFactory {
 
     private func makeResolver(for parsedUsage: ParsedTypeUsage, in scope: TypeRepository.Scope) throws -> TypeResolver<TypeUsage> {
         guard let info = repo.find(by: parsedUsage.genericName) else {
+            // Container?
+            if let repoResolver = repo.resolver(for: .name(parsedUsage.genericName), scopeName: scope.name) {
+                let typeUsage = makeTypeUsage(from: parsedUsage)
+                return try makeResolver(for: typeUsage, with: repoResolver, in: scope)
+            }
             throw Throwable.message("Unknown type: '\(parsedUsage.fullName)'")
         }
         guard let repoResolver = repo.resolver(for: info.key, scopeName: scope.name) else {
