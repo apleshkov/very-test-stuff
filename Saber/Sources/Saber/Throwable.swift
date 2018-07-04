@@ -7,10 +7,11 @@
 
 import Foundation
 
-public enum Throwable: Error, Equatable {
+public enum Throwable: Error {
     case message(String)
     case declCollision(name: String, modules: Set<String>)
     case noParsedType(for: TypeRepository.Info)
+    case wrapped(Error)
 }
 
 extension Throwable: CustomStringConvertible {
@@ -24,6 +25,8 @@ extension Throwable: CustomStringConvertible {
             return "Declaration collision: '\(name)' is declared in different modules: \(moduleList)"
         case .noParsedType(let info):
             return "Unable to make '\(info.key.description)' declaration: no parsed type"
+        case .wrapped(let error):
+            return error.localizedDescription
         }
     }
 }

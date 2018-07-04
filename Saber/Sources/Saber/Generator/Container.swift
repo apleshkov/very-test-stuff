@@ -9,7 +9,7 @@ import Foundation
 
 public struct Container: Equatable {
 
-    var name: String
+    public var name: String
 
     var protocolName: String
 

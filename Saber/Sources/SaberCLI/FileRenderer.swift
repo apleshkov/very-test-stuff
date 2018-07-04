@@ -7,19 +7,28 @@
 
 import Foundation
 import Basic
+import Saber
 
 class FileRenderer {
 
+    let path: AbsolutePath
 
-}
+    let config: SaberConfiguration
 
-public static func render(containers: [Container], to pathString: String, config: SaberConfiguration) throws {
-    let path = AbsolutePath(pathString)
-    let dataFactory = ContainerDataFactory()
-    try containers.forEach {
-        let data = dataFactory.make(from: $0)
-        let renderer = Renderer(data: data, config: config.indent)
-        let generated = renderer.render()
-        //let containerPath = path.
+    init(pathString: String, config: SaberConfiguration) {
+        self.path = AbsolutePath(pathString)
+        self.config = config
+    }
+
+    func render(containers: [Container]) throws {
+        let dataFactory = ContainerDataFactory()
+        try containers.forEach {
+            let data = dataFactory.make(from: $0)
+            let renderer = Renderer(data: data, config: config)
+            let generated = renderer.render()
+            let containerPath = path.appending(component: "\($0.name).swift")
+            let byteString = ByteString(encodingAsUTF8: generated)
+            try localFileSystem.writeFileContents(containerPath, bytes: byteString)
+        }
     }
 }

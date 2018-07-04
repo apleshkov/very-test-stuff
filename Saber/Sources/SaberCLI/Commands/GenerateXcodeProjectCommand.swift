@@ -41,7 +41,7 @@ struct GenerateXcodeProjectCommand: CommandProtocol {
     func run(_ options: Options) -> Result<(), Throwable> {
         do {
             guard options.targetNames.count > 0 else {
-                return .failure(Throwable.message("No target found"))
+                return .failure(.message("No target found"))
             }
             let project = try SaberXProject(path: options.path, targetNames: options.targetNames)
             let factory = ParsedDataFactory()
@@ -55,7 +55,7 @@ struct GenerateXcodeProjectCommand: CommandProtocol {
             print(containers)
             return .success(())
         } catch {
-            return .failure(Throwable.message(error.localizedDescription))
+            return .failure(.wrapped(error))
         }
     }
 }

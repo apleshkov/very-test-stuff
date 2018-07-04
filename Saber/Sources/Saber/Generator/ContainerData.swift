@@ -8,7 +8,7 @@
 
 import Foundation
 
-struct ContainerData {
+public struct ContainerData {
     
     var name: String
 

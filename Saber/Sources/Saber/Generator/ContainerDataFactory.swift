@@ -10,9 +10,11 @@ import Foundation
 
 private let indent = "    "
 
-class ContainerDataFactory {
-    
-    func make(from container: Container) -> ContainerData {
+public class ContainerDataFactory {
+
+    public init() {}
+
+    public func make(from container: Container) -> ContainerData {
         var data = ContainerData(name: container.name, initializer: ContainerData.Initializer())
         data.imports = ["Foundation"] + container.imports
         data.inheritedFrom = [container.protocolName]
