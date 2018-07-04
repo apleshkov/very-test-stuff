@@ -11,14 +11,11 @@ public class Renderer {
 
     private let data: ContainerData
 
-    private let indent: String
+    private let config: SaberConfiguration
 
-    private let header: String?
-
-    public init(data: ContainerData, config: SaberConfiguration = SaberConfiguration.default) {
+    public init(data: ContainerData, config: SaberConfiguration) {
         self.data = data
-        self.indent = config.indent
-        self.header = config.header
+        self.config = config
     }
 }
 
@@ -26,7 +23,7 @@ extension Renderer {
 
     public func render() -> String {
         var out: [String] = []
-        if let header = header {
+        if let header = config.header {
             out.append(header)
             out.append("")
         }
@@ -63,7 +60,7 @@ extension Renderer {
     }
 
     private func render(name: String, inheritedFrom: [String], to out: inout [String]) {
-        var line = "class \(name)"
+        var line = "\(config.accessLevel) class \(name)"
         if inheritedFrom.count > 0 {
             line += ": "
             line += inheritedFrom.joined(separator: ", ")
@@ -75,7 +72,7 @@ extension Renderer {
     private func render(nested: [[String]], to out: inout [String]) {
         nested.forEach { (block) in
             block.forEach { (line) in
-                out.append("\(indent)\(line)")
+                out.append("\(config.indent)\(line)")
             }
             out.append("")
         }
@@ -84,7 +81,7 @@ extension Renderer {
     private func render(initializer: ContainerData.Initializer, to out: inout [String]) {
         out.append(
             {
-                var str = "\(indent)open init("
+                var str = "\(config.indent)\(config.accessLevel) init("
                 str += initializer.args
                     .map { "\($0.name): \($0.typeName)" }
                     .joined(separator: ", ")
@@ -97,9 +94,9 @@ extension Renderer {
                 continue
             }
             nested.forEach {
-                out.append("\(indent)\(indent)\($0)")
+                out.append("\(config.indent)\(config.indent)\($0)")
             }
         }
-        out.append("\(indent)}")
+        out.append("\(config.indent)}")
     }
 }

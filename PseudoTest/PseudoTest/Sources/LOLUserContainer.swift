@@ -8,16 +8,7 @@
 
 import Foundation
 
-protocol UserScope: Scope {}
-
-protocol UserContainer: Container, UserScope {
-    
-    var parentContainer: SaberAppContainer { get }
-    
-    var user: User { get }
-}
-
-class SaberUserContainer: UserContainer {
+class SaberUserContainer: UserContaining {
 
     unowned let parentContainer: SaberAppContainer
     

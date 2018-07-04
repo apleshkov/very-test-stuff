@@ -11,28 +11,23 @@ import Saber
 
 class FileRenderer {
 
-    let path: AbsolutePath
+    let dirURL: URL
 
     let config: SaberConfiguration
 
-    init(path: AbsolutePath, config: SaberConfiguration) {
-        self.path = path
+    init(pathString: String, config: SaberConfiguration) {
+        self.dirURL = URL(fileURLWithPath: pathString)
         self.config = config
     }
 
-    convenience init(pathString: String, config: SaberConfiguration) {
-        self.init(path: AbsolutePath(pathString), config: config)
-    }
-
     func render(containers: [Container]) throws {
-        let dataFactory = ContainerDataFactory()
+        let dataFactory = ContainerDataFactory(config: config)
         try containers.forEach {
             let data = dataFactory.make(from: $0)
             let renderer = Renderer(data: data, config: config)
             let generated = renderer.render()
-            let containerPath = path.appending(component: "\($0.name).swift")
-            let byteString = ByteString(encodingAsUTF8: generated)
-            try localFileSystem.writeFileContents(containerPath, bytes: byteString)
+            let containerURL = dirURL.appendingPathComponent("\($0.name).swift")
+            try generated.write(to: containerURL, atomically: false, encoding: .utf8)
         }
     }
 }

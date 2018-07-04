@@ -23,8 +23,8 @@ class BasicContainerTests: XCTestCase {
         XCTAssertEqual(
             data.storedProperties,
             [
-                ["open let env: Env"],
-                ["open let user: User?"]
+                ["public let env: Env"],
+                ["public let user: User?"]
             ]
         )
         XCTAssertEqual(

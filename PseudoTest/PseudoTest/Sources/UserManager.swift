@@ -14,20 +14,18 @@ struct User {
     var id: String
 }
 
-
-class UserManager: Singleton {
+// @saber.scope(Singleton)
+class UserManager {
     
-    private let appContainer: SaberAppContainer
+    unowned var appContainer: AppContainer
     
-    private(set) var userContainer: SaberUserContainer!
+    private(set) var userContainer: UserContainer!
     
-    // @saber.inject
-    init(appContainer: SaberAppContainer) {
-        self.appContainer = appContainer
+    init() {
     }
     
     func logIn(userId: String) {
         let user = User(id: userId)
-        userContainer = SaberUserContainer(parentContainer: appContainer, user: user)
+        userContainer = UserContainer(appContainer: appContainer, user: user)
     }
 }

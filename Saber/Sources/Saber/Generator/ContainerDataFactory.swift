@@ -8,11 +8,13 @@
 
 import Foundation
 
-private let indent = "    "
-
 public class ContainerDataFactory {
 
-    public init() {}
+    private let config: SaberConfiguration
+    
+    public init(config: SaberConfiguration) {
+        self.config = config
+    }
 
     public func make(from container: Container) -> ContainerData {
         var data = ContainerData(name: container.name, initializer: ContainerData.Initializer())
@@ -24,14 +26,14 @@ public class ContainerDataFactory {
         container.dependencies.forEach {
             let name = memberName(of: $0)
             let typeName = $0.fullName
-            data.storedProperties.append(["open unowned let \(name): \(typeName)"])
+            data.storedProperties.append(["\(config.accessLevel) unowned let \(name): \(typeName)"])
             data.initializer.storedProperties.append("self.\(name) = \(name)")
             data.initializer.args.append((name: name, typeName: typeName))
         }
         container.externals.forEach {
             let name = memberName(of: $0.type)
             let typeName = $0.type.fullName
-            data.storedProperties.append(["open let \(name): \(typeName)"])
+            data.storedProperties.append(["\(config.accessLevel) let \(name): \(typeName)"])
             data.initializer.args.append((name: name, typeName: typeName))
             data.initializer.storedProperties.append("self.\(name) = \(name)")
         }
@@ -43,7 +45,7 @@ public class ContainerDataFactory {
             case .none:
                 isCached = false
             }
-            expand(data: &data, typeResolver: service.typeResolver, isCached: isCached, isThreadSafe: container.isThreadSafe, accessLevel: "open")
+            expand(data: &data, typeResolver: service.typeResolver, isCached: isCached, isThreadSafe: container.isThreadSafe, accessLevel: config.accessLevel)
         }
         return data
     }
@@ -84,8 +86,8 @@ public class ContainerDataFactory {
         data.makers.append(
             [
                 "private func \(makerName)() -> \(usage.fullName) {",
-                "\(indent)let provider = \(accessor(of: .explicit(providerDecl), owner: "self"))",
-                "\(indent)return \(invoked("provider", isOptional: providerDecl.isOptional, with: provider.methodName, args: provider.args))",
+                "\(config.indent)let provider = \(accessor(of: .explicit(providerDecl), owner: "self"))",
+                "\(config.indent)return \(invoked("provider", isOptional: providerDecl.isOptional, with: provider.methodName, args: provider.args))",
                 "}"
             ]
         )
@@ -115,7 +117,7 @@ public class ContainerDataFactory {
         case .bound(let mimicType, let decl):
             data.getters.append([
                 "\(accessLevel) var \(memberName(of: mimicType)): \(mimicType.fullName) {",
-                "\(indent)return \(accessor(of: .explicit(decl), owner: "self"))",
+                "\(config.indent)return \(accessor(of: .explicit(decl), owner: "self"))",
                 "}"
                 ])
             expand(data: &data, typeResolver: .explicit(decl), isCached: isCached, isThreadSafe: isThreadSafe, accessLevel: "private")
@@ -174,7 +176,7 @@ public class ContainerDataFactory {
             body.append("self.\(cached.memberName) = \(name)")
         }
         body.append("return \(name)")
-        return ["\(accessLevel) var \(name): \(some.fullName) {"] + body.map { "\(indent)\($0)" } + ["}"]
+        return ["\(accessLevel) var \(name): \(some.fullName) {"] + body.map { "\(config.indent)\($0)" } + ["}"]
     }
     
     func maker(for decl: TypeDeclaration) -> [String]? {
@@ -190,7 +192,7 @@ public class ContainerDataFactory {
                 }
                 return "\(name): \(valueName)"
             }
-            lines.append("\(indent)return \(decl.name)(\(invocationArgs.joined(separator: ", ")))")
+            lines.append("\(config.indent)return \(decl.name)(\(invocationArgs.joined(separator: ", ")))")
             lines.append("}")
             return lines
         }
@@ -213,15 +215,15 @@ public class ContainerDataFactory {
         memberInjections.forEach {
             let lvalue = "\(varName).\($0.name)"
             let rvalue = self.accessor(of: $0.typeResolver, owner: "self", isLazy: $0.isLazy)
-            lines.append("\(indent)\(lvalue) = \(rvalue)")
+            lines.append("\(config.indent)\(lvalue) = \(rvalue)")
         }
         methodInjections.forEach {
             let invocation = invoked(varName, isOptional: false, with: $0.methodName, args: $0.args)
-            lines.append("\(indent)\(invocation)")
+            lines.append("\(config.indent)\(invocation)")
         }
         if let handlerName = decl.didInjectHandlerName {
             let invocation = invoked(varName, isOptional: false, with: handlerName, args: [])
-            lines.append("\(indent)\(invocation)")
+            lines.append("\(config.indent)\(invocation)")
         }
         lines.append("}")
         return lines

@@ -40,9 +40,5 @@ enum StringExtractor {
             return nil
         }
         return String(data: subdata, encoding: .utf8)
-        
-//        let startIndex = contents.index(contents.startIndex, offsetBy: intRange.lowerBound)
-//        let endIndex = contents.index(contents.startIndex, offsetBy: intRange.upperBound)
-//        return String(contents[startIndex..<endIndex])
     }
 }

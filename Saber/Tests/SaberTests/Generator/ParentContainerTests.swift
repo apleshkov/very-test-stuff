@@ -40,7 +40,7 @@ class ParentContainerTests: XCTestCase {
         XCTAssertEqual(
             data.storedProperties,
             [
-                ["open unowned let parentContainer: ParentContainer"]
+                ["public unowned let parentContainer: ParentContainer"]
             ]
         )
         XCTAssertEqual(
@@ -57,7 +57,7 @@ class ParentContainerTests: XCTestCase {
             data.getters,
             [
                 [
-                    "open var bar: Bar {",
+                    "public var bar: Bar {",
                     "    let bar = self.makeBar()",
                     "    return bar",
                     "}"
@@ -121,15 +121,15 @@ class ParentContainerTests: XCTestCase {
         XCTAssertEqual(
             data.storedProperties,
             [
-                ["open unowned let containerA: ContainerA"],
-                ["open unowned let containerB: ContainerB"]
+                ["public unowned let containerA: ContainerA"],
+                ["public unowned let containerB: ContainerB"]
             ]
         )
         XCTAssertEqual(
             data.getters,
             [
                 [
-                    "open var baz: Baz {",
+                    "public var baz: Baz {",
                     "    var baz = self.makeBaz()",
                     "    self.injectTo(baz: &baz)",
                     "    return baz",

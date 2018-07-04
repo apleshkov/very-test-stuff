@@ -19,9 +19,9 @@ class RendererTests: XCTestCase {
             """
             import Foundation
 
-            class Foo: FooProtocol {
+            public class Foo: FooProtocol {
 
-                open init() {
+                public init() {
                 }
 
             }
@@ -39,9 +39,9 @@ class RendererTests: XCTestCase {
         XCTAssertEqual(
             out,
             """
-            class Foo {
+            public class Foo {
 
-                open init(bar: Bar, baz: Baz) {
+                public init(bar: Bar, baz: Baz) {
                     let quux = Quux()
                     self.quux = quux
                 }
@@ -62,9 +62,9 @@ class RendererTests: XCTestCase {
             import Foundation
             import UIKit
 
-            class Foo: Bar, Baz {
+            public class Foo: Bar, Baz {
 
-                open init() {
+                public init() {
                 }
 
             }
@@ -82,13 +82,13 @@ class RendererTests: XCTestCase {
         XCTAssertEqual(
             out,
             """
-            class Foo {
+            public class Foo {
 
                 private let bar: Bar
 
                 private let baz: Baz
 
-                open init() {
+                public init() {
                 }
 
             }
@@ -138,9 +138,9 @@ class RendererTests: XCTestCase {
         XCTAssertEqual(
             out,
             """
-            class Foo {
+            public class Foo {
 
-                open init() {
+                public init() {
                 }
 
                 var bar: Bar? {

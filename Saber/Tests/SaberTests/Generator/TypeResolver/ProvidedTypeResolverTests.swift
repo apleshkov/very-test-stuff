@@ -32,7 +32,7 @@ class ProvidedTypeResolverTests: XCTestCase {
             data.getters,
             [
                 [
-                    "open var fooBar: FooBar {",
+                    "public var fooBar: FooBar {",
                     "    let fooBar = self.makeFooBar()",
                     "    return fooBar",
                     "}"
@@ -95,7 +95,7 @@ class ProvidedTypeResolverTests: XCTestCase {
             data.getters,
             [
                 [
-                    "open var fooBar: FooBar {",
+                    "public var fooBar: FooBar {",
                     "    let fooBar = self.makeFooBar()",
                     "    return fooBar",
                     "}"

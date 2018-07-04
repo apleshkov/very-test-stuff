@@ -25,7 +25,7 @@ class ExplicitTypeResolverTests: XCTestCase {
             data.getters,
             [
                 [
-                    "open var fooBar: FooBar {",
+                    "public var fooBar: FooBar {",
                     "    let fooBar = self.makeFooBar()",
                     "    return fooBar",
                     "}"
@@ -63,7 +63,7 @@ class ExplicitTypeResolverTests: XCTestCase {
             data.getters,
             [
                 [
-                    "open var fooBar: FooBar {",
+                    "public var fooBar: FooBar {",
                     "    var fooBar = self.makeFooBar()",
                     "    self.injectTo(fooBar: &fooBar)",
                     "    return fooBar",
@@ -116,7 +116,7 @@ class ExplicitTypeResolverTests: XCTestCase {
             data.injectors,
             [
                 [
-                    "open func injectTo(fooBar: inout FooBar) {",
+                    "public func injectTo(fooBar: inout FooBar) {",
                     "    fooBar.quux = self.quux",
                     "}"
                 ]

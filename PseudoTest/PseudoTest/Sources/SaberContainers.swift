@@ -8,11 +8,17 @@
 
 import Foundation
 
-protocol AppContainer: Container, Singleton {
-}
+// @saber.container(AppContainer)
+// @saber.scope(Singleton)
+protocol AppContaining {}
+
+// @saber.container(UserContainer)
+// @saber.scope(User)
+// @saber.dependsOn(AppContainer)
+protocol UserContaining {}
 
 
-class SaberAppContainer: AppContainer {
+class SaberAppContainer: AppContaining {
     
     private var cachedUserManager: UserManager?
 }

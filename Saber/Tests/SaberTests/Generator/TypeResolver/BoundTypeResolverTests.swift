@@ -27,7 +27,7 @@ class BoundTypeResolverTests: XCTestCase {
             data.getters,
             [
                 [
-                    "open var fooProtocol: FooProtocol? {",
+                    "public var fooProtocol: FooProtocol? {",
                     "    return self.foo",
                     "}"
                 ],
@@ -73,7 +73,7 @@ class BoundTypeResolverTests: XCTestCase {
             data.getters,
             [
                 [
-                    "open var fooProtocol: FooProtocol {",
+                    "public var fooProtocol: FooProtocol {",
                     "    return self.foo",
                     "}"
                 ],
