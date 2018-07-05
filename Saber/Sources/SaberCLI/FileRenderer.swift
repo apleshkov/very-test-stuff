@@ -11,12 +11,12 @@ import Saber
 
 class FileRenderer {
 
-    let dirURL: URL
+    let outDir: URL
 
     let config: SaberConfiguration
 
-    init(pathString: String, config: SaberConfiguration) {
-        self.dirURL = URL(fileURLWithPath: pathString)
+    init(outDir: URL, config: SaberConfiguration) {
+        self.outDir = outDir
         self.config = config
     }
 
@@ -26,8 +26,32 @@ class FileRenderer {
             let data = dataFactory.make(from: $0)
             let renderer = Renderer(data: data, config: config)
             let generated = renderer.render()
-            let containerURL = dirURL.appendingPathComponent("\($0.name).swift")
+            let containerURL = outDir.appendingPathComponent("\($0.name).swift")
             try generated.write(to: containerURL, atomically: false, encoding: .utf8)
         }
+    }
+}
+
+extension FileRenderer {
+
+    struct Params {
+        var parsedDataFactory: ParsedDataFactory
+        var outDir: URL
+        var rawConfig: String
+        var defaultConfig: SaberConfiguration
+    }
+
+    static func render(params: FileRenderer.Params) throws {
+        let containers = try ContainerFactory.make(from: params.parsedDataFactory)
+        guard containers.count > 0 else {
+            throw Throwable.message("No containers found")
+        }
+        let config: SaberConfiguration
+        if params.rawConfig.count > 0 {
+            config = try ConfigDecoder(raw: params.rawConfig).decode()
+        } else {
+            config = params.defaultConfig
+        }
+        try FileRenderer(outDir: params.outDir, config: config).render(containers: containers)
     }
 }

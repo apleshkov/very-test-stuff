@@ -15,28 +15,34 @@ struct XcodeProjectCommand: CommandProtocol {
     let verb = "xcodeproj"
     let function = "Generate containers from Xcode project"
 
-    private let config: SaberConfiguration
+    private let defaultConfig: SaberConfiguration
 
     init(config: SaberConfiguration) {
-        self.config = config
+        self.defaultConfig = config
     }
 
     struct Options: OptionsProtocol {
 
-        let path: String
+        let url: URL
         
         let targetNames: Set<String>
 
-        let outPath: String
+        let outDir: URL
 
-        static func create(path: String) -> (_ rawTargets: String) -> (_ outPath: String) -> Options {
+        let rawConfig: String
+
+        static func create(path: String) -> (_ rawTargets: String) -> (_ outPath: String) -> (_ rawConfig: String) -> Options {
+            let url = URL(fileURLWithPath: path)
             return { (rawTargets) in
                 let array = rawTargets
                     .split(separator: ",")
                     .map { $0.trimmingCharacters(in: .whitespaces) }
                 let targetNames = Set(array)
                 return { (outPath) in
-                    return self.init(path: path, targetNames: targetNames, outPath: outPath)
+                    let outDir = URL(fileURLWithPath: outPath)
+                    return { (rawConfig) in
+                        return self.init(url: url, targetNames: targetNames, outDir: outDir, rawConfig: rawConfig)
+                    }
                 }
             }
         }
@@ -46,6 +52,7 @@ struct XcodeProjectCommand: CommandProtocol {
                 <*> m <| Option(key: "path", defaultValue: "", usage: "Path to *.xcodeproj")
                 <*> m <| Option(key: "targets", defaultValue: "", usage: "Comma-separated list of target names")
                 <*> m <| Option(key: "out", defaultValue: "", usage: "Output directory")
+                <*> m <| Option(key: "config", defaultValue: "", usage: "Path to *.yml or YAML text")
         }
     }
 
@@ -54,7 +61,7 @@ struct XcodeProjectCommand: CommandProtocol {
             guard options.targetNames.count > 0 else {
                 throw Throwable.message("No targets found")
             }
-            let project = try SaberXProject(path: options.path, targetNames: options.targetNames)
+            let project = try SaberXProject(path: options.url.absoluteString, targetNames: options.targetNames)
             let factory = ParsedDataFactory()
             try project.targets.forEach { (target) in
                 try target.filePaths.forEach { (path) in
@@ -62,11 +69,14 @@ struct XcodeProjectCommand: CommandProtocol {
                     try parser.parse(to: factory)
                 }
             }
-            let containers = try ContainerFactory.make(from: factory)
-            guard containers.count > 0 else {
-                throw Throwable.message("No containers found")
-            }
-            try FileRenderer(pathString: options.outPath, config: config).render(containers: containers)
+            try FileRenderer.render(
+                params: FileRenderer.Params(
+                    parsedDataFactory: factory,
+                    outDir: options.outDir,
+                    rawConfig: options.rawConfig,
+                    defaultConfig: defaultConfig
+                )
+            )
             print("Generated")
             return .success(())
         } catch {

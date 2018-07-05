@@ -8,6 +8,8 @@
 import Foundation
 import Basic
 
+private let fs = localFileSystem
+
 enum DirectoryTraverser {
 
     static func traverse(_ pathString: String, fn: (_ path: AbsolutePath) throws -> ()) throws {
@@ -15,7 +17,6 @@ enum DirectoryTraverser {
     }
 
     static func traverse(_ path: AbsolutePath, fn: (_ path: AbsolutePath) throws -> ()) throws {
-        let fs = localFileSystem
         if fs.isFile(path) {
             try fn(path)
             return
