@@ -6,8 +6,6 @@ public struct SaberConfiguration: Equatable {
     public var accessLevel = "internal"
     
     public var indent = "    "
-
-    public var header: String? = nil
     
     public init() {}
 }

@@ -14,6 +14,7 @@ let config = SaberConfiguration.default
 let registry = CommandRegistry<Throwable>()
 registry.register(XcodeProjectCommand(config: config))
 registry.register(SourcesCommand(config: config))
+registry.register(VersionCommand())
 registry.register(HelpCommand(registry: registry))
 
 registry.main(defaultVerb: "help") { (error) in

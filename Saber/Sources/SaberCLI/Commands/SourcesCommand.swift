@@ -73,6 +73,7 @@ struct SourcesCommand: CommandProtocol {
             }
             try FileRenderer.render(
                 params: FileRenderer.Params(
+                    version: saberVersion,
                     parsedDataFactory: factory,
                     outDir: options.outDir,
                     rawConfig: options.rawConfig,

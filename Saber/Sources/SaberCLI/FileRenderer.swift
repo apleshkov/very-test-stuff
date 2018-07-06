@@ -14,17 +14,20 @@ class FileRenderer {
     let outDir: URL
 
     let config: SaberConfiguration
+    
+    let version: String
 
-    init(outDir: URL, config: SaberConfiguration) {
+    init(outDir: URL, config: SaberConfiguration, version: String) {
         self.outDir = outDir
         self.config = config
+        self.version = version
     }
 
     func render(containers: [Container]) throws {
         let dataFactory = ContainerDataFactory(config: config)
         try containers.forEach {
             let data = dataFactory.make(from: $0)
-            let renderer = Renderer(data: data, config: config)
+            let renderer = Renderer(data: data, config: config, version: version)
             let generated = renderer.render()
             let containerURL = outDir.appendingPathComponent("\($0.name).swift")
             try generated.write(to: containerURL, atomically: false, encoding: .utf8)
@@ -35,6 +38,7 @@ class FileRenderer {
 extension FileRenderer {
 
     struct Params {
+        var version: String
         var parsedDataFactory: ParsedDataFactory
         var outDir: URL
         var rawConfig: String
@@ -52,6 +56,7 @@ extension FileRenderer {
         } else {
             config = params.defaultConfig
         }
-        try FileRenderer(outDir: params.outDir, config: config).render(containers: containers)
+        try FileRenderer(outDir: params.outDir, config: config, version: params.version)
+            .render(containers: containers)
     }
 }
