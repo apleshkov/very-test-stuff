@@ -13,7 +13,7 @@ import UIKit
 class UserVC: UIViewController {
 
     private let userId: String
-
+    
     // @saber.inject
     init(user: User) {
         self.userId = user.id
