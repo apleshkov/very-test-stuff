@@ -2,24 +2,24 @@ import Foundation
 
 internal class AppContainer: AppContaining {
 
-    private var cached_userManager: UserManager?
+    private var cached_pseudoTestUserManager: PseudoTest.UserManager?
 
     internal init() {
     }
 
-    internal var userManager: UserManager {
-        if let cached = self.cached_userManager { return cached }
-        let userManager = self.makeUserManager()
-        self.cached_userManager = userManager
-        return userManager
+    internal var pseudoTestUserManager: PseudoTest.UserManager {
+        if let cached = self.cached_pseudoTestUserManager { return cached }
+        let pseudoTestUserManager = self.makePseudoTestUserManager()
+        self.cached_pseudoTestUserManager = pseudoTestUserManager
+        return pseudoTestUserManager
     }
 
-    private func makeUserManager() -> UserManager {
-        return UserManager(appContainer: self)
+    private func makePseudoTestUserManager() -> PseudoTest.UserManager {
+        return PseudoTest.UserManager(appContainer: self)
     }
 
-    internal func injectTo(viewController: ViewController) {
-        viewController.userManager = self.userManager
+    internal func injectTo(pseudoTestViewController: PseudoTest.ViewController) {
+        pseudoTestViewController.userManager = self.pseudoTestUserManager
     }
 
 }

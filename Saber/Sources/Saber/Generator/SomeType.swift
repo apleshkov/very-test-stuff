@@ -11,7 +11,7 @@ protocol SomeType {
     
     var name: String { get }
     
-    var fullName: String { get }
+    func fullName(modular: Bool) -> String
     
     var isOptional: Bool { set get }
 }

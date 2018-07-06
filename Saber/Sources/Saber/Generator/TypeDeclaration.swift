@@ -16,6 +16,8 @@ struct TypeDeclaration: SomeType, Equatable {
     
     var name: String
     
+    var moduleName: String?
+    
     var isOptional: Bool
     
     var isReference: Bool
@@ -29,6 +31,7 @@ struct TypeDeclaration: SomeType, Equatable {
     var didInjectHandlerName: String?
     
     init(name: String,
+         moduleName: String? = nil,
          isOptional: Bool = false,
          isReference: Bool = false,
          initializer: Initializer = .some(args: []),
@@ -36,6 +39,7 @@ struct TypeDeclaration: SomeType, Equatable {
          methodInjections: [InstanceMethodInjection] = [],
          didInjectHandlerName: String? = nil) {
         self.name = name
+        self.moduleName = moduleName
         self.isOptional = isOptional
         self.isReference = isReference
         self.initializer = initializer
@@ -44,8 +48,12 @@ struct TypeDeclaration: SomeType, Equatable {
         self.didInjectHandlerName = didInjectHandlerName
     }
     
-    var fullName: String {
-        return "\(name)\(isOptional ? "?" : "")"
+    func fullName(modular: Bool) -> String {
+        var result = "\(name)\(isOptional ? "?" : "")"
+        if modular, let moduleName = moduleName {
+            result = "\(moduleName).\(result)"
+        }
+        return result
     }
     
     func set(initializer: Initializer) -> TypeDeclaration {

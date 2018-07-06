@@ -11,21 +11,32 @@ struct TypeUsage: SomeType, Equatable {
 
     var name: String
 
+    var moduleName: String?
+    
     var isOptional: Bool
 
     var generics: [TypeUsage]
 
-    init(name: String, isOptional: Bool = false, generics: [TypeUsage] = []) {
+    init(name: String,
+         moduleName: String? = nil,
+         isOptional: Bool = false,
+         generics: [TypeUsage] = []) {
         self.name = name
+        self.moduleName = moduleName
         self.isOptional = isOptional
         self.generics = generics
     }
-
-    var fullName: String {
-        var fullName = name
+    
+    func fullName(modular: Bool) -> String {
+        var fullName: String
+        if modular, let moduleName = moduleName {
+            fullName = "\(moduleName).\(name)"
+        } else {
+            fullName = name
+        }
         if generics.count > 0 {
             let list = generics
-                .map { $0.fullName }
+                .map { $0.fullName(modular: modular) }
                 .joined(separator: ", ")
             fullName += "<\(list)>"
         }

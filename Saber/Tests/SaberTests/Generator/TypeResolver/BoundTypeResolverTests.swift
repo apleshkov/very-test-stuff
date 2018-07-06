@@ -12,12 +12,15 @@ import XCTest
 class BoundTypeResolverTests: XCTestCase {
 
     func testOptional() {
+        let binderDecl = TypeDeclaration(name: "Foo").set(isOptional: true)
         let resolver = TypeResolver.bound(
             TypeUsage(name: "FooProtocol").set(isOptional: true),
-            to: TypeDeclaration(name: "Foo").set(isOptional: true)
+            to: binderDecl
         )
         let service = Service(typeResolver: resolver, storage: .none)
-        let container = Container(name: "Test").add(service: service)
+        let container = Container(name: "Test")
+            .add(service: service)
+            .add(service: Service(typeResolver: .explicit(binderDecl), storage: .none))
         let data = ContainerDataFactory().make(from: container)
         XCTAssertEqual(
             data.storedProperties,
@@ -32,7 +35,7 @@ class BoundTypeResolverTests: XCTestCase {
                     "}"
                 ],
                 [
-                    "private var foo: Foo? {",
+                    "public var foo: Foo? {",
                     "    let foo = self.makeFoo()",
                     "    return foo",
                     "}"
@@ -63,7 +66,9 @@ class BoundTypeResolverTests: XCTestCase {
             to: decl
         )
         let service = Service(typeResolver: resolver, storage: .none)
-        let container = Container(name: "Test").add(service: service)
+        let container = Container(name: "Test")
+            .add(service: service)
+            .add(service: Service(typeResolver: .explicit(decl), storage: .none))
         let data = ContainerDataFactory().make(from: container)
         XCTAssertEqual(
             data.storedProperties,
@@ -78,7 +83,7 @@ class BoundTypeResolverTests: XCTestCase {
                     "}"
                 ],
                 [
-                    "private var foo: Foo {",
+                    "public var foo: Foo {",
                     "    var foo = self.makeFoo()",
                     "    self.injectTo(foo: &foo)",
                     "    return foo",

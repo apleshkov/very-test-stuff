@@ -11,6 +11,8 @@ public class TypeRepository {
 
     private(set) var scopes: [ScopeName : Scope] = [:]
     
+    private var containers: [String : ScopeName] = [:]
+    
     private var typeInfos: [Key : Info] = [:]
 
     /// `.modular(module: "A", name: "Foo")` represented as "A.Foo"
@@ -87,6 +89,16 @@ extension TypeRepository {
 
 extension TypeRepository {
 
+    func container(by name: String) -> ParsedContainer? {
+        guard let scopeName = containers[name] else {
+            return nil
+        }
+        guard let scope = scopes[scopeName] else {
+            return nil
+        }
+        return scope.container
+    }
+    
     func find(by key: Key) throws -> Info {
         if case .name(let name) = key,
             let collisions = shortenNameCollisions[name],
@@ -218,6 +230,7 @@ extension TypeRepository {
                 binders: [:]
             )
             scopes[key] = scope
+            containers[parsedContainer.name] = key
         }
     }
 
@@ -244,7 +257,10 @@ extension TypeRepository {
         var binders: [Key : (scopeKey: ScopeName, usage: ParsedTypeUsage)] = [:]
         var providers: [Key : (scopeKey: ScopeName, method: ParsedMethod)] = [:]
         try parsedData.types.forEach { (parsedType) in
-            let scopeName: ScopeName? = try self.scopeName(from: parsedType.annotations, of: parsedType.fullName)
+            let scopeName: ScopeName? = try self.scopeName(
+                from: parsedType.annotations,
+                of: parsedType.fullName(modular: true)
+            )
             let key = makeKey(for: parsedType)
             register(
                 Info(

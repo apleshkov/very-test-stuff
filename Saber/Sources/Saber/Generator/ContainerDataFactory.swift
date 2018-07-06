@@ -25,14 +25,14 @@ public class ContainerDataFactory {
         }
         container.dependencies.forEach {
             let name = memberName(of: $0)
-            let typeName = $0.fullName
+            let typeName = $0.fullName(modular: true)
             data.storedProperties.append(["\(config.accessLevel) unowned let \(name): \(typeName)"])
             data.initializer.storedProperties.append("self.\(name) = \(name)")
             data.initializer.args.append((name: name, typeName: typeName))
         }
         container.externals.forEach {
             let name = memberName(of: $0.type)
-            let typeName = $0.type.fullName
+            let typeName = $0.type.fullName(modular: true)
             data.storedProperties.append(["\(config.accessLevel) let \(name): \(typeName)"])
             data.initializer.args.append((name: name, typeName: typeName))
             data.initializer.storedProperties.append("self.\(name) = \(name)")
@@ -58,12 +58,12 @@ public class ContainerDataFactory {
         if isCached {
             let name = memberName(of: some)
             let cachedName = "cached_\(name)"
-            let fullName: String = {
+            let fullTypeName: String = {
                 var some = some
                 some.isOptional = true
-                return some.fullName
+                return some.fullName(modular: true)
             }()
-            data.storedProperties.append(["private var \(cachedName): \(fullName)"])
+            data.storedProperties.append(["private var \(cachedName): \(fullTypeName)"])
             data.getters.append(
                 getter(of: some, accessLevel: accessLevel, cached: (memberName: cachedName, isThreadSafe: isThreadSafe))
             )
@@ -85,13 +85,12 @@ public class ContainerDataFactory {
         let providerDecl = provider.decl
         data.makers.append(
             [
-                "private func \(makerName)() -> \(usage.fullName) {",
+                "private func \(makerName)() -> \(usage.fullName(modular: true)) {",
                 "\(config.indent)let provider = \(accessor(of: .explicit(providerDecl), owner: "self"))",
                 "\(config.indent)return \(invoked("provider", isOptional: providerDecl.isOptional, with: provider.methodName, args: provider.args))",
                 "}"
             ]
         )
-        expand(data: &data, typeResolver: .explicit(providerDecl), isCached: isCached, isThreadSafe: isThreadSafe, accessLevel: "private")
     }
     
     private func expand(data: inout ContainerData,
@@ -116,11 +115,10 @@ public class ContainerDataFactory {
             expand(data: &data, provided: usage, by: provider, isCached: isCached, isThreadSafe: isThreadSafe, accessLevel: accessLevel)
         case .bound(let mimicType, let decl):
             data.getters.append([
-                "\(accessLevel) var \(memberName(of: mimicType)): \(mimicType.fullName) {",
+                "\(accessLevel) var \(memberName(of: mimicType)): \(mimicType.fullName(modular: true)) {",
                 "\(config.indent)return \(accessor(of: .explicit(decl), owner: "self"))",
                 "}"
                 ])
-            expand(data: &data, typeResolver: .explicit(decl), isCached: isCached, isThreadSafe: isThreadSafe, accessLevel: "private")
         case .derived(_, _):
             break
         case .external(_):
@@ -178,7 +176,7 @@ public class ContainerDataFactory {
             body.append("self.\(cached.memberName) = \(name)")
         }
         body.append("return \(name)")
-        return ["\(accessLevel) var \(name): \(some.fullName) {"] + body.map { "\(config.indent)\($0)" } + ["}"]
+        return ["\(accessLevel) var \(name): \(some.fullName(modular: true)) {"] + body.map { "\(config.indent)\($0)" } + ["}"]
     }
     
     func maker(for decl: TypeDeclaration) -> [String]? {
@@ -186,7 +184,7 @@ public class ContainerDataFactory {
         case .none:
             return nil
         case .some(let args):
-            var lines: [String] = ["private func \(memberName(of: decl, prefix: "make"))() -> \(decl.fullName) {"]
+            var lines: [String] = ["private func \(memberName(of: decl, prefix: "make"))() -> \(decl.fullName(modular: true)) {"]
             let invocationArgs: [String] = args.map {
                 let valueName = accessor(of: $0.typeResolver, owner: "self")
                 guard let name = $0.name else {
@@ -194,7 +192,11 @@ public class ContainerDataFactory {
                 }
                 return "\(name): \(valueName)"
             }
-            lines.append("\(config.indent)return \(decl.name)(\(invocationArgs.joined(separator: ", ")))")
+            var initializerName = "\(decl.name)"
+            if let moduleName = decl.moduleName {
+                initializerName = "\(moduleName).\(initializerName)"
+            }
+            lines.append("\(config.indent)return \(initializerName)(\(invocationArgs.joined(separator: ", ")))")
             lines.append("}")
             return lines
         }
@@ -209,9 +211,9 @@ public class ContainerDataFactory {
         let varName = memberName(of: decl)
         let typeString: String
         if decl.isReference {
-            typeString = decl.set(isOptional: false).fullName
+            typeString = decl.set(isOptional: false).fullName(modular: true)
         } else {
-            typeString = "inout " + decl.set(isOptional: false).fullName
+            typeString = "inout " + decl.set(isOptional: false).fullName(modular: true)
         }
         var lines = ["\(accessLevel) func injectTo(\(varName): \(typeString)) {"]
         memberInjections.forEach {

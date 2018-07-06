@@ -112,7 +112,11 @@ extension ContainerFactory {
             guard let dependency = repo.scopes[$0] else {
                 throw Throwable.message("Unknown scope: \($0)")
             }
-            return TypeUsage(name: dependency.container.fullName)
+            let container = dependency.container
+            return TypeUsage(
+                name: container.name,
+                moduleName: container.moduleName
+            )
         }
     }
 }
@@ -166,9 +170,13 @@ extension ContainerFactory {
             guard let fromScope = repo.scopes[fromName] else {
                 throw Throwable.message("Unknown scope: '\(fromName)'")
             }
+            let container = fromScope.container
             let typeResolver = try makeResolver(for: typeUsage, with: fromResolver, in: fromScope)
             return .derived(
-                from: TypeUsage(name: fromScope.container.fullName),
+                from: TypeUsage(
+                    name: container.fullName(modular: false),
+                    moduleName: container.moduleName
+                ),
                 typeResolver: typeResolver
             )
         }
@@ -177,8 +185,11 @@ extension ContainerFactory {
     private func makeResolver(for parsedUsage: ParsedTypeUsage, in scope: TypeRepository.Scope) throws -> TypeResolver<TypeUsage> {
         guard let info = repo.find(by: parsedUsage.genericName) else {
             // Container?
-            if let repoResolver = repo.resolver(for: .name(parsedUsage.genericName), scopeName: scope.name) {
-                let typeUsage = makeTypeUsage(from: parsedUsage)
+            if let parsedContainer = repo.container(by: parsedUsage.name) {
+                let typeUsage = TypeUsage(name: parsedContainer.name, moduleName: parsedContainer.moduleName)
+                guard let repoResolver = repo.resolver(for: .name(parsedContainer.name), scopeName: scope.name) else {
+                    throw Throwable.message("Unknown resolver for '\(parsedContainer.fullName(modular: true))'")
+                }
                 return try makeResolver(for: typeUsage, with: repoResolver, in: scope)
             }
             throw Throwable.message("Unknown type: '\(parsedUsage.fullName)'")
@@ -209,7 +220,7 @@ extension ContainerFactory {
         switch info.parsed {
         case .type(_):
             let decl = try ensure(info: info, in: scope)
-            var usage = TypeUsage(name: decl.declaration.name)
+            var usage = TypeUsage(name: decl.declaration.name, moduleName: info.key.moduleName)
             usage.isOptional = decl.declaration.isOptional
             return usage
         case .usage(let parsedUsage):
@@ -256,7 +267,7 @@ extension ContainerFactory {
             processingDeclarations.remove(key)
         }
         let isInjectOnly = parsedType.annotations.contains(.injectOnly)
-        var decl = TypeDeclaration(name: info.key.description)
+        var decl = TypeDeclaration(name: info.key.name, moduleName: info.key.moduleName)
         decl.isReference = parsedType.isReference
         for property in parsedType.properties {
             guard property.annotations.contains(.inject) else {
@@ -313,10 +324,10 @@ extension ContainerFactory {
         }
         let injected = methods.filter { $0.annotations.contains(.inject) }
         if injected.count > 1 {
-            throw Throwable.message("Unable to find initializer for '\(parsedType.fullName)': multiple injected-initializers found")
+            throw Throwable.message("Unable to find initializer for '\(parsedType.fullName(modular: true))': multiple injected-initializers found")
         }
         guard let initializer = injected.first else {
-            throw Throwable.message("Unable to find initializer for '\(parsedType.fullName)': \(methods.count) initializers found, but none of them marked as injected")
+            throw Throwable.message("Unable to find initializer for '\(parsedType.fullName(modular: true))': \(methods.count) initializers found, but none of them marked as injected")
         }
         return initializer
     }

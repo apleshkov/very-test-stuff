@@ -2,22 +2,22 @@ import Foundation
 
 internal class UserContainer: UserContaining {
 
-    internal unowned let appContainer: AppContainer
+    internal unowned let pseudoTestAppContainer: PseudoTest.AppContainer
 
-    internal let userData: UserData
+    internal let pseudoTestUserData: PseudoTest.UserData
 
-    internal init(appContainer: AppContainer, userData: UserData) {
-        self.appContainer = appContainer
-        self.userData = userData
+    internal init(pseudoTestAppContainer: PseudoTest.AppContainer, pseudoTestUserData: PseudoTest.UserData) {
+        self.pseudoTestAppContainer = pseudoTestAppContainer
+        self.pseudoTestUserData = pseudoTestUserData
     }
 
-    internal var userVC: UserVC {
-        let userVC = self.makeUserVC()
-        return userVC
+    internal var pseudoTestUserVC: PseudoTest.UserVC {
+        let pseudoTestUserVC = self.makePseudoTestUserVC()
+        return pseudoTestUserVC
     }
 
-    private func makeUserVC() -> UserVC {
-        return UserVC(user: self.userData.user)
+    private func makePseudoTestUserVC() -> PseudoTest.UserVC {
+        return PseudoTest.UserVC(user: self.pseudoTestUserData.user)
     }
 
 }

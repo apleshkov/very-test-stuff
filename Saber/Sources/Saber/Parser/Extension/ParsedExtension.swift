@@ -26,8 +26,8 @@ struct ParsedExtension: Equatable {
 
 extension ParsedExtension {
     
-    var fullName: String {
-        guard let moduleName = self.moduleName else {
+    func fullName(modular: Bool) -> String {
+        guard modular, let moduleName = self.moduleName else {
             return typeName
         }
         return "\(moduleName).\(typeName)"
