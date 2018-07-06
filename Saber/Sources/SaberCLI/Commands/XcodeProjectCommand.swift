@@ -31,28 +31,39 @@ struct XcodeProjectCommand: CommandProtocol {
 
         let rawConfig: String
 
-        static func create(path: String) -> (_ rawTargets: String) -> (_ outPath: String) -> (_ rawConfig: String) -> Options {
-            let url = URL(fileURLWithPath: path)
-            return { (rawTargets) in
-                let array = rawTargets
-                    .split(separator: ",")
-                    .map { $0.trimmingCharacters(in: .whitespaces) }
-                let targetNames = Set(array)
-                return { (outPath) in
-                    let outDir = URL(fileURLWithPath: outPath)
-                    return { (rawConfig) in
-                        return self.init(url: url, targetNames: targetNames, outDir: outDir, rawConfig: rawConfig)
+        static func create(workDir: String)
+            -> (_ path: String)
+            -> (_ rawTargets: String)
+            -> (_ outPath: String)
+            -> (_ rawConfig: String)
+            -> Options {
+                let baseURL: URL? = workDir.count > 0
+                    ? URL(fileURLWithPath: workDir, isDirectory: true)
+                    : nil
+                return { (path) in                    
+                    let url = URL(fileURLWithPath: path).saber_relative(to: baseURL)
+                    return { (rawTargets) in
+                        let array = rawTargets
+                            .split(separator: ",")
+                            .map { $0.trimmingCharacters(in: .whitespaces) }
+                        let targetNames = Set(array)
+                        return { (outPath) in
+                            let outDir = URL(fileURLWithPath: outPath).saber_relative(to: baseURL)
+                            return { (rawConfig) in
+                                return self.init(url: url, targetNames: targetNames, outDir: outDir, rawConfig: rawConfig)
+                            }
+                        }
                     }
                 }
-            }
         }
 
         static func evaluate(_ m: CommandMode) -> Result<Options, CommandantError<Throwable>> {
             return create
-                <*> m <| Option(key: "path", defaultValue: "", usage: "Path to *.xcodeproj")
-                <*> m <| Option(key: "targets", defaultValue: "", usage: "Comma-separated list of target names")
-                <*> m <| Option(key: "out", defaultValue: "", usage: "Output directory")
-                <*> m <| Option(key: "config", defaultValue: "", usage: "Path to *.yml or YAML text")
+                <*> m <| Option(key: "workDir", defaultValue: "", usage: "Working directory (optional)")
+                <*> m <| Option(key: "path", defaultValue: "", usage: "Path to *.xcodeproj (is relative to --workDir if any)")
+                <*> m <| Option(key: "targets", defaultValue: "", usage: "Comma-separated list of project target names")
+                <*> m <| Option(key: "out", defaultValue: "", usage: "Output directory (is relative to --workDir if any)")
+                <*> m <| Option(key: "config", defaultValue: "", usage: "Path to *.yml or YAML text (optional)")
         }
     }
 
@@ -61,7 +72,7 @@ struct XcodeProjectCommand: CommandProtocol {
             guard options.targetNames.count > 0 else {
                 throw Throwable.message("No targets found")
             }
-            let project = try SaberXProject(path: options.url.absoluteString, targetNames: options.targetNames)
+            let project = try SaberXProject(path: options.url.path, targetNames: options.targetNames)
             let factory = ParsedDataFactory()
             try project.targets.forEach { (target) in
                 try target.filePaths.forEach { (path) in
