@@ -9,6 +9,8 @@ import Foundation
 import Commandant
 import Saber
 
+Logger = ConsoleLogger()
+
 let config = SaberConfiguration.default
 
 let registry = CommandRegistry<Throwable>()

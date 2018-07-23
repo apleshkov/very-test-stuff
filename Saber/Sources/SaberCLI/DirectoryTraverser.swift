@@ -7,6 +7,7 @@
 
 import Foundation
 import Basic
+import Saber
 
 private let fs = localFileSystem
 
@@ -22,8 +23,10 @@ enum DirectoryTraverser {
             return
         }
         guard fs.isDirectory(path) else {
+            Logger?.warn("Ignoring \(path.asString): not a directory")
             return
         }
+        Logger?.info("Traversing \(path.asString)...")
         try fs.getDirectoryContents(path).forEach {
             let entry = path.appending(component: $0)
             try traverse(entry, fn: fn)

@@ -51,3 +51,25 @@ extension ParsedContainer {
         return "\(moduleName).\(name)"
     }
 }
+
+extension ParsedContainer: CustomDebugStringConvertible {
+
+    var debugDescription: String {
+        let prefix = "<Container '\(fullName(modular: true))'>"
+        var components: [String] = [
+            "protocol: '\(protocolName)'",
+            "scope: '\(scopeName)'"
+        ]
+        if dependencies.count > 0 {
+            components.append("dependencies: " +  dependencies.map { "'\($0.fullName)'" }.joined(separator: ", "))
+        }
+        if externals.count > 0 {
+            components.append("externals: " + externals.map { "'\($0.fullName)'" }.joined(separator: ", "))
+        }
+        if imports.count > 0 {
+            components.append("imports: " + imports.map { "'\($0)'" }.joined(separator: ", "))
+        }
+        components.append("thread-safe: \(isThreadSafe)")
+        return "\(prefix) \(components.joined(separator: "; "))"
+    }
+}

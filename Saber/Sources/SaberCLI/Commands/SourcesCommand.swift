@@ -69,6 +69,7 @@ struct SourcesCommand: CommandProtocol {
                     return
                 }
                 let parser = try FileParser(path: p.asString)
+                Logger?.info("Parsing \(p.asString)...")
                 try parser.parse(to: factory)
             }
             try FileRenderer.render(
