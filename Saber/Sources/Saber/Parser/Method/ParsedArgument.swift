@@ -21,3 +21,15 @@ struct ParsedArgument: Equatable {
         self.isLazy = isLazy
     }
 }
+
+extension ParsedArgument: CustomStringConvertible {
+    
+    var description: String {
+        var desc = name ?? "_"
+        if isLazy {
+            desc = "lazy " + desc
+        }
+        desc += ": " + type.fullName
+        return desc
+    }
+}

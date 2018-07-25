@@ -75,6 +75,7 @@ struct XcodeProjectCommand: CommandProtocol {
             let project = try SaberXProject(path: options.url.path, targetNames: options.targetNames)
             let factory = ParsedDataFactory()
             try project.targets.forEach { (target) in
+                Logger?.info("Target '\(target.name)'...")
                 try target.filePaths.forEach { (path) in
                     let parser = try FileParser(path: path, moduleName: target.name)
                     try parser.parse(to: factory)
@@ -89,7 +90,6 @@ struct XcodeProjectCommand: CommandProtocol {
                     defaultConfig: defaultConfig
                 )
             )
-            print("Generated")
             return .success(())
         } catch {
             return .failure(.wrapped(error))

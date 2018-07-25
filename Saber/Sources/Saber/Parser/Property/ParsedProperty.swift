@@ -27,3 +27,21 @@ struct ParsedProperty: Equatable {
         self.isLazy = isLazy
     }
 }
+
+extension ParsedProperty: Loggable {
+    
+    func log(with logger: Logging, level: LogLevel) {
+        var message = "\(name): \(type.fullName)"
+        if isLazy {
+            message = "lazy " + message
+        }
+        if annotations.count > 0 {
+            message += " -- "
+            message += annotations
+                .map { $0.description }
+                .joined(separator: ", ")
+        }
+        message = "- " + message
+        logger.log(level, message: message)
+    }
+}

@@ -7,29 +7,11 @@
 
 import Foundation
 
-public enum LogLevel: CustomStringConvertible {
-    case warning
-    case error
-    case info
-    case debug
-
-    public var description: String {
-        switch self {
-        case .debug:
-            return "debug"
-        case .error:
-            return "error"
-        case .info:
-            return "info"
-        case .warning:
-            return "warning"
-        }
-    }
-}
-
 public protocol Logging {
 
     func log(_ level: LogLevel, message: @autoclosure () -> String)
+    
+    func log(_ level: LogLevel, loggable: Loggable)
 
     func warn(_ message: @autoclosure () -> String)
 
@@ -42,6 +24,10 @@ public protocol Logging {
 
 extension Logging {
 
+    public func log(_ level: LogLevel, loggable: Loggable) {
+        loggable.log(with: self, level: level)
+    }
+    
     public func warn(_ message: @autoclosure () -> String) {
         log(.warning, message: message)
     }

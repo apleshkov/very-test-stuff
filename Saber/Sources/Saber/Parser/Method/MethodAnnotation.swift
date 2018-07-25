@@ -12,3 +12,17 @@ enum MethodAnnotation: Equatable {
     case provider
     case didInject
 }
+
+extension MethodAnnotation: CustomStringConvertible {
+    
+    var description: String {
+        switch self {
+        case .inject:
+            return "@inject"
+        case .didInject:
+            return "@didInject"
+        case .provider:
+            return "@provider"
+        }
+    }
+}

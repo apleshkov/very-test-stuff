@@ -24,6 +24,7 @@ public class TypeRepository {
     private var resolvers: [ScopeName : [Key : Resolver]] = [:]
 
     init(parsedData: ParsedData) throws {
+        Logger?.info("Building type repository...")
         try prepareScopes(parsedData: parsedData)
         try fillAliases(parsedData: parsedData)
         try fillTypes(parsedData: parsedData)
@@ -136,6 +137,7 @@ extension TypeRepository {
         if let scopeKey = info.scopeName {
             scopes[scopeKey]?.keys.insert(key)
         }
+        Logger?.debug("Registered '\(key.description)' -- scope: \(info.scopeName ?? "none")")
     }
     
     func resolver(for key: Key, scopeName: ScopeName) -> Resolver? {
@@ -211,12 +213,13 @@ extension TypeRepository {
 extension TypeRepository {
     
     private func prepareScopes(parsedData: ParsedData) throws {
+        Logger?.info("Preparing scopes...")
         for (_, parsedContainer) in parsedData.containers {
             let scopeName = parsedContainer.scopeName
             let key = scopeName
             let deps: [ScopeName] = try parsedContainer.dependencies.map {
                 guard let container = parsedData.containers[$0.name] else {
-                    throw Throwable.message("Unknown '\(parsedContainer.name)' dependency: '\($0.name)' not found")
+                    throw Throwable.message("Unknown '\(parsedContainer.fullName(modular: true))' dependency: '\($0.name)' not found")
                 }
                 return container.scopeName
             }
@@ -231,6 +234,7 @@ extension TypeRepository {
             )
             scopes[key] = scope
             containers[parsedContainer.name] = key
+            Logger?.debug("Scope '\(scopeName)' -- container: '\(parsedContainer.fullName(modular: true))'; dependencies: \(deps)")
         }
     }
 
@@ -254,6 +258,7 @@ extension TypeRepository {
     }
 
     private func fillTypes(parsedData: ParsedData) throws {
+        Logger?.info("Processing types...")
         var binders: [Key : (scopeKey: ScopeName, usage: ParsedTypeUsage)] = [:]
         var providers: [Key : (scopeKey: ScopeName, method: ParsedMethod)] = [:]
         try parsedData.types.forEach { (parsedType) in
@@ -299,6 +304,7 @@ extension TypeRepository {
                 )
             }
             scopes[entry.scopeKey]?.binders[key] = mimicKey
+            Logger?.debug("Binder '\(key.description)' -> '\(mimicKey.description)'")
         }
         for (key, entry) in providers {
             let method = entry.method
@@ -319,10 +325,12 @@ extension TypeRepository {
                 )
             }
             scopes[entry.scopeKey]?.providers[key] = (of: providedKey, method: method)
+            Logger?.debug("Provider '\(key.description)' -> '\(providedKey.description)'")
         }
     }
 
     private func fillTypeExtensions(parsedData: ParsedData) throws {
+        Logger?.info("Processing extensions...")
         parsedData.extensions.forEach { (parsedExt) in
             let key = makeKey(for: parsedExt)
             guard let info = try? self.find(by: key) else {
@@ -334,13 +342,16 @@ extension TypeRepository {
             parsedType.properties += parsedExt.properties
             parsedType.methods += parsedExt.methods
             typeInfos[key]?.parsed = .type(parsedType)
+            Logger?.debug("Extended '\(key.description)'")
         }
     }
     
     private func fillExternals(parsedData: ParsedData) throws {
+        Logger?.info("Processing externals...")
         for (_, parsedContainer) in parsedData.containers {
             var members: [Key : ExternalMember] = [:]
             try parsedContainer.externals.forEach { (usage) in
+                Logger?.debug("External '\(usage.genericName)'")
                 guard let externalInfo = find(by: usage.genericName) else {
                     throw Throwable.message("Invalid '\(parsedContainer.name)' external: unable to find '\(usage.fullName)'")
                 }
@@ -364,6 +375,7 @@ extension TypeRepository {
                         from: externalInfo.key,
                         name: $0.name
                     )
+                    Logger?.log(.debug, loggable: $0)
                 }
                 externalParsedType.methods.forEach {
                     guard $0.isStatic == false, let usage = $0.returnType else {
@@ -385,6 +397,7 @@ extension TypeRepository {
                         from: externalInfo.key,
                         parsed: $0
                     )
+                    Logger?.log(.debug, loggable: $0)
                 }
             }
             let scopeKey = parsedContainer.scopeName
@@ -393,6 +406,7 @@ extension TypeRepository {
     }
     
     private func fillResolvers() throws {
+        Logger?.info("Building resolvers...")
         for (_, scope) in scopes {
             var dict: [Key : Resolver] = [:]
             dict[makeKey(for: scope.container)] = .container
@@ -420,6 +434,13 @@ extension TypeRepository {
                 }
             }
         }
+        if let logger = Logger {
+            for (scopeName, dict) in resolvers {
+                for (key, resolver) in dict {
+                    logger.debug("{\(scopeName)} \(key.description) -- \(resolver.description)")
+                }
+            }
+        }
     }
 }
 
@@ -430,5 +451,25 @@ extension TypeRepository.Key: CustomStringConvertible {
             return name
         }
         return "\(moduleName).\(name)"
+    }
+}
+
+extension TypeRepository.Resolver: CustomStringConvertible {
+    
+    var description: String {
+        switch self {
+        case .explicit:
+            return "explicit"
+        case .container:
+            return "container"
+        case .binder(let key):
+            return "bound with '\(key.description)'"
+        case .provider(let key):
+            return "provided by '\(key.description)'"
+        case .external(let member):
+            return "external from '\(member.fromKey.description)'"
+        case .derived(let from, let resolver):
+            return "derived from '\(from)' as \(resolver.description)"
+        }
     }
 }

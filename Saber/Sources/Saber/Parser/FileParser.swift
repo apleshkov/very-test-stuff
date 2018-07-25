@@ -17,6 +17,11 @@ public class FileParser {
     private let moduleName: String?
 
     public init(file: File, moduleName: String? = nil) throws {
+        if let path = file.path {
+            Logger?.info("Parsing '\(path)'...")
+        } else {
+            Logger?.info("Parsing text...")
+        }
         self.structure = try Structure(file: file).dictionary
         self.rawData = RawData(contents: file.contents)
         self.moduleName = moduleName
@@ -34,9 +39,10 @@ public class FileParser {
     }
     
     private func parse(_ structure: [String : SourceKitRepresentable], to data: ParsedDataFactory) throws {
-        if var container = try ContainerParser.parse(structure, rawData: rawData) {            
+        if var container = try ContainerParser.parse(structure, rawData: rawData) {
             container.moduleName = moduleName
-            Logger?.debug("Found \(container.debugDescription)")
+            Logger?.info("Container '\(container.fullName(modular: true))' parsed")
+            Logger?.log(.debug, loggable: container)
             try data.register(container)
         } else if let type = TypeParser.parse(structure, rawData: rawData) {
             process(type, parent: nil, data: data)
@@ -57,6 +63,8 @@ public class FileParser {
         if let parentName = parent?.name {
             type.name = "\(parentName).\(type.name)"
         }
+        Logger?.info("Type '\(type.fullName(modular: true))' parsed")
+        Logger?.log(.debug, loggable: type)
         data.register(type)
         type.nested.forEach {
             switch $0 {
@@ -76,6 +84,8 @@ public class FileParser {
         if let parentName = parent?.name {
             ext.typeName = "\(parentName).\(ext.typeName)"
         }
+        Logger?.info("Extension '\(ext.fullName(modular: true))' parsed")
+        Logger?.log(.debug, loggable: ext)
         data.register(ext)
         ext.nested.forEach {
             switch $0 {

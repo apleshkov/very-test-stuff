@@ -52,10 +52,10 @@ extension ParsedContainer {
     }
 }
 
-extension ParsedContainer: CustomDebugStringConvertible {
+extension ParsedContainer: Loggable {
 
-    var debugDescription: String {
-        let prefix = "<Container '\(fullName(modular: true))'>"
+    func log(with logger: Logging, level: LogLevel) {
+        let prefix = "Container '\(fullName(modular: true))'"
         var components: [String] = [
             "protocol: '\(protocolName)'",
             "scope: '\(scopeName)'"
@@ -70,6 +70,7 @@ extension ParsedContainer: CustomDebugStringConvertible {
             components.append("imports: " + imports.map { "'\($0)'" }.joined(separator: ", "))
         }
         components.append("thread-safe: \(isThreadSafe)")
-        return "\(prefix) \(components.joined(separator: "; "))"
+        let message = "\(prefix) -- \(components.joined(separator: "; "))"
+        logger.log(level, message: message)
     }
 }

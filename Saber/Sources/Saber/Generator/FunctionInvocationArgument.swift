@@ -21,3 +21,15 @@ struct FunctionInvocationArgument: Equatable {
         self.isLazy = isLazy
     }
 }
+
+extension FunctionInvocationArgument: CustomStringConvertible {
+    
+    var description: String {
+        var desc = name ?? "_"
+        if isLazy {
+            desc = "lazy " + desc
+        }
+        desc += ": " + typeResolver.description
+        return desc
+    }
+}

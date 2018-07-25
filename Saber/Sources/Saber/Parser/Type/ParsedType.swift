@@ -39,3 +39,24 @@ extension ParsedType {
         return "\(moduleName).\(name)"
     }
 }
+
+extension ParsedType: Loggable {
+    
+    func log(with logger: Logging, level: LogLevel) {
+        let kind = isReference ? "Reference" : "Value"
+        var message = "\(kind) '\(fullName(modular: true))'"
+        if annotations.count > 0 {
+            message += " -- "
+            message += annotations
+                .map { $0.description }
+                .joined(separator: ", ")
+        }
+        logger.log(level, message: message)
+        properties.forEach {
+            logger.log(level, loggable: $0)
+        }
+        methods.forEach {
+            logger.log(level, loggable: $0)
+        }
+    }
+}

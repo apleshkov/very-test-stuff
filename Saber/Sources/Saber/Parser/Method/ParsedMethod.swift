@@ -42,3 +42,27 @@ extension ParsedMethod {
         return name == "init"
     }
 }
+
+extension ParsedMethod: Loggable {
+    
+    func log(with logger: Logging, level: LogLevel) {
+        var message = name
+        if isStatic {
+            message = "static " + message
+        }
+        if isFailableInitializer {
+            message += "?"
+        }
+        message += "("
+        message += args.map { $0.description }.joined(separator: ", ")
+        message += ")"
+        if let returnType = returnType {
+            message += " -> \(returnType.fullName)"
+        }
+        if annotations.count > 0 {
+            message += " -- " + annotations.map { $0.description }.joined(separator: ", ")
+        }
+        message = "- " + message
+        logger.log(level, message: message)
+    }
+}

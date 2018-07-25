@@ -33,3 +33,17 @@ extension ParsedExtension {
         return "\(moduleName).\(typeName)"
     }
 }
+
+extension ParsedExtension: Loggable {
+    
+    func log(with logger: Logging, level: LogLevel) {
+        let message = "Extension '\(fullName(modular: true))'"
+        logger.log(level, message: message)
+        properties.forEach {
+            logger.log(level, loggable: $0)
+        }
+        methods.forEach {
+            logger.log(level, loggable: $0)
+        }
+    }
+}

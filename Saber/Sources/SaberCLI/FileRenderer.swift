@@ -31,6 +31,7 @@ class FileRenderer {
             let generated = renderer.render()
             let containerURL = outDir.appendingPathComponent("\($0.name).swift")
             try generated.write(to: containerURL, atomically: false, encoding: .utf8)
+            Logger?.info("Rendered: '\(containerURL.path)'")
         }
     }
 }
