@@ -17,10 +17,14 @@ public class ContainerDataFactory {
     }
 
     public func make(from container: Container) -> ContainerData {
+        Logger?.debug("Making '\(container.name)' data to render...")
         var data = ContainerData(name: container.name, initializer: ContainerData.Initializer())
         data.imports = ["Foundation"] + container.imports
+        Logger?.debug("- imports: \(data.imports)")
         data.inheritedFrom = [container.protocolName]
+        Logger?.debug("- inheritedFrom: \(data.inheritedFrom)")
         if container.isThreadSafe {
+            Logger?.debug("- is thread safe: appending a lock")
             data.storedProperties.append(["private let lock = NSRecursiveLock()"])
         }
         container.dependencies.forEach {
@@ -29,6 +33,7 @@ public class ContainerDataFactory {
             data.storedProperties.append(["\(config.accessLevel) unowned let \(name): \(typeName)"])
             data.initializer.storedProperties.append("self.\(name) = \(name)")
             data.initializer.args.append((name: name, typeName: typeName))
+            Logger?.debug("- dependency: \(name): \(typeName)")
         }
         container.externals.forEach {
             let name = memberName(of: $0.type)
@@ -36,6 +41,7 @@ public class ContainerDataFactory {
             data.storedProperties.append(["\(config.accessLevel) let \(name): \(typeName)"])
             data.initializer.args.append((name: name, typeName: typeName))
             data.initializer.storedProperties.append("self.\(name) = \(name)")
+            Logger?.debug("- external: \(name): \(typeName)")
         }
         container.services.forEach { (service) in
             let isCached: Bool
@@ -91,6 +97,7 @@ public class ContainerDataFactory {
                 "}"
             ]
         )
+        Logger?.debug("- maker: \(makerName)() -> \(usage.fullName(modular: true))")
     }
     
     private func expand(data: inout ContainerData,
@@ -119,6 +126,7 @@ public class ContainerDataFactory {
                 "\(config.indent)return \(accessor(of: .explicit(decl), owner: "self"))",
                 "}"
                 ])
+            Logger?.debug("- getter \(memberName(of: mimicType)): \(mimicType.fullName(modular: true)) -- cached: none; thread-safe: false")
         case .derived(_, _):
             break
         case .external(_):
@@ -176,12 +184,14 @@ public class ContainerDataFactory {
             body.append("self.\(cached.memberName) = \(name)")
         }
         body.append("return \(name)")
+        Logger?.debug("- getter \(name): \(some.fullName(modular: true)) -- cached: \(cached?.memberName ?? "none"); thread-safe: \(cached?.isThreadSafe ?? false)")
         return ["\(accessLevel) var \(name): \(some.fullName(modular: true)) {"] + body.map { "\(config.indent)\($0)" } + ["}"]
     }
     
     func maker(for decl: TypeDeclaration) -> [String]? {
         switch decl.initializer {
         case .none:
+            Logger?.debug("- no maker for \(memberName(of: decl)): no initializer found")
             return nil
         case .some(let args):
             var lines: [String] = ["private func \(memberName(of: decl, prefix: "make"))() -> \(decl.fullName(modular: true)) {"]
@@ -198,6 +208,7 @@ public class ContainerDataFactory {
             }
             lines.append("\(config.indent)return \(initializerName)(\(invocationArgs.joined(separator: ", ")))")
             lines.append("}")
+            Logger?.debug("- maker \(memberName(of: decl, prefix: "make"))() -> \(decl.fullName(modular: true)) -- initializer: \(initializerName)(\(invocationArgs.joined(separator: ", ")))")
             return lines
         }
     }
@@ -206,6 +217,7 @@ public class ContainerDataFactory {
         let memberInjections = decl.memberInjections
         let methodInjections = decl.methodInjections
         guard memberInjections.count > 0 || methodInjections.count > 0 else {
+            Logger?.debug("- no injector for \(memberName(of: decl)): no member & method injections")
             return nil
         }
         let varName = memberName(of: decl)
@@ -230,6 +242,7 @@ public class ContainerDataFactory {
             lines.append("\(config.indent)\(invocation)")
         }
         lines.append("}")
+        Logger?.debug("- injector to \(varName): \(typeString)")
         return lines
     }
 

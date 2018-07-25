@@ -32,7 +32,7 @@ extension TypeResolver: CustomStringConvertible {
         case .bound(let mimic, let some):
             return "'\(mimic.fullName(modular: true))' is bound to '\(some.fullName(modular: true))'"
         case .derived(let from, let typeResolver):
-            return "derived from '\(from.fullName(modular: true))' as \(typeResolver.description)"
+            return "derived from '\(from.fullName(modular: true))' as \(typeResolver)"
         case .external(let from, let kind):
             switch kind {
             case .property(let name):

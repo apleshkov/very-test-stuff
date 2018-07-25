@@ -110,7 +110,7 @@ extension TypeRepository {
             return try find(by: .modular(module: first, name: name))
         }
         guard let info = typeInfos[key] else {
-            throw Throwable.message("Unable to find '\(key.description)'")
+            throw Throwable.message("Unable to find '\(key)'")
         }
         return info
     }
@@ -137,7 +137,7 @@ extension TypeRepository {
         if let scopeKey = info.scopeName {
             scopes[scopeKey]?.keys.insert(key)
         }
-        Logger?.debug("Registered '\(key.description)' -- scope: \(info.scopeName ?? "none")")
+        Logger?.debug("Registered '\(key)' -- scope: \(info.scopeName ?? "none")")
     }
     
     func resolver(for key: Key, scopeName: ScopeName) -> Resolver? {
@@ -304,12 +304,12 @@ extension TypeRepository {
                 )
             }
             scopes[entry.scopeKey]?.binders[key] = mimicKey
-            Logger?.debug("Binder '\(key.description)' -> '\(mimicKey.description)'")
+            Logger?.debug("Binder '\(key)' -> '\(mimicKey)'")
         }
         for (key, entry) in providers {
             let method = entry.method
             guard let usage = method.returnType else {
-                throw Throwable.message("Unable to get provided type: '\(key.description).\(method.name)' returns nothing")
+                throw Throwable.message("Unable to get provided type: '\(key)' \(method)' returns nothing")
             }
             let providedKey: Key
             if let providedInfo = find(by: usage.genericName) {
@@ -325,7 +325,7 @@ extension TypeRepository {
                 )
             }
             scopes[entry.scopeKey]?.providers[key] = (of: providedKey, method: method)
-            Logger?.debug("Provider '\(key.description)' -> '\(providedKey.description)'")
+            Logger?.debug("Provider '\(key)' -> '\(providedKey)'")
         }
     }
 
@@ -342,7 +342,7 @@ extension TypeRepository {
             parsedType.properties += parsedExt.properties
             parsedType.methods += parsedExt.methods
             typeInfos[key]?.parsed = .type(parsedType)
-            Logger?.debug("Extended '\(key.description)'")
+            Logger?.debug("Extended '\(key)'")
         }
     }
     
@@ -356,7 +356,7 @@ extension TypeRepository {
                     throw Throwable.message("Invalid '\(parsedContainer.name)' external: unable to find '\(usage.fullName)'")
                 }
                 guard case .type(let externalParsedType) = externalInfo.parsed else {
-                    throw Throwable.message("Invalid '\(parsedContainer.name)' external: unable to find '\(externalInfo.key.description)' parsed type")
+                    throw Throwable.message("Invalid '\(parsedContainer.name)' external: unable to find '\(externalInfo.key)' parsed type")
                 }
                 externalParsedType.properties.forEach {
                     let info: Info
@@ -437,7 +437,7 @@ extension TypeRepository {
         if let logger = Logger {
             for (scopeName, dict) in resolvers {
                 for (key, resolver) in dict {
-                    logger.debug("{\(scopeName)} \(key.description) -- \(resolver.description)")
+                    logger.debug("{\(scopeName)} \(key) -- \(resolver)")
                 }
             }
         }
@@ -463,13 +463,13 @@ extension TypeRepository.Resolver: CustomStringConvertible {
         case .container:
             return "container"
         case .binder(let key):
-            return "bound with '\(key.description)'"
+            return "bound with '\(key)'"
         case .provider(let key):
-            return "provided by '\(key.description)'"
+            return "provided by '\(key)'"
         case .external(let member):
-            return "external from '\(member.fromKey.description)'"
+            return "external from '\(member.fromKey)'"
         case .derived(let from, let resolver):
-            return "derived from '\(from)' as \(resolver.description)"
+            return "derived from '\(from)' as \(resolver)"
         }
     }
 }

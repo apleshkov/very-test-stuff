@@ -9,8 +9,6 @@ import Foundation
 import Commandant
 import Saber
 
-Logger = ConsoleLogger()
-
 let config = SaberConfiguration.default
 
 let registry = CommandRegistry<Throwable>()
@@ -20,5 +18,5 @@ registry.register(VersionCommand())
 registry.register(HelpCommand(registry: registry))
 
 registry.main(defaultVerb: "help") { (error) in
-    fputs("\(error.description)\n", stderr)
+    fputs("\(error)\n", stderr)
 }

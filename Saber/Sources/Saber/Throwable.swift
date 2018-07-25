@@ -28,7 +28,7 @@ extension Throwable: CustomStringConvertible {
             let moduleList = modules.map { "\($0)" }.joined(separator: ", ")
             return "Declaration collision: '\(name)' is declared in different modules: \(moduleList)"
         case .noParsedType(let info):
-            return "Unable to make '\(info.key.description)' declaration: no parsed type"
+            return "Unable to make '\(info.key)' declaration: no parsed type"
         case .wrapped(let error):
             return error.localizedDescription
         }

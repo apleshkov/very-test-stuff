@@ -59,7 +59,7 @@ extension ContainerFactory {
                 let usage = try makeTypeUsage(from: fromKey, in: scope)
                 return ContainerExternal(type: usage, kinds: [])
             }()
-            Logger?.debug("External: '\(fromKey.description)'")
+            Logger?.debug("External: '\(fromKey)'")
             switch member {
             case .method(_, let parsedMethod):
                 Logger?.debug("- \(parsedMethod.name)")
@@ -84,7 +84,7 @@ extension ContainerFactory {
             do {
                 value = try ensure(info: info, in: scope)
             } catch (error: Throwable.noParsedType(_)) {
-                Logger?.debug("Service '\(key.description)': no declaration found, skipping")
+                Logger?.debug("Service '\(key)': no declaration found, skipping")
                 continue
             }
             let typeResolver = TypeResolver<TypeDeclaration>.explicit(value.declaration)
@@ -93,7 +93,7 @@ extension ContainerFactory {
                 storage: value.isCached ? .cached : .none
             )
             result.append(service)
-            Logger?.debug("Service '\(key.description)' as explicit; cached: \(value.isCached)")
+            Logger?.debug("Service '\(key)' as explicit; cached: \(value.isCached)")
         }
         for (providerKey, data) in scope.providers {
             let typeUsage = try makeTypeUsage(from: data.of, in: scope)
@@ -104,7 +104,7 @@ extension ContainerFactory {
                 storage: .none
             )
             result.append(service)
-            Logger?.debug("Service '\(typeUsage.fullName(modular: true))' provided by '\(providerKey.description)'; cached: false")
+            Logger?.debug("Service '\(typeUsage.fullName(modular: true))' provided by '\(providerKey)'; cached: false")
         }
         for (binderKey, mimicKey) in scope.binders {
             let typeUsage = try makeTypeUsage(from: mimicKey, in: scope)
@@ -116,7 +116,7 @@ extension ContainerFactory {
                 storage: .none
             )
             result.append(service)
-            Logger?.debug("Service '\(typeUsage.fullName(modular: true))' bound to '\(binderKey.description)'; cached: false")
+            Logger?.debug("Service '\(typeUsage.fullName(modular: true))' bound to '\(binderKey)'; cached: false")
         }
         return result
     }
@@ -141,7 +141,7 @@ extension ContainerFactory {
 
     private func makeTypeProvider(key providerKey: TypeRepository.Key, in scope: TypeRepository.Scope) throws -> TypeProvider {
         guard let data = scope.providers[providerKey] else {
-            throw Throwable.message("Unknown provider: '\(providerKey.description)' not found")
+            throw Throwable.message("Unknown provider: '\(providerKey)' not found")
         }
         let method = data.method
         let providerInfo = try repo.find(by: providerKey)
@@ -199,22 +199,32 @@ extension ContainerFactory {
     }
 
     private func makeResolver(for parsedUsage: ParsedTypeUsage, in scope: TypeRepository.Scope) throws -> TypeResolver<TypeUsage> {
+        Logger?.debug("Making type resolver for {\(scope.name)} '\(parsedUsage.fullName)'...")
         guard let info = repo.find(by: parsedUsage.genericName) else {
             // Container?
             if let parsedContainer = repo.container(by: parsedUsage.name) {
-                let typeUsage = TypeUsage(name: parsedContainer.name, moduleName: parsedContainer.moduleName)
-                guard let repoResolver = repo.resolver(for: .name(parsedContainer.name), scopeName: scope.name) else {
-                    throw Throwable.message("Unknown resolver for '\(parsedContainer.fullName(modular: true))'")
+                let repoKey = TypeRepository.Key(name: parsedContainer.name, moduleName: parsedContainer.moduleName)
+                Logger?.debug("Finding repo resolver for {\(scope.name)} '\(repoKey)'...")
+                guard let repoResolver = repo.resolver(for: repoKey, scopeName: scope.name) else {
+                    throw Throwable.message("Unknown resolver for '\(parsedContainer.fullName(modular: true))' (scope: '\(scope.name)')")
                 }
-                return try makeResolver(for: typeUsage, with: repoResolver, in: scope)
+                Logger?.debug("Repo resolver for {\(scope.name)} '\(repoKey)': \(repoResolver)")
+                let typeUsage = TypeUsage(name: parsedContainer.name, moduleName: parsedContainer.moduleName)
+                let typeResolver = try makeResolver(for: typeUsage, with: repoResolver, in: scope)
+                Logger?.debug("Type resolver for {\(scope.name)} '\(repoKey)': \(typeResolver)")
+                return typeResolver
             }
-            throw Throwable.message("Unknown type: '\(parsedUsage.fullName)'")
+            throw Throwable.message("Unknown type: '\(parsedUsage.fullName)' (scope: '\(scope.name)')")
         }
+        Logger?.debug("Finding repo resolver for {\(scope.name)} '\(info.key)'...")
         guard let repoResolver = repo.resolver(for: info.key, scopeName: scope.name) else {
-            throw Throwable.message("Unknown resolver for: '\(parsedUsage.fullName)'")
+            throw Throwable.message("Unknown resolver for: '\(parsedUsage.fullName)' (scope: '\(scope.name)')")
         }
+        Logger?.debug("Repo resolver for {\(scope.name)} '\(info.key)': \(repoResolver)")
         let typeUsage = try makeTypeUsage(from: info, in: scope)
-        return try makeResolver(for: typeUsage, with: repoResolver, in: scope)
+        let typeResolver = try makeResolver(for: typeUsage, with: repoResolver, in: scope)
+        Logger?.debug("Type resolver for {\(scope.name)} '\(info.key)': \(typeResolver)")
+        return typeResolver
     }
 }
 
@@ -270,12 +280,12 @@ extension ContainerFactory {
     private func ensure(info: TypeRepository.Info, in scope: TypeRepository.Scope) throws -> DeclValue {
         let key = DeclKey(scopeName: scope.name, key: info.key)
         guard processingDeclarations.contains(key) == false else {
-            throw Throwable.message("Cyclic dependency found: '\(info.key.description)' is still processing")
+            throw Throwable.message("Cyclic dependency found: '\(info.key)' is still processing")
         }
         if let value = declarationValues[key] {
             return value
         }
-        Logger?.debug("Making '\(info.key.description)' (scope: '\(scope.name)')...")
+        Logger?.debug("Making '\(info.key)' (scope: '\(scope.name)')...")
         guard case .type(let parsedType) = info.parsed else {
             throw Throwable.noParsedType(for: info)
         }
@@ -285,14 +295,14 @@ extension ContainerFactory {
         }
         let isInjectOnly = parsedType.annotations.contains(.injectOnly)
         if isInjectOnly {
-            Logger?.debug("Injection \(info.key.description) ignores initializer: \(TypeAnnotation.injectOnly) found")
+            Logger?.debug("Injection \(info.key) ignores initializer: \(TypeAnnotation.injectOnly) found")
         }
         var decl = TypeDeclaration(name: info.key.name, moduleName: info.key.moduleName)
         decl.isReference = parsedType.isReference
         for property in parsedType.properties {
             guard property.annotations.contains(.inject) else {
                 Logger?.debug(
-                    "Ignoring \(info.key.description).\(property.name): no \(MethodAnnotation.inject) annotation, but \(property.annotations)"
+                    "Ignoring \(info.key).\(property.name): no \(MethodAnnotation.inject) annotation, but \(property.annotations)"
                 )
                 continue
             }
@@ -303,7 +313,7 @@ extension ContainerFactory {
             )
             decl.memberInjections.append(injection)
             Logger?.debug(
-                "Injection \(info.key.description).\(property.name): \(injection.typeResolver)"
+                "Injection \(info.key).\(property.name): \(injection.typeResolver)"
                     + " -- annotations: \(property.annotations)"
                     + "; lazy: \(injection.isLazy)"
             )
@@ -313,26 +323,31 @@ extension ContainerFactory {
         for method in parsedType.methods {
             if method.isInitializer {
                 if !isInjectOnly {
+                    Logger?.debug(
+                        "Injection \(info.key) initializer found: \(method.name)("
+                            + method.args.map { $0.description }.joined(separator: ", ")
+                            + ") -- annotations: \(method.annotations)"
+                    )
                     parsedInitializers.append(method)
                 }
                 continue
             }
             if didInjectHandlerName == nil && method.annotations.contains(.didInject) {
                 didInjectHandlerName = method.name
-                Logger?.debug("Injection \(info.key.description).didInjectHandler: \(method.name)")
+                Logger?.debug("Injection \(info.key).didInjectHandler: \(method.name)")
                 continue
             }
             if method.annotations.contains(.inject) {
                 let injection = InstanceMethodInjection(methodName: method.name, args: try makeArguments(for: method, in: scope))
                 decl.methodInjections.append(injection)
                 Logger?.debug(
-                    "Injection \(info.key.description).\(method.name)("
+                    "Injection \(info.key).\(method.name)("
                         + injection.args.map { $0.description }.joined(separator: ", ")
                         + ") -- annotations: \(method.annotations)"
                 )
             } else {
                 Logger?.debug(
-                    "Ignoring \(info.key.description).\(method.name)("
+                    "Ignoring \(info.key).\(method.name)("
                         + method.args.map { $0.description }.joined(separator: ", ")
                         + "): no \(MethodAnnotation.inject) annotation, but \(method.annotations)"
                 )
@@ -341,16 +356,16 @@ extension ContainerFactory {
         decl.didInjectHandlerName = didInjectHandlerName
         decl.initializer = try {
             if isInjectOnly {
-                Logger?.debug("Injection \(info.key.description) initializer: none")
+                Logger?.debug("Injection \(info.key) initializer: none")
                 return .none
             }
             guard let initializer = try findInitializer(from: parsedInitializers, for: parsedType) else {
-                Logger?.debug("Injection \(info.key.description) initializer: init() by default")
+                Logger?.debug("Injection \(info.key) initializer: init() by default")
                 return .some(args: [])
             }
             decl.isOptional = initializer.isFailableInitializer
             Logger?.debug(
-                "Injection \(info.key.description) initializer: "
+                "Injection \(info.key) initializer: "
                     + "init"
                     + (initializer.isFailableInitializer ? "?" : "")
                     + "("
@@ -362,7 +377,7 @@ extension ContainerFactory {
         let isCached = parsedType.annotations.contains(.cached)
         let value: DeclValue = (decl, isCached)
         declarationValues[key] = value
-        Logger?.debug("Injection '\(info.key.description)' (cached: \(isCached)) is ready!")
+        Logger?.debug("Injection '\(info.key)' (cached: \(isCached)) is ready!")
         return value
     }
 

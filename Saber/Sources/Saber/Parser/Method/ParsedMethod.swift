@@ -43,9 +43,9 @@ extension ParsedMethod {
     }
 }
 
-extension ParsedMethod: Loggable {
+extension ParsedMethod: Loggable, CustomStringConvertible {
     
-    func log(with logger: Logging, level: LogLevel) {
+    var description: String {
         var message = name
         if isStatic {
             message = "static " + message
@@ -60,9 +60,12 @@ extension ParsedMethod: Loggable {
             message += " -> \(returnType.fullName)"
         }
         if annotations.count > 0 {
-            message += " -- " + annotations.map { $0.description }.joined(separator: ", ")
+            message += " -- annotations: \(annotations)"
         }
-        message = "- " + message
-        logger.log(level, message: message)
+        return message
+    }
+    
+    func log(with logger: Logging, level: LogLevel) {
+        logger.log(level, message: "- \(self)")
     }
 }

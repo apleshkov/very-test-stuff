@@ -7,8 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		07815E1D20ED7099000FE3D9 /* UserContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07815E1B20ED7099000FE3D9 /* UserContainer.swift */; };
-		07815E1E20ED7099000FE3D9 /* AppContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07815E1C20ED7099000FE3D9 /* AppContainer.swift */; };
+		07815F0121090344000FE3D9 /* AppContainer.saber.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07815EFF21090344000FE3D9 /* AppContainer.saber.swift */; };
+		07815F0221090344000FE3D9 /* UserContainer.saber.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07815F0021090344000FE3D9 /* UserContainer.saber.swift */; };
 		0786297A20AB6FDF00567B86 /* UserManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0786297920AB6FDF00567B86 /* UserManager.swift */; };
 		53B058E020AB246C0063F68C /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53B058DF20AB246C0063F68C /* AppDelegate.swift */; };
 		53B058E220AB246C0063F68C /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53B058E120AB246C0063F68C /* ViewController.swift */; };
@@ -20,8 +20,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		07815E1B20ED7099000FE3D9 /* UserContainer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UserContainer.swift; sourceTree = "<group>"; };
-		07815E1C20ED7099000FE3D9 /* AppContainer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppContainer.swift; sourceTree = "<group>"; };
+		07815EFF21090344000FE3D9 /* AppContainer.saber.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppContainer.saber.swift; sourceTree = "<group>"; };
+		07815F0021090344000FE3D9 /* UserContainer.saber.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UserContainer.saber.swift; sourceTree = "<group>"; };
 		0786297920AB6FDF00567B86 /* UserManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserManager.swift; sourceTree = "<group>"; };
 		53B058DC20AB246C0063F68C /* PseudoTest.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PseudoTest.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		53B058DF20AB246C0063F68C /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -48,8 +48,8 @@
 		07815E1A20ED7099000FE3D9 /* Saber */ = {
 			isa = PBXGroup;
 			children = (
-				07815E1B20ED7099000FE3D9 /* UserContainer.swift */,
-				07815E1C20ED7099000FE3D9 /* AppContainer.swift */,
+				07815EFF21090344000FE3D9 /* AppContainer.saber.swift */,
+				07815F0021090344000FE3D9 /* UserContainer.saber.swift */,
 			);
 			path = Saber;
 			sourceTree = "<group>";
@@ -166,13 +166,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				07815E1D20ED7099000FE3D9 /* UserContainer.swift in Sources */,
 				0786297A20AB6FDF00567B86 /* UserManager.swift in Sources */,
-				07815E1E20ED7099000FE3D9 /* AppContainer.swift in Sources */,
+				07815F0121090344000FE3D9 /* AppContainer.saber.swift in Sources */,
 				53B058F720AB436C0063F68C /* UserVC.swift in Sources */,
 				53B058E220AB246C0063F68C /* ViewController.swift in Sources */,
 				53B058E020AB246C0063F68C /* AppDelegate.swift in Sources */,
 				53B058F320AB24910063F68C /* SaberContainers.swift in Sources */,
+				07815F0221090344000FE3D9 /* UserContainer.saber.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -11,6 +11,8 @@ import Saber
 
 class FileRenderer {
 
+    static let fileSuffix = "saber.swift"
+    
     let outDir: URL
 
     let config: SaberConfiguration
@@ -29,7 +31,7 @@ class FileRenderer {
             let data = dataFactory.make(from: $0)
             let renderer = Renderer(data: data, config: config, version: version)
             let generated = renderer.render()
-            let containerURL = outDir.appendingPathComponent("\($0.name).swift")
+            let containerURL = outDir.appendingPathComponent("\($0.name).\(FileRenderer.fileSuffix)")
             try generated.write(to: containerURL, atomically: false, encoding: .utf8)
             Logger?.info("Rendered: '\(containerURL.path)'")
         }
