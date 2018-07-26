@@ -28,20 +28,19 @@ struct ParsedProperty: Equatable {
     }
 }
 
-extension ParsedProperty: Loggable {
+extension ParsedProperty: CustomStringConvertible {
     
-    func log(with logger: Logging, level: LogLevel) {
-        var message = "\(name): \(type.fullName)"
+    var description: String {
+        var result = "\(name): \(type.fullName)"
         if isLazy {
-            message = "lazy " + message
+            result = "lazy " + result
         }
         if annotations.count > 0 {
-            message += " -- "
-            message += annotations
+            result += " -- "
+            result += annotations
                 .map { $0.description }
                 .joined(separator: ", ")
         }
-        message = "- " + message
-        logger.log(level, message: message)
+        return result
     }
 }

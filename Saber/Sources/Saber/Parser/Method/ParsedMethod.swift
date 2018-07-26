@@ -43,29 +43,25 @@ extension ParsedMethod {
     }
 }
 
-extension ParsedMethod: Loggable, CustomStringConvertible {
+extension ParsedMethod: CustomStringConvertible {
     
     var description: String {
-        var message = name
+        var result = name
         if isStatic {
-            message = "static " + message
+            result = "static " + result
         }
         if isFailableInitializer {
-            message += "?"
+            result += "?"
         }
-        message += "("
-        message += args.map { $0.description }.joined(separator: ", ")
-        message += ")"
+        result += "("
+        result += args.map { $0.description }.joined(separator: ", ")
+        result += ")"
         if let returnType = returnType {
-            message += " -> \(returnType.fullName)"
+            result += " -> \(returnType.fullName)"
         }
         if annotations.count > 0 {
-            message += " -- annotations: \(annotations)"
+            result += " -- annotations: \(annotations)"
         }
-        return message
-    }
-    
-    func log(with logger: Logging, level: LogLevel) {
-        logger.log(level, message: "- \(self)")
+        return result
     }
 }

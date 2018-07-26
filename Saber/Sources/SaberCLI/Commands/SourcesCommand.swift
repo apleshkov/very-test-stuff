@@ -29,13 +29,13 @@ struct SourcesCommand: CommandProtocol {
 
         let rawConfig: String
         
-        let shouldLog: Bool
+        let logLevel: String
 
         static func create(workDir: String)
             -> (_ inputPath: String)
             -> (_ outDir: String)
             -> (_ rawConfig: String)
-            -> (_ log: String)
+            -> (_ logLevel: String)
             -> Options {
                 let baseURL: URL? = workDir.count > 0
                     ? URL(fileURLWithPath: workDir, isDirectory: true)
@@ -45,12 +45,12 @@ struct SourcesCommand: CommandProtocol {
                     return { (outPath) in
                         let outDir = URL(fileURLWithPath: outPath).saber_relative(to: baseURL)
                         return { (rawConfig) in
-                            return { (log) in
+                            return { (logLevel) in
                                 self.init(
                                     inputDir: inputDir,
                                     outDir: outDir,
                                     rawConfig: rawConfig,
-                                    shouldLog: log == "all"
+                                    logLevel: logLevel
                                 )
                             }
                         }
@@ -64,15 +64,13 @@ struct SourcesCommand: CommandProtocol {
                 <*> m <| Option(key: "from", defaultValue: "", usage: "Directory with sources (is relative to --workDir if any)")
                 <*> m <| Option(key: "out", defaultValue: "", usage: "Output directory (is relative to --workDir if any)")
                 <*> m <| Option(key: "config", defaultValue: "", usage: "Path to *.yml or YAML text (optional)")
-                <*> m <| Option(key: "log", defaultValue: "", usage: "Use `--log all` to enable logging (optional)")
+                <*> m <| Option(key: "log", defaultValue: "info", usage: "Could be 'info' (by default) or 'debug' (optional)")
         }
     }
 
     func run(_ options: Options) -> Result<(), Throwable> {
         do {
-            if options.shouldLog {
-                Logger = ConsoleLogger()
-            }
+            Logger = ConsoleLogger(level: try LogLevel.make(from: options.logLevel))
             let factory = ParsedDataFactory()
             try DirectoryTraverser.traverse(options.inputDir.path) { (p) in
                 let path = p.asString

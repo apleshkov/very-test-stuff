@@ -1,28 +1,22 @@
-MODULE_NAME = saber
-SDK = macosx
-ARCH = x86_64
+PREFIX ?= /usr/local
+INST_FOLDER = $(PREFIX)/bin
 
-CONFIG ?= debug
+SWIFT_BUILD_FLAGS=--configuration release
 
-ROOT_DIR = $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
-OUTPUT_DIR = $(ROOT_DIR)/bin
-TARGET_DIR = $(OUTPUT_DIR)/$(SDK)/$(CONFIG)
-SRC_DIR = $(ROOT_DIR)/Sources
-
-ifeq ($(CONFIG), debug)
-    CFLAGS=-Onone -g
-else
-    CFLAGS=-O3
-endif
-
-SWIFTC = $(shell xcrun -f swiftc)
-CLANG = $(shell xcrun -f clang)
-SDK_PATH = $(shell xcrun --show-sdk-path --sdk $(SDK))
-SWIFT_FILES = $(wildcard $(SRC_DIR)/*.swift)
-
-build:
-    mkdir -p $(TARGET_DIR)
-    $(SWIFTC) $(SWIFT_FILES) -emit-executable -sdk $(SDK_PATH) -module-name $(MODULE_NAME) -emit-module -emit-module-path $(TARGET_DIR)/$(MODULE_NAME).swiftmodule -o $(TARGET_DIR)/$(MODULE_NAME)
+BIN_PATH = $(shell swift build $(SWIFT_BUILD_FLAGS) --show-bin-path)
 
 clean:
-    rm -rf $(TARGET_DIR)
+	swift package clean
+
+build:
+	swift build $(SWIFT_BUILD_FLAGS)
+
+install: clean build
+	install -d "$(INST_FOLDER)"
+	install "$(BIN_PATH)/SaberCLI" "$(INST_FOLDER)/saber"
+
+uninstall:
+	rm -rf "$(INST_FOLDER)/saber"
+
+test:
+	swift test

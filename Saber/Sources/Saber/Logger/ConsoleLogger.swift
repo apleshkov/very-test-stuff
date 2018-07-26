@@ -9,9 +9,16 @@ import Foundation
 
 public class ConsoleLogger: Logging {
 
-    public init() {}
+    let level: LogLevel
+    
+    public init(level: LogLevel) {
+        self.level = level
+    }
 
     public func log(_ level: LogLevel, message: @autoclosure () -> String) {
-        print("[\(level)] \(message())")
+        if self.level < level {
+            return
+        }
+        fputs("\(message())\n", stdout)
     }
 }

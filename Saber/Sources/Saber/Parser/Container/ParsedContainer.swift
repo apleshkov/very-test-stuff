@@ -55,22 +55,12 @@ extension ParsedContainer {
 extension ParsedContainer: Loggable {
 
     func log(with logger: Logging, level: LogLevel) {
-        let prefix = "Container '\(fullName(modular: true))'"
-        var components: [String] = [
-            "protocol: '\(protocolName)'",
-            "scope: '\(scopeName)'"
-        ]
-        if dependencies.count > 0 {
-            components.append("dependencies: " +  dependencies.map { "'\($0.fullName)'" }.joined(separator: ", "))
-        }
-        if externals.count > 0 {
-            components.append("externals: " + externals.map { "'\($0.fullName)'" }.joined(separator: ", "))
-        }
-        if imports.count > 0 {
-            components.append("imports: " + imports.map { "'\($0)'" }.joined(separator: ", "))
-        }
-        components.append("thread-safe: \(isThreadSafe)")
-        let message = "\(prefix) -- \(components.joined(separator: "; "))"
-        logger.log(level, message: message)
+        logger.log(level, message: "Parsed container '\(fullName(modular: true))':")
+        logger.log(level, message: "- protocol: \(protocolName)")
+        logger.log(level, message: "- scope: \(scopeName)")
+        logger.log(level, message: "- dependencies: \(dependencies.map { $0.fullName })")
+        logger.log(level, message: "- externals: \(externals.map { $0.fullName })")
+        logger.log(level, message: "- imports: \(imports)")
+        logger.log(level, message: "- thread-safe: \(isThreadSafe)")
     }
 }

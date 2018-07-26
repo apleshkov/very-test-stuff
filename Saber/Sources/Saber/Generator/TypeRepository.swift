@@ -375,21 +375,22 @@ extension TypeRepository {
                         from: externalInfo.key,
                         name: $0.name
                     )
-                    Logger?.log(.debug, loggable: $0)
+                    Logger?.debug("External '\(usage.genericName)' property: \($0)")
                 }
                 externalParsedType.methods.forEach {
-                    guard $0.isStatic == false, let usage = $0.returnType else {
+                    guard $0.isStatic == false, let returnedUsage = $0.returnType else {
+                        Logger?.debug("Ignoring external '\(usage.genericName)' method (static or returns nothing): \($0)")
                         return
                     }
                     let info: Info
-                    if let foundInfo = find(by: usage.genericName) {
+                    if let foundInfo = find(by: returnedUsage.genericName) {
                         info = foundInfo
                     } else {
-                        let key: Key = makeKey(for: usage)
+                        let key: Key = makeKey(for: returnedUsage)
                         info = Info(
                             key: key,
                             scopeName: externalInfo.scopeName,
-                            parsed: .usage(usage)
+                            parsed: .usage(returnedUsage)
                         )
                         register(info)
                     }
@@ -397,7 +398,7 @@ extension TypeRepository {
                         from: externalInfo.key,
                         parsed: $0
                     )
-                    Logger?.log(.debug, loggable: $0)
+                    Logger?.debug("External '\(returnedUsage.genericName)' method: \($0)")
                 }
             }
             let scopeKey = parsedContainer.scopeName

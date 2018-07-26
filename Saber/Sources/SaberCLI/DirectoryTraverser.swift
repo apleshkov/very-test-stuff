@@ -23,7 +23,7 @@ enum DirectoryTraverser {
             return
         }
         guard fs.isDirectory(path) else {
-            Logger?.warn("Ignoring \(path.asString): not a directory")
+            Logger?.debug("Ignoring \(path.asString): not a directory")
             return
         }
         Logger?.info("Traversing \(path.asString)...")

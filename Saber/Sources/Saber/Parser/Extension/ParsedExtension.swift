@@ -37,13 +37,12 @@ extension ParsedExtension {
 extension ParsedExtension: Loggable {
     
     func log(with logger: Logging, level: LogLevel) {
-        let message = "Extension '\(fullName(modular: true))'"
-        logger.log(level, message: message)
+        logger.log(level, message: "Parsed extension '\(fullName(modular: true))':")
         properties.forEach {
-            logger.log(level, loggable: $0)
+            logger.log(level, message: "- \($0)")
         }
         methods.forEach {
-            logger.log(level, loggable: $0)
+            logger.log(level, message: "- \($0)")
         }
     }
 }
