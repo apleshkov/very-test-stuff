@@ -1,6 +1,6 @@
 //
 //  ParsedMethod.swift
-//  Parser
+//  Saber
 //
 //  Created by andrey.pleshkov on 23/05/2018.
 //

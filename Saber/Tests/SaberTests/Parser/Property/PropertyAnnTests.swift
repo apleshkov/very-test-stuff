@@ -1,6 +1,6 @@
 //
 //  PropertyAnnTests.swift
-//  ParserTests
+//  SaberTests
 //
 //  Created by andrey.pleshkov on 28/05/2018.
 //

@@ -1,6 +1,6 @@
 //
 //  ParserTests.swift
-//  ParserTests
+//  SaberTests
 //
 //  Created by andrey.pleshkov on 08/05/2018.
 //
