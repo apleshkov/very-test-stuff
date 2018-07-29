@@ -6,24 +6,31 @@ import Foundation
 
 internal class AppContainer: AppContaining {
 
-    private var cached_userManager: PseudoTest.UserManager?
-
     internal init() {
     }
 
-    internal var userManager: PseudoTest.UserManager {
-        if let cached = self.cached_userManager { return cached }
-        let userManager = self.makeUserManager()
-        self.cached_userManager = userManager
-        return userManager
+    internal var foo: Foo {
+        let foo = self.makeFoo()
+        return foo
     }
 
-    private func makeUserManager() -> PseudoTest.UserManager {
-        return PseudoTest.UserManager(appContainer: self)
+    internal var bar: Bar {
+        let bar = self.makeBar()
+        self.injectTo(bar: bar)
+        return bar
     }
 
-    internal func injectTo(viewController: PseudoTest.ViewController) {
-        viewController.userManager = self.userManager
+    private func makeFoo() -> Foo {
+        return Foo()
+    }
+
+    private func makeBar() -> Bar {
+        return Bar(foo: { [unowned self] in return self.foo })
+    }
+
+    private func injectTo(bar: Bar) {
+        bar.makeFoo = { [unowned self] in return self.foo }
+        bar.set(fooFactory: { [unowned self] in return self.foo })
     }
 
 }

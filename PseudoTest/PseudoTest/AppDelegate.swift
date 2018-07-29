@@ -13,11 +13,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
 
-    let appContainer = AppContainer()
+    //let appContainer = AppContainer()
     
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
-        appContainer.userManager.logIn(userId: "foobarquux")
+        //appContainer.userManager.logIn(userId: "foobarquux")
         return true
     }
 

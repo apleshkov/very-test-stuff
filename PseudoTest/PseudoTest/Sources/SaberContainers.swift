@@ -9,16 +9,42 @@
 import Foundation
 
 // @saber.container(AppContainer)
-// @saber.scope(Singleton)
+// @saber.scope(App)
 protocol AppContaining {}
+
+// @saber.scope(App)
+class Foo {
+}
+
+// @saber.scope(App)
+class Bar {
+    
+    // @saber.inject
+    var makeFoo: (() -> Foo)!
+    
+    // @saber.inject
+    func set(fooFactory: () -> Foo) {
+        // ...
+    }
+    
+    init(foo: () -> Foo) {
+        // ...
+    }
+}
+
+// @saber.scope1(App)
+class NetworkManager {
+}
 
 // @saber.container(UserContainer)
 // @saber.scope(User)
 // @saber.dependsOn(AppContainer)
-// @saber.externals(UserData)
 protocol UserContaining {}
 
-struct UserData {
+// @saber.scope1(User)
+class UserAPI {
     
-    var user: User
+    init(networkManager: NetworkManager) {
+        // ...
+    }
 }
